@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Document
+from .models import BankStatementAccessRequest
 
 class DocumentSerializer(serializers.ModelSerializer):
     document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
@@ -23,7 +24,13 @@ class DocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['date_uploaded']
 
+class AccessRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankStatementAccessRequest
+        fields = ['id', 'user', 'document', 'pin', 'created_at', 'is_granted']
+        read_only_fields = ['pin', 'created_at', 'is_granted']
 
+        
 # class DocumentAccessRequestSerializer(serializers.Serializer):
 #     document_id = serializers.IntegerField()
 #     user_email = serializers.EmailField()
