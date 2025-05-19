@@ -22,6 +22,7 @@ from .filters import (
     RescueProgramFilter,
     VocationalTrainingProgramFilter
 )
+# FIXME: the programs and instances of the programs must be different based on this fix the views
 
 PROGRAM_METADATA = {
     "education": {
