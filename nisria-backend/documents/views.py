@@ -1,22 +1,36 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
-
-from .models import Document
-from .serializers import DocumentSerializer
+from accounts.permissions import IsSuperAdmin
+from .models import Document, BankStatementAccessRequest
+from .serializers import DocumentSerializer,  BankStatementPreviewSerializer
 from .filters import DocumentFilter
+
+# 🔁 Reusable pagination class
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
 
 # /api/documents/ [GET, POST]
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def document_list_create(request):
     if request.method == 'GET':
-        documents = Document.objects.all().order_by('-date_uploaded')
-        serializer = DocumentSerializer(documents, many=True)
-        return Response(serializer.data)
-    
+        documents = Document.objects.exclude(document_type='bank_statement').order_by('-date_uploaded')
+        paginator = StandardResultsSetPagination()
+        result_page = paginator.paginate_queryset(documents, request)
+        serializer = DocumentSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
     elif request.method == 'POST':
         serializer = DocumentSerializer(data=request.data)
         if serializer.is_valid():
@@ -24,16 +38,35 @@ def document_list_create(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 # /api/documents/<id>/ [GET, PUT]
 @api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
 def document_detail_update(request, pk):
     document = get_object_or_404(Document, pk=pk)
 
     if request.method == 'GET':
+        # Check if document is a bank statement
+        if document.document_type == 'bank_statement':
+            # Only allow superusers to see it
+            if not request.user.is_superuser:
+                return Response(
+                    {"message": "Access denied. Bank statement requires special access approval."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
         serializer = DocumentSerializer(document)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
+        if document.document_type == 'bank_statement':
+            # Only allow superusers to update it
+            if not request.user.is_superuser:
+                return Response(
+                    {"message": "Access denied. Bank statement requires special access approval."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
         serializer = DocumentSerializer(document, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -42,44 +75,70 @@ def document_detail_update(request, pk):
 
 # /api/documents/filter/ [GET]
 class DocumentFilterView(ListAPIView):
-    queryset = Document.objects.all().order_by('-date_uploaded')
+    queryset = Document.objects.exclude(document_type='bank_statement').order_by('-date_uploaded')
     serializer_class = DocumentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = DocumentFilter
+    pagination_class = StandardResultsSetPagination
+
 
 # /api/documents/search/ [GET]
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def document_search(request):
     query = request.query_params.get('name', '')
-    documents = Document.objects.filter(name__icontains=query)
-    serializer = DocumentSerializer(documents, many=True)
+    documents = Document.objects.exclude(document_type='bank_statement').filter(name__icontains=query).order_by('-date_uploaded')
+    paginator = StandardResultsSetPagination()
+    result_page = paginator.paginate_queryset(documents, request)
+    serializer = DocumentSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
+# /api/documents/<id>/request-access/ [POST]
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def request_bank_statement_access(request, document_id):
+    document = get_object_or_404(Document, pk=document_id, document_type='bank_statement')
+
+    access_request = BankStatementAccessRequest.objects.create(
+        user=request.user,
+        document=document
+    )
+    return Response({
+        "message": "Access request submitted. Wait for approval.",
+        "pin": str(access_request.pin)
+    }, status=status.HTTP_201_CREATED)
+
+# ✅ /api/access/grant/<uuid:pin>/ [POST]
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def grant_bank_statement_access(request, pin):
+    access_request = get_object_or_404(BankStatementAccessRequest, pin=pin)
+    access_request.is_granted = True
+    access_request.save()
+    return Response({"message": "Access granted successfully."})
+
+# ✅ /api/access/validate/<uuid:pin>/ [POST]
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def validate_bank_statement_access(request, pin):
+    access_request = get_object_or_404(BankStatementAccessRequest, pin=pin, user=request.user)
+
+    if access_request.is_valid():
+        document = access_request.document
+        serialized_doc = DocumentSerializer(document).data
+        return Response({
+            "message": "Access granted.",
+            "document": serialized_doc
+        })
+    else:
+        return Response({"error": "Access denied or expired."}, status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def bank_statement_preview_list(request):
+    bank_statements = Document.objects.filter(document_type='bank_statement').order_by('-date_uploaded')
+    serializer = BankStatementPreviewSerializer(bank_statements, many=True)
     return Response(serializer.data)
 
-# /api/documents/request-access/ [POST]
-# @api_view(['POST'])
-# def request_document_access(request):
-#     # dummy handler — replace with logic like emailing admin, creating an AccessRequest model, etc.
-#     requested_doc_id = request.data.get('document_id')
-#     user_email = request.data.get('email')
-
-#     if requested_doc_id and user_email:
-#         # your actual access request logic goes here
-#         return Response({'message': 'Access request received.'}, status=status.HTTP_200_OK)
-#     return Response({'error': 'Missing document ID or email.'}, status=status.HTTP_400_BAD_REQUEST)
-
-# /api/documents/<id>/grant-access/ [POST]
-# @api_view(['POST'])
-# def grant_document_access(request, pk):
-#     # dummy logic for now
-#     admin_user = request.user
-#     if not admin_user.is_staff:
-#         return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
-
-#     document = get_object_or_404(Document, pk=pk)
-#     recipient_email = request.data.get('email')
-
-#     if recipient_email:
-#         # simulate granting access (e.g., sending email, toggling permission flag, etc.)
-#         return Response({'message': f'Access granted to {recipient_email} for "{document.name}".'})
-    
-#     return Response({'error': 'Recipient email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+# TODO: add views and endpoints for searching and filtering bank statements

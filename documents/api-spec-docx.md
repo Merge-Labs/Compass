@@ -442,7 +442,6 @@ For `Document`, `User`, and `Grant`:
 | ---------------------- | --------------------------------------------------- |
 | Role-based permissions | Built-in or custom roles logic                      |
 | Extended User model    | Custom User model                                   |
-| OTP SMS Support        | `Africa's Talking API` via requests or a Python SDK |
 
 ---
 
