@@ -15,7 +15,9 @@ class DivisionSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'lead', 'date_created', 'date_updated', 'total_budget']
 
 
+# FIXME: the programs and instances of the programs must be different based on this fix the serializers
 class BaseProgramSerializer(serializers.ModelSerializer):
+    division = serializers.PrimaryKeyRelatedField(read_only=True)
     maintainer = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.filter(role__in=['grant_officer', 'management_lead', 'admin']),
         allow_null=True,
