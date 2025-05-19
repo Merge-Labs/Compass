@@ -30,17 +30,9 @@ class AccessRequestSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'document', 'pin', 'created_at', 'is_granted']
         read_only_fields = ['pin', 'created_at', 'is_granted']
 
-        
-# class DocumentAccessRequestSerializer(serializers.Serializer):
-#     document_id = serializers.IntegerField()
-#     user_email = serializers.EmailField()
-#     reason = serializers.CharField(max_length=1000)
 
+class BankStatementPreviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ['id', 'name', 'description', 'division', 'date_uploaded']
 
-# class GrantAccessSerializer(serializers.Serializer):
-#     user_email = serializers.EmailField()
-#     access_level = serializers.ChoiceField(choices=[
-#         ('read', 'Read'),
-#         ('download', 'Download'),
-#         ('edit', 'Edit'),
-#     ])
