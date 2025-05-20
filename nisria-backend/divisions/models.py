@@ -8,7 +8,7 @@ class Division(models.Model):
         ("nisria", "Nisria"), 
         ("maisha", "Maisha")
     ]
-    name = models.CharField(max_length=100, choices=NAME_FIELD_CHOICES)
+    name = models.CharField(max_length=100, choices=NAME_FIELD_CHOICES, unique=True)
     description=models.TextField()
     lead = models.ForeignKey(User, limit_choices_to={'role': 'management_lead'}, on_delete=models.SET_NULL, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
