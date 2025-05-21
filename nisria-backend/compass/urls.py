@@ -41,6 +41,7 @@ urlpatterns = [
     path('api/programs/', include('divisions.urls')),
     path('api/documents/', include('documents.urls')),
     path('api/templates/', include('email_templates.urls')),
+    path('api/grants/', include('grants.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
