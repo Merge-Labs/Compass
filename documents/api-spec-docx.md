@@ -436,8 +436,7 @@ For `Document`, `User`, and `Grant`:
 
 ---
 
-### Permissions, Roles, & Auth
-
+### Permissions, Roles, & Aut
 | Purpose                | Package                                             |
 | ---------------------- | --------------------------------------------------- |
 | Role-based permissions | Built-in or custom roles logic                      |
