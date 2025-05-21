@@ -109,7 +109,7 @@ def request_bank_statement_access(request, document_id):
         "pin": str(access_request.pin)
     }, status=status.HTTP_201_CREATED)
 
-# ✅ /api/access/grant/<uuid:pin>/ [POST]
+# /api/access/grant/<uuid:pin>/ [POST]
 @api_view(['POST'])
 @permission_classes([IsSuperAdmin])
 def grant_bank_statement_access(request, pin):
@@ -118,7 +118,7 @@ def grant_bank_statement_access(request, pin):
     access_request.save()
     return Response({"message": "Access granted successfully."})
 
-# ✅ /api/access/validate/<uuid:pin>/ [POST]
+# /api/access/validate/<uuid:pin>/ [POST]
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def validate_bank_statement_access(request, pin):

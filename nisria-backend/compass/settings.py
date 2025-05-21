@@ -177,3 +177,6 @@ SIMPLE_JWT = {
 
 # Custom user model 
 AUTH_USER_MODEL = 'accounts.User'
+
+# for http redirect
+ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']

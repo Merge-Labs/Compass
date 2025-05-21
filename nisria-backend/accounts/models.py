@@ -61,4 +61,4 @@ class User(AbstractUser):
     
 
 # TODO: Email Validation with OTP
-# TODO: Impliment UUID
+# TODO: Implement UUID
