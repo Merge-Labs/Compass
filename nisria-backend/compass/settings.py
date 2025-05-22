@@ -14,6 +14,7 @@ from pathlib import Path
 from decouple import config
 import cloudinary
 from datetime import timedelta
+from celery.schedules import crontab # For Celery Beat
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_yasg',
     'django_filters',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -163,7 +165,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # You can change this globally or override per-view
 }
 
 
@@ -180,3 +181,23 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # for http redirect
 ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']
+
+# Celery Configuration Options
+# ------------------------------------------------------------------------------
+# Make sure Redis is running: sudo systemctl start redis-server or redis-server
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
+CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Nairobi' 
+
+# Celery Beat Settings
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If you want to manage schedules via Django admin
+
+CELERY_BEAT_SCHEDULE = {
+    'expire_pending_grants_daily': {
+        'task': 'grants.tasks.run_expire_pending_grants_command', # Path to the task
+        'schedule': crontab(minute='35', hour='0'),  
+    },
+}
