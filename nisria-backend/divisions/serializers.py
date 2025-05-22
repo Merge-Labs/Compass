@@ -1,78 +1,174 @@
 from rest_framework import serializers
-from .models import Division, EducationProgram, MicroFundProgram, RescueProgram, VocationalTrainingProgram
+from .models import (
+    Division, Program,
+    EducationProgramDetail, MicroFundProgramDetail, RescueProgramDetail,
+    VocationalTrainingProgramTrainerDetail, VocationalTrainingProgramTraineeDetail,
+    GENDER_CHOICES 
+)
 from accounts.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 class DivisionSerializer(serializers.ModelSerializer):
-    lead = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(role='management_lead'),
+    leads = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role__in=['management_lead', 'super_admin']),
         allow_null=True,
-        required=False  # Allow lead to be optional
+        required=False,
+        many=True,
+        allow_empty=True
     )
-    total_budget = serializers.ReadOnlyField()
+    total_budget = serializers.ReadOnlyField() 
 
     class Meta:
         model = Division
-        fields = ['id', 'name', 'description', 'lead', 'date_created', 'date_updated', 'total_budget']
+        fields = ['id', 'name', 'description', 'leads', 'date_created', 'date_updated', 'total_budget']
 
 
-# FIXME: the programs and instances of the programs must be different based on this fix the serializers
-class BaseProgramSerializer(serializers.ModelSerializer):
-    division = serializers.PrimaryKeyRelatedField(read_only=True)
-    maintainer = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(role__in=['grant_officer', 'management_lead', 'admin']),
-        allow_null=True,
-        required=False # Allow maintainer to be optional
+class ProgramSerializer(serializers.ModelSerializer):
+    division = serializers.PrimaryKeyRelatedField(
+        queryset=Division.objects.all()
     )
-    # Division is typically set by the view based on URL, so it might be read-only or excluded here
-    # If it needs to be writable, ensure it's handled correctly in view's perform_create
-    division = serializers.PrimaryKeyRelatedField(read_only=True) # Or queryset=Division.objects.all() if writable
+
+    division_name_display = serializers.CharField(source='division.get_name_display', read_only=True)
+    maintainers = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role__in=['grant_officer', 'management_lead', 'admin', 'super_admin']),
+        allow_null=True,
+        required=False,
+        many=True,
+        allow_empty=True
+    )
 
     class Meta:
-        # 'model' attribute will be set in subclasses
-        # Common fields can be listed here if any, but most are in Program model itself
+        model = Program
         fields = [
-            'id', 'name', 'description', 'division', 'monthly_budget', 'annual_budget',
-            'maintainer', 'date_created', 'date_updated'
-        ]
-
-
-class EducationProgramSerializer(BaseProgramSerializer):
-    class Meta(BaseProgramSerializer.Meta):
-        model = EducationProgram
-        fields = BaseProgramSerializer.Meta.fields + [
-            'student_name', 'education_level', 'student_location', 'student_contact',
-            'start_date', 'end_date', 'school_associated'
-        ]
-
-
-class MicroFundProgramSerializer(BaseProgramSerializer):
-    class Meta(BaseProgramSerializer.Meta):
-        model = MicroFundProgram
-        fields = BaseProgramSerializer.Meta.fields + [
-            'person_name', 'chama_group', 'is_active', 'start_date', 'location', 'telephone'
-        ]
-
-
-class RescueProgramSerializer(BaseProgramSerializer):
-    class Meta(BaseProgramSerializer.Meta):
-        model = RescueProgram
-        fields = BaseProgramSerializer.Meta.fields + [
-            'child_name', 'is_reunited', 'under_care', 'date_joined', 'date_reunited',
-            'age', 'place_found', 'rescuer_contact', 'notes'
-        ]
-
-
-class VocationalTrainingProgramSerializer(BaseProgramSerializer):
-    class Meta(BaseProgramSerializer.Meta):
-        model = VocationalTrainingProgram
-        fields = BaseProgramSerializer.Meta.fields + [
-            'trainer_name', 'trainer_association', 'trainer_phone', 'trainer_email',
-            'trainee_name', 'trainee_phone', 'trainee_email', 'trainee_association',
-            'date_enrolled', 'under_training'
+            'id', 'name', 'description', 
+            'division', 
+            'division_name_display', 
+            'monthly_budget', 'annual_budget', 
+            'maintainers', 'date_created', 'date_updated'
         ]
 
     def validate(self, data):
-        # Example custom validation: ensure trainer and trainee are not the same if needed
-        # if data.get('trainer_email') == data.get('trainee_email'):
-        #     raise serializers.ValidationError("Trainer and Trainee email cannot be the same.")
+        instance = getattr(self, 'instance', None)
+
+        name = data.get('name', instance.name if instance else None)
+        
+        division_from_data = data.get('division')
+
+        final_division_instance = None
+        if division_from_data:
+            final_division_instance = division_from_data
+        elif instance and instance.division: 
+            final_division_instance = instance.division
+        
+        if not name or not final_division_instance:
+            return data
+
+
+        program_display_name = dict(Program.PROGRAM_FIELD_CHOICES).get(name, name)
+        nisria_programs = ["education", "microfund", "rescue"]
+        maisha_programs = ["vocational"]
+
+        try:
+            if name in nisria_programs and final_division_instance.name != "nisria":
+                raise DjangoValidationError(
+                    f"Program '{program_display_name}' must be under the 'Nisria' division."
+                )
+            if name in maisha_programs and final_division_instance.name != "maisha":
+                raise DjangoValidationError(
+                    f"Program '{program_display_name}' must be under the 'Maisha' division."
+                )
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(e.message_dict if hasattr(e, 'message_dict') else str(e))
+            
         return data
+
+
+class EducationProgramDetailSerializer(serializers.ModelSerializer):
+    program = serializers.SlugRelatedField(read_only=True, slug_field='name') 
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.filter(name="education"), source='program', write_only=True, label="Program ID")
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
+    updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = EducationProgramDetail
+        fields = [
+            'id', 'program', 'program_id', 'student_name', 'gender', 
+            'education_level', 'student_location', 'student_contact',
+            'start_date', 'end_date', 'school_associated', 
+            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+        ]
+
+class MicroFundProgramDetailSerializer(serializers.ModelSerializer):
+    program = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.filter(name="microfund"), source='program', write_only=True, label="Program ID")
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
+    updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = MicroFundProgramDetail
+        fields = [
+            'id', 'program', 'program_id', 'person_name', 'gender', 'chama_group', 
+            'is_active', 'start_date', 'location', 'telephone',
+            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+        ]
+
+class RescueProgramDetailSerializer(serializers.ModelSerializer):
+    program = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.filter(name="rescue"), source='program', write_only=True, label="Program ID")
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
+    updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = RescueProgramDetail
+        fields = [
+            'id', 'program', 'program_id', 'child_name', 'gender', 'is_reunited', 
+            'under_care', 'date_joined', 'date_reunited', 'age', 'place_found', 
+            'rescuer_contact', 'notes',
+            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+        ]
+
+
+class VocationalTrainingProgramTrainerDetailSerializer(serializers.ModelSerializer):
+    program = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.filter(name="vocational"), source='program', write_only=True, label="Program ID")
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
+    updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = VocationalTrainingProgramTrainerDetail
+        fields = [
+            'id', 'program', 'program_id', 'trainer_name', 'gender', 
+            'trainer_association', 'trainer_phone', 'trainer_email',
+            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+        ]
+
+class VocationalTrainingProgramTraineeDetailSerializer(serializers.ModelSerializer):
+    # Trainer is a ForeignKey to VocationalTrainingProgramTrainerDetail
+    trainer = serializers.PrimaryKeyRelatedField(queryset=VocationalTrainingProgramTrainerDetail.objects.all())
+    trainer_name = serializers.ReadOnlyField(source='trainer.trainer_name') # Include trainer name for readability
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
+    updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = VocationalTrainingProgramTraineeDetail
+        fields = [
+            'id', 'trainer', 'trainer_name', 'trainee_name', 'gender', 
+            'trainee_phone', 'trainee_email', 'trainee_association',
+            'date_enrolled', 'under_training',
+            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+        ]
