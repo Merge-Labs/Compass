@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from documents.models import Document  
 from divisions.models import Program
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -54,29 +55,75 @@ class Grant(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        # Import Task model here to avoid circular imports at module level
+        from task_manager.models import Task
+
         is_new = self.pk is None
-        old_status_for_comparison = None
+        old_status = None
 
         if not is_new:
             # For an existing instance, get its current status from the database
             try:
                 old_grant = Grant.objects.get(pk=self.pk)
-                old_status_for_comparison = old_grant.status
+                old_status = old_grant.status
             except Grant.DoesNotExist:
-                # Should not happen if self.pk is valid, but as a fallback,
-                # treat as if it's transitioning from the default status.
-                old_status_for_comparison = self._meta.get_field('status').get_default()
-        else:
-            # For a new instance, the "previous" status is its default value
-            old_status_for_comparison = self._meta.get_field('status').get_default()
-
-        # The status that is about to be saved (or is currently set on the instance)
-        new_status = self.status
+                # This case implies it's effectively new regarding status change logic
+                pass 
 
         super().save(*args, **kwargs)  # Call the "real" save() method.
 
-        if new_status == 'approved' and old_status_for_comparison == 'pending':
+        # GrantExpenditure creation logic (existing)
+        if self.status == 'approved' and old_status == 'pending':
             GrantExpenditure.objects.get_or_create(grant=self)
+
+        # Automatic Task Management Logic
+        # 1. Task Creation: When grant becomes 'pending' (or is created as 'pending')
+        if self.status == 'pending' and old_status != 'pending':
+            # Check if an open follow-up task for this grant already exists
+            # to prevent duplicates if status flips multiple times.
+            existing_task_query = Task.objects.filter(
+                grant=self,
+                is_grant_follow_up_task=True
+            ).exclude(status='completed')
+
+            if not existing_task_query.exists():
+                task_title = f"Follow up: Grant '{self.organization_name}' is pending"
+                task_description = (
+                    f"The grant application for '{self.organization_name}' (ID: {self.id}) "
+                    f"has been marked as 'pending' on {timezone.now().strftime('%Y-%m-%d %H:%M')}. "
+                    f"Please review and take necessary actions."
+                )
+                task_assignee = self.submitted_by if self.submitted_by else None
+                task_creator = self.submitted_by if self.submitted_by else None
+                
+                Task.objects.create(
+                    title=task_title,
+                    description=task_description,
+                    assigned_to=task_assignee,
+                    assigned_by=task_creator, 
+                    status='todo',
+                    priority='medium', 
+                    due_date=self.application_deadline, 
+                    grant=self,
+                    is_grant_follow_up_task=True
+                )
+
+        # 2. Task Completion: When grant moves from 'pending' to another status
+        elif old_status == 'pending' and self.status != 'pending':
+            tasks_to_complete = Task.objects.filter(
+                grant=self,
+                is_grant_follow_up_task=True,
+            ).exclude(status='completed') # Only act on tasks that are not already completed
+            
+            for task_item in tasks_to_complete:
+                task_item.status = 'completed'
+                task_item.description = (
+                    f"{task_item.description}\n\n"
+                    f"This task was automatically marked as completed on {timezone.now().strftime('%Y-%m-%d %H:%M')} "
+                    f"because the linked grant '{self.organization_name}' (ID: {self.id}) status changed "
+                    f"from 'pending' to '{self.get_status_display()}'."
+                )
+                task_item.save(update_fields=['status', 'description', 'updated_at'])
 
     def __str__(self):
         return f"{self.organization_name} – {self.amount_currency}{self.amount_value}"

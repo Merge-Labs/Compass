@@ -3,6 +3,12 @@ from .models import Grant, GrantExpenditure
 from documents.models import Document  
 from divisions.models import Program 
 
+class BasicGrantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Grant
+        fields = ['id', 'organization_name', 'status']
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
