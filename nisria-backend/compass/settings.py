@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'documents',
     'grants',
     'email_templates',
+    'analytics',
+    'notifications',
+    'task_manager',
     'cloudinary',
     'rest_framework',
     'rest_framework.authtoken',
@@ -84,7 +87,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'compass.wsgi.application'
 
 
-# Database
+# Database uncomment the lines below to use sqlite
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # DATABASES = {
