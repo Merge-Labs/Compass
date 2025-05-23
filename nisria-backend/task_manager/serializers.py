@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Task
 from accounts.models import User 
+from grants.models import Grant 
+from grants.serializers import BasicGrantSerializer 
 
 class BasicUserSerializer(serializers.ModelSerializer): 
     class Meta:
@@ -15,6 +17,13 @@ class TaskSerializer(serializers.ModelSerializer):
     )
     assigned_to_details = BasicUserSerializer(source='assigned_to', read_only=True)
     assigned_by_details = BasicUserSerializer(source='assigned_by', read_only=True)
+    grant = serializers.PrimaryKeyRelatedField(
+        queryset=Grant.objects.all(),
+        allow_null=True,
+        required=False # Task can exist without a grant
+    )
+    grant_details = BasicGrantSerializer(source='grant', read_only=True)
+    is_grant_follow_up_task = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Task
@@ -25,11 +34,15 @@ class TaskSerializer(serializers.ModelSerializer):
             'assigned_by', 
             'assigned_by_details', 
             'status', 'priority', 
-            'due_date', 'created_at', 'updated_at'
+            'due_date', 'created_at', 'updated_at',
+            'grant', 
+            'grant_details', 
+            'is_grant_follow_up_task'
         ]
         read_only_fields = [
             'id', 'assigned_by', 'assigned_by_details', 
-            'created_at', 'updated_at', 'assigned_to_details'
+            'created_at', 'updated_at', 'assigned_to_details',
+            'grant_details', 'is_grant_follow_up_task'
         ]
 
     def validate_assigned_to(self, value):
