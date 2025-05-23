@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+import uuid
 class EmailTemplates(models.Model):
     TEMPLATE_TYPE_CHOICES = [
         ('grant_application', 'Grant Application'),
@@ -13,6 +13,7 @@ class EmailTemplates(models.Model):
     ]
 
     name = models.CharField(max_length=100)  
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     template_type = models.CharField(max_length=50, choices=TEMPLATE_TYPE_CHOICES)
     subject_template = models.CharField(max_length=255)
     body_template = models.TextField(help_text="Use {{placeholders}} for dynamic fields.")

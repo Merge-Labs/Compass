@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from documents.models import Document  
 from divisions.models import Program
 from django.utils import timezone
-
+import uuid
 User = get_user_model()
 
 
@@ -22,6 +22,7 @@ class Grant(models.Model):
     ]
 
     organization_name = models.CharField(max_length=255)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application_link = models.URLField(blank=True, null=True)
     amount_currency = models.CharField(max_length=10)
     amount_value = models.DecimalField(max_digits=15, decimal_places=2)
@@ -131,6 +132,7 @@ class Grant(models.Model):
 
 class GrantExpenditure(models.Model):
     grant = models.OneToOneField(Grant, on_delete=models.CASCADE, related_name='expenditure')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     amount_used = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     estimated_depletion_date = models.DateField(null=True, blank=True)
 

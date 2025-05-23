@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from accounts.models import User
+import uuid
 
 GENDER_CHOICES = [
     ('male', 'Male'),
@@ -15,6 +16,7 @@ GENDER_CHOICES = [
 class AuditableModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -38,6 +40,7 @@ class Division(models.Model):
         ("maisha", "Maisha")
     ]
     name = models.CharField(max_length=100, choices=NAME_FIELD_CHOICES, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description=models.TextField()
     leads = models.ManyToManyField(
         User, 
@@ -65,6 +68,7 @@ class Program(models.Model):
         ("vocational", "Vocational")
     ]
     name = models.CharField(max_length=100, choices=PROGRAM_FIELD_CHOICES, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description=models.TextField()
     division = models.ForeignKey(Division, on_delete=models.CASCADE)
     monthly_budget = models.DecimalField(max_digits=10, decimal_places=2)
