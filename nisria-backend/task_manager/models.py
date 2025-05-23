@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings 
 from grants.models import Grant
+import uuid
 
 class Task(models.Model):
     STATUS_CHOICES = [
@@ -17,6 +18,7 @@ class Task(models.Model):
     ]
 
     title = models.CharField(max_length=255)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.TextField(blank=True, null=True)
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,

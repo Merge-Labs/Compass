@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import AbstractUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.core.exceptions import ValidationError  
@@ -22,6 +23,9 @@ class User(AbstractUser):
     """
     Custom user model for the application.
     """
+
+    # Override the id field to use UUID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     ROLE_CHOICES = [
         ('super_admin', 'Super Admin'),
@@ -59,6 +63,4 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.full_name} - {self.role}"  # Corrected field reference
     
-
 # TODO: Email Validation with OTP
-# TODO: Implement UUID
