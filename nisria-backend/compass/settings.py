@@ -98,7 +98,6 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 # }
 
 # PSQL Database
-
 DATABASES = {
     'default': {
         'ENGINE': config('DATABASE_ENGINE'),
@@ -200,7 +199,11 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If y
 
 CELERY_BEAT_SCHEDULE = {
     'expire_pending_grants_daily': {
-        'task': 'grants.tasks.run_expire_pending_grants_command', # Path to the task
+        'task': 'grants.tasks.run_expire_pending_grants_command', 
         'schedule': crontab(minute='35', hour='0'),  
+    },
+    'check_grant_deadlines_daily': {
+        'task': 'notifications.tasks.check_grant_deadlines_and_notify_task',
+        'schedule': crontab(minute='17', hour='15'),  
     },
 }

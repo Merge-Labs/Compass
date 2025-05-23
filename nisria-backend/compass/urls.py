@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import permissions
@@ -28,7 +29,7 @@ urlpatterns = [
     path('api/grants/', include('grants.urls')),
     path('api/tasks/', include('task_manager.urls')),
     path('api/notifications/', include('notifications.urls')),
-    path('api/analytics', include('analytics.urls')),
+    path('api/analytics/', include('analytics.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

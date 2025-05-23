@@ -89,7 +89,6 @@ def email_template_detail_view(request, pk):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def render_email_template_view(request, pk):
-    #TODO: migrate to Gmail API + OAuth: Authenticate the user, get access token, and send via Gmail API. and Use your backend to send via SMTP with a "reply-to" header.
     template_obj = get_object_or_404(EmailTemplates, pk=pk)
 
     if template_obj.template_type == 'employee_contract' and request.user.role not in ['super_admin', 'management_lead']:
