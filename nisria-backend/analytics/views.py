@@ -1,9 +1,10 @@
-from  django.http import JsonResponse
 from django.db.models import Count, Sum, Q, F, Avg, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncWeek 
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated 
+from rest_framework.response import Response # Import Response
+from rest_framework import status # Import status for HTTP status codes
 
 from accounts.models import User as AccountUser 
 from documents.models import Document, BankStatementAccessRequest
@@ -21,6 +22,131 @@ try:
 except ImportError:
     GRANTS_APP_AVAILABLE = False
     Grant = None 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) 
+def grant_growth_analytics_weekly(request):
+    """
+    Provides data on the number of grants uploaded per week.
+    Groups grants by their 'date_created' field.
+    """
+    if not GRANTS_APP_AVAILABLE or Grant is None:
+        return Response({'error': 'Grants app or Grant model not found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Use 'date_created' field from the Grant model for the timestamp
+    timestamp_field = 'date_created'  
+
+    weekly_grant_counts = Grant.objects.annotate(
+        week_start=TruncWeek(timestamp_field)
+    ).values(
+        'week_start'  # Group by the starting date of the week
+    ).annotate(
+        grant_count=Count('id')  # Count grants in each group
+    ).order_by('week_start') # Order by week chronologically
+
+    data = [
+        {'week_start': item['week_start'].strftime('%Y-%m-%d') if item['week_start'] else None, 'grant_count': item['grant_count']}
+        for item in weekly_grant_counts
+    ]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def grant_types_analytics(request):
+    """
+    Provides a count of grants for each organization_type.
+    """
+    if not GRANTS_APP_AVAILABLE or Grant is None:
+        return Response({'error': 'Grants app or Grant model not found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Assuming your Grant model has an 'organization_type' field
+    # and 'ORG_TYPE_CHOICES' defined on the model.
+    # We'll use the actual values stored in the database for grouping.
+    grant_type_counts = Grant.objects.values(
+        'organization_type'  # Group by the organization_type field
+    ).annotate(
+        count=Count('id')  # Count grants in each group
+    ).order_by('organization_type') # Optional: order by type for consistency
+
+    # Format the data for the response
+    # If you want to display the "human-readable" choice display name,
+    # you would need to iterate and map, but for raw counts, this is fine.
+    data = [
+        {'organization_type': item['organization_type'], 'count': item['count']}
+        for item in grant_type_counts
+    ]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def document_types_analytics(request):
+    """
+    Provides a count of documents for each document_type.
+    """
+    # Document model is imported directly at the top of the file
+    # from documents.models import Document
+
+    document_type_counts = Document.objects.values(
+        'document_type'  # Group by the document_type field
+    ).annotate(
+        count=Count('id')  # Count documents in each group
+    ).order_by('document_type') # Optional: order by type for consistency
+
+    # Format the data for the response.
+    # This will return the internal value of document_type (e.g., 'bank_statement').
+    # If you need the display name (e.g., "Bank Statement"), you'd iterate
+    # through Document.DOCUMENT_TYPE_CHOICES to map them.
+    data = [
+        {'document_type': item['document_type'], 'count': item['count']}
+        for item in document_type_counts
+    ]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_roles_analytics(request):
+    """
+    Provides a count of users for each role.
+    """
+    # AccountUser is an alias for your accounts.models.User
+    # from accounts.models import User as AccountUser (imported at the top)
+
+    user_role_counts = AccountUser.objects.values(
+        'role'  # Group by the role field
+    ).annotate(
+        count=Count('id')  # Count users in each role group
+    ).order_by('role') # Optional: order by role for consistency
+
+    # Format the data for the response.
+    # This will return the internal value of role (e.g., 'super_admin').
+    data = [
+        {'role': item['role'], 'count': item['count']}
+        for item in user_role_counts
+    ]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_location_analytics(request):
+    """
+    Provides a count of users for each location.
+    Filters out null or empty string locations.
+    """
+    # AccountUser is an alias for your accounts.models.User
+    # from accounts.models import User as AccountUser (imported at the top)
+
+    user_location_counts = AccountUser.objects.exclude(
+        location__isnull=True
+    ).exclude(
+        location__exact=''
+    ).values(
+        'location'  # Group by the location field
+    ).annotate(
+        count=Count('id')  # Count users in each location group
+    ).order_by('location') # Optional: order by location for consistency
+
+    data = [{'location': item['location'], 'count': item['count']} for item in user_location_counts]
+    return Response(data)
 
 # Helper function to get counts by a specific field
 def get_counts_by_field(queryset, field_name):
@@ -182,4 +308,4 @@ def dashboard_analytics(request):
         'grant_follow_up_tasks': grant_follow_up_tasks,
     }
 
-    return JsonResponse(analytics_data)
+    return Response(analytics_data)

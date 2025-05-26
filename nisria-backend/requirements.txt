@@ -8,9 +8,11 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
 cloudinary==1.44.0
+colorama==0.4.6
 cron-descriptor==1.4.5
 Django==5.2.1
 django-celery-beat==2.8.1
+django-cors-headers==4.7.0
 django-filter==25.1
 django-timezone-field==7.1
 djangorestframework==3.16.0

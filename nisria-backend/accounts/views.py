@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import User
 from .serializers import UserSerializer, RegisterUserSerializer, ChangePasswordSerializer
 from .permissions import IsSuperAdmin
-
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 
 def indexTest(request):
     return JsonResponse({"message": "API endpoints working in accounts app"})
@@ -59,3 +60,6 @@ def list_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
