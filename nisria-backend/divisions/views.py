@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import (
     Division, Program,
@@ -84,6 +86,14 @@ PROGRAM_DETAIL_METADATA = {
     }
 }
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="A simple test endpoint for the divisions app.",
+    responses={
+        200: openapi.Response(description="Success message", examples={"application/json": {"message": "API endpoints working in Divisions app"}})
+    }
+)
+@api_view(['GET'])
 def indexTest(request):
     return JsonResponse({"message": "API endpoints working in Divisions app"})
 
@@ -127,6 +137,25 @@ def _get_program_detail_meta_and_program(division_name_url, program_type_url):
         raise Http404(f"Program '{program_name_in_db}' not found in division '{db_division_name}'.")
 
 # --- Division Views ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of divisions.",
+    responses={
+        200: DivisionSerializer(many=True),
+        401: 'Unauthorized'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new division.",
+    request_body=DivisionSerializer,
+    responses={
+        201: DivisionSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        # Add 403 if specific permissions are checked internally beyond IsAuthenticated
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated]) 
 def division_list_create(request):
@@ -144,6 +173,46 @@ def division_list_create(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a specific division by its ID.",
+    responses={
+        200: DivisionSerializer,
+        401: 'Unauthorized',
+        404: 'Division Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='put',
+    operation_description="Update a specific division by its ID.",
+    request_body=DivisionSerializer,
+    responses={
+        200: DivisionSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='patch',
+    operation_description="Partially update a specific division by its ID.",
+    request_body=DivisionSerializer,
+    responses={
+        200: DivisionSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Delete a specific division by its ID.",
+    responses={
+        204: 'No Content - Division deleted successfully',
+        401: 'Unauthorized',
+        404: 'Division Not Found'
+    }
+)
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated]) 
 def division_detail_view(request, pk):
@@ -172,6 +241,25 @@ def division_detail_view(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # --- Program Definition Views ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of programs.",
+    responses={
+        200: ProgramSerializer(many=True),
+        401: 'Unauthorized'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new program definition.",
+    request_body=ProgramSerializer,
+    responses={
+        201: ProgramSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        # Add 403 if specific permissions are checked internally
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def program_list_create(request):
@@ -189,6 +277,46 @@ def program_list_create(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a specific program definition by its ID.",
+    responses={
+        200: ProgramSerializer,
+        401: 'Unauthorized',
+        404: 'Program Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='put',
+    operation_description="Update a specific program definition by its ID.",
+    request_body=ProgramSerializer,
+    responses={
+        200: ProgramSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Program Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='patch',
+    operation_description="Partially update a specific program definition by its ID.",
+    request_body=ProgramSerializer,
+    responses={
+        200: ProgramSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Program Not Found'
+    }
+)
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Delete a specific program definition by its ID.",
+    responses={
+        204: 'No Content - Program deleted successfully',
+        401: 'Unauthorized',
+        404: 'Program Not Found'
+    }
+)
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def program_detail_view(request, pk):
@@ -283,63 +411,192 @@ def _program_detail_view(request, division_name_url, program_type_url, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # Education Program Views
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of Education Program Details for the specified division (e.g., 'nisria').",
+    responses={
+        200: EducationProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Education Program definition not found.'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new Education Program Detail for the specified division.",
+    request_body=EducationProgramDetailSerializer,
+    responses={
+        201: EducationProgramDetailSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division or Education Program definition not found.'
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated]) 
 def education_program_list_create(request, division_name):
     return _program_list_create_view(request, division_name, "education")
-    
+
+@swagger_auto_schema(method='get', operation_description="Retrieve a specific Education Program Detail.", responses={200: EducationProgramDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='put', operation_description="Update an Education Program Detail.", request_body=EducationProgramDetailSerializer, responses={200: EducationProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='patch', operation_description="Partially update an Education Program Detail.", request_body=EducationProgramDetailSerializer, responses={200: EducationProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='delete', operation_description="Delete an Education Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated]) 
 def education_program_detail(request, division_name, pk):
     return _program_detail_view(request, division_name, "education", pk)
-    
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Search Education Program Details for the specified division. Use 'q' query parameter for search term.",
+    manual_parameters=[openapi.Parameter('q', openapi.IN_QUERY, description="Search term for student name, education level, etc.", type=openapi.TYPE_STRING)],
+    responses={
+        200: EducationProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Education Program definition not found.'
+    }
+)
 @api_view(['GET']) 
 @permission_classes([IsAuthenticated]) 
 def education_program_search(request, division_name):
     return _base_program_detail_list_logic(request, division_name, "education", search_logic=True)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Filter Education Program Details for the specified division. Refer to EducationProgramDetailFilter for available query parameters.",
+    responses={
+        200: EducationProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Education Program definition not found.'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def education_program_filter(request, division_name):
     return _base_program_detail_list_logic(request, division_name, "education", filter_logic=True)
 
 # --- MicroFund Program Views ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of MicroFund Program Details for the specified division (e.g., 'nisria').",
+    responses={
+        200: MicroFundProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or MicroFund Program definition not found.'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new MicroFund Program Detail for the specified division.",
+    request_body=MicroFundProgramDetailSerializer,
+    responses={
+        201: MicroFundProgramDetailSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division or MicroFund Program definition not found.'
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated]) 
 def microfund_program_list_create(request, division_name): 
     return _program_list_create_view(request, division_name, "microfund")    
 
+@swagger_auto_schema(method='get', operation_description="Retrieve a specific MicroFund Program Detail.", responses={200: MicroFundProgramDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='put', operation_description="Update a MicroFund Program Detail.", request_body=MicroFundProgramDetailSerializer, responses={200: MicroFundProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='patch', operation_description="Partially update a MicroFund Program Detail.", request_body=MicroFundProgramDetailSerializer, responses={200: MicroFundProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='delete', operation_description="Delete a MicroFund Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated]) 
 def microfund_program_detail(request, division_name, pk): 
     return _program_detail_view(request, division_name, "microfund", pk)
-    
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Filter MicroFund Program Details for the specified division. Refer to MicroFundProgramDetailFilter for available query parameters.",
+    responses={
+        200: MicroFundProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or MicroFund Program definition not found.'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def microfund_program_filter(request, division_name): 
     return _base_program_detail_list_logic(request, division_name, "microfund", filter_logic=True)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Search MicroFund Program Details for the specified division. Use 'q' query parameter for search term.",
+    manual_parameters=[openapi.Parameter('q', openapi.IN_QUERY, description="Search term for person name, chama group, etc.", type=openapi.TYPE_STRING)],
+    responses={
+        200: MicroFundProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or MicroFund Program definition not found.'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def microfund_program_search(request, division_name): 
     return _base_program_detail_list_logic(request, division_name, "microfund", search_logic=True)
 
 # --- Rescue Program Views ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of Rescue Program Details for the specified division (e.g., 'nisria').",
+    responses={
+        200: RescueProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Rescue Program definition not found.'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new Rescue Program Detail for the specified division.",
+    request_body=RescueProgramDetailSerializer,
+    responses={
+        201: RescueProgramDetailSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division or Rescue Program definition not found.'
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated]) 
 def rescue_program_list_create(request, division_name): 
     return _program_list_create_view(request, division_name, "rescue")
 
+@swagger_auto_schema(method='get', operation_description="Retrieve a specific Rescue Program Detail.", responses={200: RescueProgramDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='put', operation_description="Update a Rescue Program Detail.", request_body=RescueProgramDetailSerializer, responses={200: RescueProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='patch', operation_description="Partially update a Rescue Program Detail.", request_body=RescueProgramDetailSerializer, responses={200: RescueProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='delete', operation_description="Delete a Rescue Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated]) 
 def rescue_program_detail(request, division_name, pk): 
     return _program_detail_view(request, division_name, "rescue", pk)
-    
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Filter Rescue Program Details for the specified division. Refer to RescueProgramDetailFilter for available query parameters.",
+    responses={
+        200: RescueProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Rescue Program definition not found.'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def rescue_program_filter(request, division_name): 
     return _base_program_detail_list_logic(request, division_name, "rescue", filter_logic=True)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Search Rescue Program Details for the specified division. Use 'q' query parameter for search term.",
+    manual_parameters=[openapi.Parameter('q', openapi.IN_QUERY, description="Search term for child name, place found, etc.", type=openapi.TYPE_STRING)],
+    responses={
+        200: RescueProgramDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Rescue Program definition not found.'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def rescue_program_search(request, division_name): 
@@ -386,6 +643,26 @@ def _base_trainee_list_logic(request, division_name_url, program_type_url, filte
     return paginator.get_paginated_response(serializer_instance.data)
 
 # --- Vocational Program Trainer Views ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of Vocational Program Trainers for the specified division (e.g., 'maisha').",
+    responses={
+        200: VocationalTrainingProgramTrainerDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Vocational Program definition not found.'
+    }
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new Vocational Program Trainer for the specified division.",
+    request_body=VocationalTrainingProgramTrainerDetailSerializer,
+    responses={
+        201: VocationalTrainingProgramTrainerDetailSerializer,
+        400: 'Bad Request - Invalid data',
+        401: 'Unauthorized',
+        404: 'Division or Vocational Program definition not found.'
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def vocational_trainer_list_create(request, division_name):
@@ -393,6 +670,10 @@ def vocational_trainer_list_create(request, division_name):
     # This view uses the generic _program_list_create_view because TrainerDetail links directly to Program
     return _program_list_create_view(request, division_name, "vocational-trainer")
 
+@swagger_auto_schema(method='get', operation_description="Retrieve a specific Vocational Program Trainer.", responses={200: VocationalTrainingProgramTrainerDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='put', operation_description="Update a Vocational Program Trainer.", request_body=VocationalTrainingProgramTrainerDetailSerializer, responses={200: VocationalTrainingProgramTrainerDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='patch', operation_description="Partially update a Vocational Program Trainer.", request_body=VocationalTrainingProgramTrainerDetailSerializer, responses={200: VocationalTrainingProgramTrainerDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='delete', operation_description="Delete a Vocational Program Trainer.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def vocational_trainer_detail(request, division_name, pk):
@@ -401,6 +682,17 @@ def vocational_trainer_detail(request, division_name, pk):
     return _program_detail_view(request, division_name, "vocational-trainer", pk)
 
 # --- Vocational Program Trainee Views (Nested under Trainer) ---
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of Vocational Program Trainees for a specific trainer within a division.",
+    responses={200: VocationalTrainingProgramTraineeDetailSerializer(many=True), 401: 'Unauthorized', 404: 'Division, Program, or Trainer not found.'}
+)
+@swagger_auto_schema(
+    method='post',
+    operation_description="Create a new Vocational Program Trainee for a specific trainer.",
+    request_body=VocationalTrainingProgramTraineeDetailSerializer,
+    responses={201: VocationalTrainingProgramTraineeDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Division, Program, or Trainer not found.'}
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def vocational_trainee_list_create(request, division_name, trainer_pk):
@@ -436,6 +728,10 @@ def vocational_trainee_list_create(request, division_name, trainer_pk):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(method='get', operation_description="Retrieve a specific Vocational Program Trainee.", responses={200: VocationalTrainingProgramTraineeDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='put', operation_description="Update a Vocational Program Trainee.", request_body=VocationalTrainingProgramTraineeDetailSerializer, responses={200: VocationalTrainingProgramTraineeDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='patch', operation_description="Partially update a Vocational Program Trainee.", request_body=VocationalTrainingProgramTraineeDetailSerializer, responses={200: VocationalTrainingProgramTraineeDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
+@swagger_auto_schema(method='delete', operation_description="Delete a Vocational Program Trainee.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def vocational_trainee_detail(request, division_name, trainer_pk, pk):
@@ -465,11 +761,30 @@ def vocational_trainee_detail(request, division_name, trainer_pk, pk):
 # These are your existing vocational views, they will now effectively manage trainees
 # across all trainers of the "vocational" program in the "maisha" division.
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Filter Vocational Program Trainees across all trainers for the specified division (e.g., 'maisha'). Refer to VocationalTrainingProgramTraineeDetailFilter for parameters.",
+    responses={
+        200: VocationalTrainingProgramTraineeDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Vocational Program definition not found.'
+    }
+)
 @api_view(['GET']) # Filters VocationalTrainingProgramTraineeDetail
 @permission_classes([IsAuthenticated])
 def vocational_program_filter(request, division_name):
     return _base_trainee_list_logic(request, division_name, "vocational", filter_logic=True)
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Search Vocational Program Trainees across all trainers for the specified division (e.g., 'maisha'). Use 'q' query parameter.",
+    manual_parameters=[openapi.Parameter('q', openapi.IN_QUERY, description="Search term for trainee name, association, etc.", type=openapi.TYPE_STRING)],
+    responses={
+        200: VocationalTrainingProgramTraineeDetailSerializer(many=True),
+        401: 'Unauthorized',
+        404: 'Division or Vocational Program definition not found.'
+    }
+)
 @api_view(['GET']) 
 @permission_classes([IsAuthenticated])
 def vocational_program_search(request, division_name):

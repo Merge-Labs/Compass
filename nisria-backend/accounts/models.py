@@ -2,12 +2,16 @@ import uuid
 from django.contrib.auth.models import AbstractUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.core.exceptions import ValidationError  
-
+from cloudinary.models import CloudinaryField # Import CloudinaryField
+ 
 class UserManager(BaseUserManager):
     def create_user(self, email, full_name, phone_number, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email)        
+        # Ensure 'is_staff' and 'is_superuser' are not passed directly if role is used to set them
+        extra_fields.pop('is_staff', None)
+        extra_fields.pop('is_superuser', None)
         User = self.model(email=email, full_name=full_name, phone_number=phone_number, **extra_fields)
         User.set_password(password)
         User.save(using=self._db)
@@ -43,7 +47,10 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture = CloudinaryField(
+        'profile_picture',  # Optional: name of the folder in Cloudinary
+        folder='profile_pics', # Explicitly set the folder in Cloudinary
+        null=True, blank=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -58,6 +65,9 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):  
         if not self.email.endswith('@nisria.co'):
             raise ValidationError('Email must end with @nisria.co')
+        
+        if self.role == 'super_admin':
+            self.is_staff = True
         super().save(*args, **kwargs)
 
     def __str__(self):

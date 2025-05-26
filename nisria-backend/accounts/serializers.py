@@ -15,7 +15,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'full_name', 'phone_number', 'password', 'role', 'location']
+        # Ensure 'profile_picture' is included if you want to set it during registration
+        fields = ['email', 'full_name', 'phone_number', 'password', 'role', 'location', 'profile_picture'] 
+        extra_kwargs = {
+            'profile_picture': {'required': False} # Make it optional during registration
+        }
+
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -23,12 +28,11 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             full_name=validated_data['full_name'],
             phone_number=validated_data['phone_number'],
             password=validated_data['password'],
-            # Pass other fields like role and location via **extra_fields
-            role=validated_data.get('role'), # Use .get() for optional fields if not always present
-            location=validated_data.get('location') # Use .get() for optional fields
+            role=validated_data.get('role'), 
+            location=validated_data.get('location'),
+            profile_picture=validated_data.get('profile_picture') # Add this
         )
         return user
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)

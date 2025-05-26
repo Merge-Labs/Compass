@@ -8,11 +8,16 @@ from .serializers import UserSerializer, RegisterUserSerializer, ChangePasswordS
 from .permissions import IsSuperAdmin
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
+from drf_yasg.utils import swagger_auto_schema
 
 def indexTest(request):
     return JsonResponse({"message": "API endpoints working in accounts app"})
 
-
+@swagger_auto_schema(   
+    method='POST',  
+    request_body=RegisterUserSerializer,    
+    responses={201: 'User created', 400: 'Bad Request'}
+)
 @api_view(['POST'])
 @permission_classes([IsSuperAdmin])  # Only Super Admin can create users
 def register_user(request):
@@ -22,13 +27,26 @@ def register_user(request):
         return Response({"message": "User registered successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@swagger_auto_schema(
+    method='GET', 
+    responses={
+        200: UserSerializer,
+        400: 'Bad Request',
+        401: 'Unauthorized',
+        404: 'Profile Not Found'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profile(request):
     serializer = UserSerializer(request.user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(   
+    method='PUT',  
+    request_body=UserSerializer,    
+    responses={201: 'User created', 400: 'Bad Request'}
+)
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
@@ -38,7 +56,11 @@ def update_profile(request):
         return Response({"message": "Profile updated successfully!", 'data': serializer.data})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@swagger_auto_schema(   
+    method='PUT',  
+    request_body=ChangePasswordSerializer,    
+    responses={201: 'User created', 400: 'Bad Request'}
+)
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
@@ -53,7 +75,15 @@ def change_password(request):
         return Response({"message": "Password updated successfully!"})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@swagger_auto_schema(
+    method='GET', 
+    responses={
+        200: UserSerializer,
+        400: 'Bad Request',
+        401: 'Unauthorized',
+        404: 'Profile Not Found'
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsSuperAdmin])
 def list_users(request):

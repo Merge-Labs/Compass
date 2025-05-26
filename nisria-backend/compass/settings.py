@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_celery_beat',
     'corsheaders',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -168,6 +169,13 @@ cloudinary.config(
     api_secret = config('CLOUDINARY_API_SECRET')
 )
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'your_cloud_name',
+    'API_KEY': 'your_api_key',
+    'API_SECRET': 'your_api_secret',
+}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 # rest framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -216,4 +224,21 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.check_grant_deadlines_and_notify_task',
         'schedule': crontab(minute='17', hour='15'),  
     },
+}
+
+# Swagger Settings for drf-yasg
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': "IMPORTANT: Enter the token with the 'Bearer ' prefix (e.g., 'Bearer eyJhbGciOiJIUzI1Ni...').",
+        }
+    },
+    # If you want to enforce JWT for all protected endpoints in Swagger UI:
+    'SECURITY_REQUIREMENTS': [{
+        'Bearer': []
+    }],
+    'USE_SESSION_AUTH': False,  # Disable session authentication in Swagger UI if you only use JWT
 }
