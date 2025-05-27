@@ -1,6 +1,8 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Shield, Users, BarChart3, Settings, LogOut } from 'lucide-react';
+import ThemeToggle from '../../components/ui/ThemeToggle'; // Assuming ThemeToggle is in components folder
+import { useTheme } from '../../context/ThemeProvider';
 
 export const SuperAdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -9,71 +11,94 @@ export const SuperAdminDashboard = () => {
     await logout();
   };
 
+  const { theme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === 'light' 
+        ? 'bg-gradient-to-br from-slate-100 via-gray-100 to-stone-100' 
+        : 'bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900'
+    }`}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Super Admin Dashboard</h1>
-            <p className="text-purple-200">Welcome back, {user?.full_name}</p>
+            <h1 className={`text-3xl font-bold mb-2 ${theme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+              Super Admin Dashboard
+            </h1>
+            <p className={`${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
+              Welcome back, {user?.full_name || 'Admin'}
+            </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
+          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                theme === 'light' 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              <LogOut size={20} />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          {/* Card 1: Total Users */}
+          <div className={`rounded-xl p-6 shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white border border-slate-200' : 'bg-slate-800/70 backdrop-blur-md border border-slate-700'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-200 text-sm">Total Users</p>
-                <p className="text-3xl font-bold text-white">1,234</p>
+                <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Total Users</p>
+                <p className={`text-3xl font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>1,234</p>
               </div>
-              <Users className="text-purple-400" size={40} />
+              <Users className={`${theme === 'light' ? 'text-blue-500' : 'text-blue-400'}`} size={36} />
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          {/* Card 2: Active Grants */}
+          <div className={`rounded-xl p-6 shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white border border-slate-200' : 'bg-slate-800/70 backdrop-blur-md border border-slate-700'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-200 text-sm">Active Grants</p>
-                <p className="text-3xl font-bold text-white">456</p>
+                <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Active Grants</p>
+                <p className={`text-3xl font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>456</p>
               </div>
-              <BarChart3 className="text-blue-400" size={40} />
+              <BarChart3 className={`${theme === 'light' ? 'text-indigo-500' : 'text-indigo-400'}`} size={36} />
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          {/* Card 3: System Health */}
+          <div className={`rounded-xl p-6 shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white border border-slate-200' : 'bg-slate-800/70 backdrop-blur-md border border-slate-700'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-200 text-sm">System Health</p>
-                <p className="text-3xl font-bold text-green-400">98%</p>
+                <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>System Health</p>
+                <p className={`text-3xl font-bold ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}>98%</p>
               </div>
-              <Shield className="text-green-400" size={40} />
+              <Shield className={`${theme === 'light' ? 'text-green-500' : 'text-green-400'}`} size={36} />
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          {/* Card 4: Configurations */}
+          <div className={`rounded-xl p-6 shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white border border-slate-200' : 'bg-slate-800/70 backdrop-blur-md border border-slate-700'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-200 text-sm">Configurations</p>
-                <p className="text-3xl font-bold text-white">12</p>
+                <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Configurations</p>
+                <p className={`text-3xl font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>12</p>
               </div>
-              <Settings className="text-orange-400" size={40} />
+              <Settings className={`${theme === 'light' ? 'text-amber-500' : 'text-orange-400'}`} size={36} />
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-          <h2 className="text-xl font-semibold text-white mb-4">System Overview</h2>
-          <p className="text-purple-200">
+        <div className={`rounded-xl p-6 shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white border border-slate-200' : 'bg-slate-800/70 backdrop-blur-md border border-slate-700'}`}>
+          <h2 className={`text-xl font-semibold mb-4 ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>
+            System Overview
+          </h2>
+          <p className={`${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
             As a Super Admin, you have complete access to all system functions and can manage all aspects of the platform.
           </p>
         </div>
@@ -81,4 +106,3 @@ export const SuperAdminDashboard = () => {
     </div>
   );
 };
-

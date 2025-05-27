@@ -1,26 +1,45 @@
+// src/pages/Landing.jsx
 import React from 'react';
-import { useAuth } from '../context/AuthProvider';
 import { Link } from 'react-router-dom';
+import ThemeToggle from '../components/ui/ThemeToggle'; // Import the ThemeToggle component
+import { useTheme } from '../context/ThemeProvider'; // Import useTheme to access the current theme
 
 const Landing = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { theme } = useTheme(); // Get the current theme
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-900 via-red-900 to-pink-900">
-      <h1 className="text-4xl font-bold text-white mb-4">Welcome to Nisria Grants Portal</h1>
-      <p className="text-orange-200 mb-8">
-        {isAuthenticated
-          ? `You are logged in as ${user?.full_name || user?.email}.`
-          : 'Please log in to access your dashboard.'}
-      </p>
-      {!isAuthenticated && (
+    <div className={`min-h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
+      theme === 'light' ? 'bg-s1 text-p4' : 'bg-slate-900 text-slate-100'
+    }`}>
+      <header className="absolute top-0 right-0 p-4 md:p-6">
+        <ThemeToggle />
+      </header>
+
+      <main className="text-center p-6">
+        <img 
+          src="/logo/compass-logo.png" 
+          alt="Compass Logo" 
+          className={`w-32 h-32 md:w-40 md:h-40 mx-auto mb-6 transition-opacity duration-500 ${
+            theme === 'dark' ? 'opacity-90' : 'opacity-100'
+          }`} 
+        />
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          Welcome to <span className="text-p1 dark:text-p1-light">Compass</span>
+        </h1>
+        <p className={`text-lg md:text-xl mb-8 ${theme === 'light' ? 'text-p5/80' : 'text-slate-400'}`}>
+          Navigate your world with precision and ease.
+        </p>
         <Link
           to="/login"
-          className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          className="px-8 py-3 bg-p2 hover:bg-p2/90 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 dark:bg-p2-dark dark:hover:bg-p2-dark/90"
         >
-          Login
+          Get Started
         </Link>
-      )}
+      </main>
+
+      <footer className={`absolute bottom-0 p-4 text-sm ${theme === 'light' ? 'text-p5/70' : 'text-slate-500'}`}>
+        © {new Date().getFullYear()} Nisria. All rights reserved.
+      </footer>
     </div>
   );
 };

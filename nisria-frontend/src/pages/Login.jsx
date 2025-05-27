@@ -4,6 +4,8 @@ import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
 import { getDashboardRoute } from '../constants/roles';
+import ThemeToggle from '../components/ui/ThemeToggle'; // Optional: if you want to place it here
+
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -111,35 +113,35 @@ const Login = () => {
   };
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center">
+    <div ref={containerRef} className="min-h-screen bg-s1 dark:bg-slate-900 relative overflow-hidden flex items-center justify-center transition-colors duration-300">
       {/* Animated Background Orbs */}
       <div 
         ref={orb1Ref}
-        className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-br from-yellow-400/30 to-orange-500/20 rounded-full"
+        className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-br from-p1/30 to-p2/20 dark:from-p1/20 dark:to-p2/15 rounded-full"
         style={{ filter: 'blur(100px)' }}
       />
       <div 
         ref={orb2Ref}
-        className="absolute top-10 right-32 w-80 h-80 bg-gradient-to-br from-amber-300/25 to-yellow-500/15 rounded-full"
+        className="absolute top-10 right-32 w-80 h-80 bg-gradient-to-br from-p2/25 to-p5/15 dark:from-p2/20 dark:to-p5/10 rounded-full"
         style={{ filter: 'blur(120px)' }}
       />
       <div 
         ref={orb3Ref}
-        className="absolute bottom-32 left-1/4 w-96 h-96 bg-gradient-to-br from-orange-400/20 to-amber-600/10 rounded-full"
+        className="absolute bottom-32 left-1/4 w-96 h-96 bg-gradient-to-br from-p1/20 to-s3/10 dark:from-p1/15 dark:to-s3/5 rounded-full"
         style={{ filter: 'blur(140px)' }}
       />
       <div 
         ref={orb4Ref}
-        className="absolute bottom-20 right-20 w-72 h-72 bg-gradient-to-br from-yellow-500/25 to-orange-400/15 rounded-full"
+        className="absolute bottom-20 right-20 w-72 h-72 bg-gradient-to-br from-p2/25 to-p1/15 dark:from-p2/20 dark:to-p1/10 rounded-full"
         style={{ filter: 'blur(110px)' }}
       />
 
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-2 h-2 bg-white/10 rounded-full animate-pulse"
+            className="absolute w-2 h-2 bg-p5/20 dark:bg-p5/30 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -156,41 +158,44 @@ const Login = () => {
         className="relative z-10 w-full max-w-md mx-4"
       >
         <div 
-          className="backdrop-blur-xl bg-white/10 rounded-3xl p-8 border border-white/20 shadow-2xl relative overflow-hidden"
+          className="rounded-3xl p-8 border relative overflow-hidden
+                     bg-p4/10 dark:bg-slate-800/30 
+                     border-p5/20 dark:border-slate-700/50
+                     backdrop-blur-xl" // Assuming backdrop-blur-xl (24px) is acceptable, or define 'blur(20px)' in tailwind.config.js
           style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)'
+            // background and border are now handled by Tailwind classes above for theming.
+            // backdropFilter: 'blur(20px)', // If 'blur(20px)' is critical and not covered by backdrop-blur-xl, make this dynamic or add to config.
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)' // This custom shadow will not theme unless made dynamic or configured in Tailwind.
+            // For dark mode, you might want: boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
           }}
         >
           {/* Subtle gradient overlay */}
           <div 
-            className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl"
+            className="absolute inset-0 bg-gradient-to-br from-p4/5 to-transparent dark:from-slate-700/10 rounded-3xl"
             style={{ pointerEvents: 'none' }}
           />
 
           {/* Logo and Title */}
           <div className="text-center mb-8 relative z-10">
-            <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-500/20 rounded-full" />
+            <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-p4/10 dark:bg-slate-700/20 backdrop-blur-sm border border-p5/20 dark:border-slate-600 flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-p1/20 to-p2/20 dark:from-p1/15 dark:to-p2/15 rounded-full" />
               <div className="relative size-20 rounded-full flex items-center justify-center z-10 mx-auto">
                 <img
                   src="logo/compass-logo.png" 
                   alt="Logo"
-                  className="pt-1 w-full h-full object-cover rounded-full flex items-center justify-center mx-auto"
+                  className="pt-1 w-full h-full object-contain rounded-full flex items-center justify-center mx-auto" // Changed object-cover to object-contain for typical logos
                   style={{ display: 'block', margin: '0 auto' }}
                 />
               </div>
             </div>
-            <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Compass</h1>
-            <p className="text-white/70 text-sm">Welcome back!</p>
+            <h1 className="text-3xl font-light text-p4 dark:text-slate-100 mb-2 tracking-wide">Compass</h1>
+            <p className="text-p5/80 dark:text-slate-400 text-sm">Welcome back!</p>
           </div>
-
+          {/* Optional: <ThemeToggle /> */}
           {/* Login Form */}
           <div className="space-y-6 relative z-10">
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm flex items-center space-x-2 backdrop-blur-sm">
+              <div className="p-3 rounded-lg bg-p1/20 dark:bg-red-500/20 border border-p1/30 dark:border-red-500/30 text-p4 dark:text-red-100 text-sm flex items-center space-x-2 backdrop-blur-sm">
                 <AlertCircle size={16} />
                 <span>{error}</span>
               </div>
@@ -206,10 +211,16 @@ const Login = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Username or Email"
                 required
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all duration-300 hover:bg-white/15"
+                className="w-full px-4 py-3 rounded-xl transition-all duration-300
+                           bg-p4/10 dark:bg-slate-700/50 backdrop-blur-sm 
+                           border border-p5/20 dark:border-slate-600
+                           text-p4 dark:text-slate-100 placeholder-p5/50 dark:placeholder-slate-400
+                           focus:outline-none focus:ring-2 focus:ring-p2/50 dark:focus:ring-p2/70 focus:border-p2/50 dark:focus:border-p2/70
+                           hover:bg-p4/15 dark:hover:bg-slate-700/70 hover:border-p5/30 dark:hover:border-slate-500"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(10px)'
+                  // background and backdropFilter should ideally be handled by Tailwind classes for theming
+                  // If 'blur(10px)' is specific, add to tailwind.config.js or make this style object dynamic
+                  backdropFilter: 'blur(10px)' // This will not theme unless made dynamic
                 }}
               />
             </div>
@@ -224,16 +235,20 @@ const Login = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Password"
                 required
-                className="w-full px-4 py-3 pr-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all duration-300 hover:bg-white/15"
+                className="w-full px-4 py-3 pr-12 rounded-xl transition-all duration-300
+                           bg-p4/10 dark:bg-slate-700/50 backdrop-blur-sm 
+                           border border-p5/20 dark:border-slate-600
+                           text-p4 dark:text-slate-100 placeholder-p5/50 dark:placeholder-slate-400
+                           focus:outline-none focus:ring-2 focus:ring-p2/50 dark:focus:ring-p2/70 focus:border-p2/50 dark:focus:border-p2/70
+                           hover:bg-p4/15 dark:hover:bg-slate-700/70 hover:border-p5/30 dark:hover:border-slate-500"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(10px)'
+                  backdropFilter: 'blur(10px)' // This will not theme unless made dynamic
                 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors p-1 rounded-md hover:bg-white/10"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-p5/60 dark:text-slate-400 hover:text-p4/80 dark:hover:text-slate-200 transition-colors p-1 rounded-md hover:bg-p4/10 dark:hover:bg-slate-700/30"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -249,15 +264,17 @@ const Login = () => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`w-4 h-4 rounded border-2 border-white/30 transition-all duration-200 ${rememberMe ? 'bg-amber-400 border-amber-400' : 'bg-white/5'} group-hover:border-white/50`}>
+                  <div className={`w-4 h-4 rounded border-2 transition-all duration-200 
+                                 ${rememberMe ? 'bg-p2 border-p2 dark:bg-p2-dark dark:border-p2-dark' : 'bg-p4/5 dark:bg-slate-700 border-p5/30 dark:border-slate-600'} 
+                                 group-hover:border-p5/50 dark:group-hover:border-slate-500`}>
                     {rememberMe && (
-                      <svg className="w-3 h-3 text-black absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3 h-3 text-white dark:text-slate-900 absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
                 </div>
-                <span className="text-white/70 text-sm group-hover:text-white/80 transition-colors">Remember me</span>
+                <span className="text-p5/70 dark:text-slate-400 text-sm group-hover:text-p4/80 dark:group-hover:text-slate-200 transition-colors">Remember me</span>
               </label>
             </div>
 
@@ -265,10 +282,14 @@ const Login = () => {
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-amber-400 to-orange-500 text-black font-medium rounded-xl hover:from-amber-500 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-amber-500/25"
+              className="w-full py-3 px-4 text-white font-medium rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg
+                         bg-gradient-to-r from-p1 to-p2 dark:from-p1-dark dark:to-p2-dark 
+                         hover:from-p1/90 hover:to-p2/90 dark:hover:from-p1-dark/90 dark:hover:to-p2-dark/90
+                         focus:outline-none focus:ring-2 focus:ring-p2/50 dark:focus:ring-p2-dark/50
+                         hover:shadow-p2/25 dark:hover:shadow-p2-dark/25"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <LogIn size={18} />
@@ -279,11 +300,11 @@ const Login = () => {
 
             {/* Sign Up Link */}
             <div className="text-center">
-              <span className="text-white/60 text-sm">
-                forgot Password?{' '}
+              <span className="text-p5/60 dark:text-slate-400 text-sm">
+                Forgot Password?{' '}
                 <button
                   type="button"
-                  className="text-amber-400 hover:text-amber-300 transition-colors font-medium hover:underline"
+                  className="text-p2 dark:text-p2-light hover:text-p2/80 dark:hover:text-p2-light/80 transition-colors font-medium hover:underline"
                 >
                   Reset Password
                 </button>
@@ -293,10 +314,10 @@ const Login = () => {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute -top-4 -left-4 w-8 h-8 border border-white/20 rounded-full bg-white/5 backdrop-blur-sm animate-pulse" style={{ animationDuration: '3s' }} />
-        <div className="absolute -bottom-4 -right-4 w-6 h-6 border border-white/20 rounded-full bg-white/5 backdrop-blur-sm animate-pulse" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
-        <div className="absolute top-1/2 -left-8 w-4 h-4 border border-white/20 rounded-full bg-white/5 backdrop-blur-sm animate-pulse" style={{ animationDuration: '4s', animationDelay: '1s' }} />
-        <div className="absolute top-1/4 -right-6 w-5 h-5 border border-white/20 rounded-full bg-white/5 backdrop-blur-sm animate-pulse" style={{ animationDuration: '2.5s', animationDelay: '1.5s' }} />
+        <div className="absolute -top-4 -left-4 w-8 h-8 border border-p5/20 dark:border-slate-700 rounded-full bg-p4/5 dark:bg-slate-800/30 backdrop-blur-sm animate-pulse" style={{ animationDuration: '3s' }} />
+        <div className="absolute -bottom-4 -right-4 w-6 h-6 border border-p5/20 dark:border-slate-700 rounded-full bg-p4/5 dark:bg-slate-800/30 backdrop-blur-sm animate-pulse" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+        <div className="absolute top-1/2 -left-8 w-4 h-4 border border-p5/20 dark:border-slate-700 rounded-full bg-p4/5 dark:bg-slate-800/30 backdrop-blur-sm animate-pulse" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+        <div className="absolute top-1/4 -right-6 w-5 h-5 border border-p5/20 dark:border-slate-700 rounded-full bg-p4/5 dark:bg-slate-800/30 backdrop-blur-sm animate-pulse" style={{ animationDuration: '2.5s', animationDelay: '1.5s' }} />
       </div>
     </div>
   );
