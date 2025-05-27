@@ -1,68 +1,233 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap');
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@theme {
+  /* Colors */
+  --color-p1: #eb1d1d;   /* Red primary 1 */
+  --color-p2: #0468bf;   /* Blue primary 2 */
+  --color-p3: #eb1d1dcc; /* Semi-transparent red (adjusted from green/yellow) */
+  --color-p4: #f2dcdc;   /* Light red/pinkish (adjusted from light blue) */
+  --color-p5: #9dbce5;   /* Light blue tone (adjusted from purple) */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-s1: #1a0b0b;   /* Very dark red/black */
+  --color-s2: #0c2a4f;   /* Dark blue */
+  --color-s3: #2b4c7a;   /* Medium blue */
+  --color-s4: #034a9e;   /* Strong blue */
+  --color-s5: #17355a;   /* Dark muted blue */
+
+  --color-black-default: #000000;
+  --color-black-100: #05091d;
+
+  /* Box Shadows */
+  --shadow-100: 0px 4px 4px rgba(235, 29, 29, 0.25),
+    0px 16px 24px rgba(235, 29, 29, 0.25), inset 0px 3px 6px #bf1d1d;
+  --shadow-200: 0px 4px 4px rgba(4, 104, 191, 0.25),
+    0px 16px 24px rgba(4, 104, 191, 0.25), inset 0px 4px 10px #0468bf;
+  --shadow-300: 0px 4px 4px rgba(235, 29, 29, 0.25),
+    0px 16px 24px rgba(235, 29, 29, 0.25), inset 0px 3px 6px #bf1d1d;
+  --shadow-400: inset 0px 2px 4px 0 rgba(255, 255, 255, 0.05);
+  --shadow-500: 0px 16px 24px rgba(0, 0, 0, 0.25),
+    0px -14px 48px rgba(4, 104, 191, 0.7);
+    
+  /* Fonts */
+  --font-lora: "Lora", serif;
+  --font-playfair: "Playfair", serif;
+  --font-cormorant: "Cormorant Garamond", sans-serif;
+
+  /* Spacing */
+  --spacing-1/5: 20%;
+  --spacing-2/5: 40%;
+  --spacing-3/5: 60%;
+  --spacing-4/5: 80%;
+  --spacing-3/20: 15%;
+  --spacing-7/20: 35%;
+  --spacing-9/20: 45%;
+  --spacing-11/20: 55%;
+  --spacing-13/20: 65%;
+  --spacing-15/20: 75%;
+  --spacing-17/20: 85%;
+  --spacing-19/20: 95%;
+  --spacing-22: 88px;
+  --spacing-100: 100px;
+  --spacing-512: 512px;
+  --spacing-330: 330px;
+  --spacing-388: 388px;
+  --spacing-400: 400px;
+  --spacing-440: 440px;
+  --spacing-640: 640px;
+  --spacing-960: 960px;
+  --spacing-1230: 1230px;
+
+  /* Z-index */
+  --zindex-1: 1;
+  --zindex-2: 2;
+  --zindex-4: 4;
+
+  /* Line Height */
+  --leading-12: 48px;
+
+  /* Border Radius */
+  --radius-14: 14px;
+  --radius-20: 20px;
+  --radius-40: 40px;
+  --radius-half: 50%;
+  --radius-7xl: 40px;
+
+  /* Flex */
+  --flex-50: 0 0 50%;
+  --flex-320: 1px 0 320px;
+  --flex-300: 0 0 300px;
+  --flex-540: 0 0 540px;
+  --flex-280: 0 0 280px;
+  --flex-256: 0 0 256px;
+  --flex-100: 0 0 100%;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+@layer base {
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+  body {
+    @apply font-lora text-[16px] tracking-[-0.03em] text-p5;
   }
-  a:hover {
-    color: #747bff;
+
+  a {
+    @apply no-underline;
   }
+
+  img {
+    @apply block max-w-full;
+  }
+
   button {
-    background-color: #f9f9f9;
+    @apply bg-none tracking-[-0.03em];
   }
+
+  input {
+    @apply tracking-[-0.03em];
+  }
+}
+
+@layer utilities {
+  /* START of Typography */
+  .h-num {
+    @apply font-playfair text-[72px] font-bold leading-[84px];
+  }
+
+  .h1 {
+    @apply text-[84px] font-black leading-[84px] tracking-[-0.03em];
+  }
+
+  .h2 {
+    @apply text-[64px] font-black leading-[64px];
+  }
+
+  .h3 {
+    @apply text-[48px] font-semibold leading-[56px] tracking-[-0.02em];
+  }
+
+  .h4 {
+    @apply text-[40px] font-semibold leading-[52px];
+  }
+
+  .h5 {
+    @apply text-[32px] font-semibold leading-[40px];
+  }
+
+  .h6 {
+    @apply text-[24px] font-medium leading-[36px];
+  }
+
+  .body-1 {
+    @apply text-[22px] leading-[36px];
+  }
+
+  .body-2 {
+    @apply text-[18px] font-semibold leading-[32px];
+  }
+
+  .body-3 {
+    @apply text-[16px] leading-[28px] tracking-[0.02em];
+  }
+
+  .base {
+    @apply text-[16px] font-medium leading-[24px] tracking-[0.03em];
+  }
+
+  .base-bold {
+    @apply text-[16px] font-bold leading-[24px];
+  }
+
+  .base-small {
+    @apply text-[14px] font-semibold leading-[18px] tracking-[0.03em];
+  }
+
+  .small-1 {
+    @apply text-[14px] font-semibold leading-[18px] tracking-[0.03em];
+  }
+
+  .small-2 {
+    @apply text-[12px] font-bold leading-[16px] tracking-[0.3em];
+  }
+
+  .small-compact {
+    @apply text-[12px] font-semibold leading-[18px] tracking-[0.03em];
+  }
+
+  /* END of Typography */
+  /* START of Gradients */
+  .g1 {
+    background-image: linear-gradient(rgba(235, 29, 29, 0.3), transparent); /* light red tint */
+  }
+
+  .g2 {
+    background-image: linear-gradient(#0468bf, #034a9e); /* vibrant to deep blue */
+  }
+
+  .g3 {
+    background-image: linear-gradient(#0468bf, #1a0b0b); /* blue to dark red-black */
+  }
+
+  .g4 {
+    background-image: linear-gradient(#17355a, #0c2a4f); /* deep blue tones */
+  }
+
+  .g5 {
+    background-image: linear-gradient(#2b4c7a, #17355a); /* softer blue gradient */
+  }
+
+  .g6 {
+    background-image: linear-gradient(#2b4c7a, #0c2a4f); /* mid to deep blue */
+  }
+
+  .g7 {
+    background-image: linear-gradient(#1a0b0b, #0e1434); /* dark red to dark blue */
+  }
+
+  .g8 {
+    background-image: linear-gradient(to right, transparent, #eb1d1d, transparent); /* glowing red shimmer */
+  }
+
+  .g9 {
+    background-image: linear-gradient(#05091d, transparent); /* soft black fade */
+  }
+
+
+  /* END of Gradients */
+  /* START of Common */
+  .container {
+    @apply mx-auto max-w-[1252px] px-16 max-xl:px-10 max-lg:px-6 max-sm:px-4;
+  }
+
+  .caption {
+    @apply mb-5 uppercase text-p3;
+  }
+
+  .scroll-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  /* END of Common */
 }
