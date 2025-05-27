@@ -36,7 +36,7 @@ class Document(models.Model):
         ('maisha', 'Maisha'),
     ]
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPE_CHOICES)
     document_format = models.CharField(max_length=20, choices=DOCUMENT_FORMAT_CHOICES)

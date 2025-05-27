@@ -6,11 +6,13 @@ class Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('task_assigned', 'Task Assigned'),
         ('grant_deadline_reminder', 'Grant Deadline Reminder'),
+        ('bank_statement_access_granted', 'Bank Statement Access Granted'),
         ('general', 'General Notification'),
         # Add other types as needed
     ]
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    assigner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='assigned_notifications', null=True, blank=True, help_text="User who triggered the notification, if applicable (e.g., task assigner).")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     message = models.TextField()
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES, default='general')

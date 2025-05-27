@@ -4,12 +4,27 @@ from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import Task
 from .serializers import TaskSerializer
 from .permissions import CanManageAllTasks, IsAssigneeOrManagerForTaskObject
 from accounts.models import User # For role comparison
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="List tasks. Managers see all, others see their assigned tasks. Supports filters: status, priority, assigned_to_id, due_date, search.",
+    manual_parameters=[
+        openapi.Parameter('status', openapi.IN_QUERY, description="Filter by status", type=openapi.TYPE_STRING),
+        openapi.Parameter('priority', openapi.IN_QUERY, description="Filter by priority", type=openapi.TYPE_STRING),
+        openapi.Parameter('assigned_to_id', openapi.IN_QUERY, description="Filter by assignee user ID", type=openapi.TYPE_STRING),
+        openapi.Parameter('due_date', openapi.IN_QUERY, description="Filter by due date (YYYY-MM-DD)", type=openapi.TYPE_STRING),
+        openapi.Parameter('search', openapi.IN_QUERY, description="Search in title/description", type=openapi.TYPE_STRING),
+        openapi.Parameter('created_by_me', openapi.IN_QUERY, description="If true, managers see only tasks they created", type=openapi.TYPE_BOOLEAN),
+    ],
+    responses={200: TaskSerializer(many=True)}
+)
 @api_view(['GET'])
 @permission_classes([drf_permissions.IsAuthenticated])
 def list_tasks(request):
@@ -62,6 +77,11 @@ def list_tasks(request):
     serializer = TaskSerializer(tasks_queryset, many=True)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    method='post',
+    request_body=TaskSerializer,
+    responses={201: TaskSerializer()}
+)
 @api_view(['POST'])
 @permission_classes([drf_permissions.IsAuthenticated, CanManageAllTasks])
 def create_task(request):
@@ -71,6 +91,10 @@ def create_task(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: TaskSerializer()}
+)
 @api_view(['GET'])
 @permission_classes([drf_permissions.IsAuthenticated])
 def retrieve_task(request, pk):
@@ -84,6 +108,11 @@ def retrieve_task(request, pk):
     serializer = TaskSerializer(task)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    methods=['put', 'patch'],
+    request_body=TaskSerializer,
+    responses={200: TaskSerializer()}
+)
 @api_view(['PUT', 'PATCH'])
 @permission_classes([drf_permissions.IsAuthenticated])
 def update_task(request, pk):
@@ -129,6 +158,10 @@ def update_task(request, pk):
 #     task.delete()
 #     return Response(status=status.HTTP_204_NO_CONTENT)
 
+@swagger_auto_schema(
+    method='post',
+    responses={200: TaskSerializer()}
+)
 @api_view(['POST'])
 @permission_classes([drf_permissions.IsAuthenticated])
 def mark_task_as_complete(request, pk):
@@ -144,6 +177,17 @@ def mark_task_as_complete(request, pk):
     serializer = TaskSerializer(task)
     return Response(serializer.data)
 
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'status': openapi.Schema(type=openapi.TYPE_STRING, description="New status value")
+        },
+        required=['status']
+    ),
+    responses={200: TaskSerializer()}
+)
 @api_view(['POST'])
 @permission_classes([drf_permissions.IsAuthenticated])
 def change_task_status(request, pk):

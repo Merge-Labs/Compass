@@ -2,6 +2,7 @@ from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
 import logging
+from django.conf import settings
 
 from django.contrib.auth import get_user_model
 from .models import Notification
@@ -59,18 +60,33 @@ def create_task_assignment_notification_task(task_id, user_id, assigner_id):
     try:
         task = Task.objects.get(id=task_id)
         recipient = User.objects.get(id=user_id)
-        assigner = User.objects.get(id=assigner_id) if assigner_id else None
+        assigner_obj = User.objects.get(id=assigner_id) if assigner_id else None
 
         message = f"You have been assigned a new task: '{task.title}'"
-        if assigner:
-            message += f" by {assigner.get_full_name() or assigner.email}."
-        else:
-            message += "."
+
+        # if assigner:
+        #     # Attempt to get a meaningful name for the assigner
+        #     assigner_identifier = assigner_obj.get_full_name() # Uses the overridden get_full_name from your User model
+
+        #     # If get_full_name() returns an empty string, "None", or "None None", it's not ideal.
+        #     # In such cases, fall back to the assigner's email.
+        #     if not assigner_identifier or assigner_identifier.lower() in ["none", "none none"]:
+        #         assigner_identifier = assigner_obj.email
+            
+        #     if assigner_identifier: # If a usable identifier (name or email) was found
+        #         message += f" by {assigner_identifier}."
+        #     else:
+        #         # If no usable identifier, just end the sentence.
+        #         message += "."
+        # else:
+        #     # No assigner was provided
+        #     message += "."
         
         task_link = f"/tasks/{task.id}/" # Adjust if you have a frontend, e.g., /app/tasks/{task.id}
 
         notification = Notification.objects.create(
             recipient=recipient,
+            assigner=assigner_obj, # Save the assigner object
             message=message,
             notification_type='task_assigned',
             link=task_link
@@ -123,3 +139,29 @@ def check_grant_deadlines_and_notify_task():
                 send_actual_notification.delay(notification.id)
                 logger.info(f"Created grant deadline reminder for '{grant.organization_name}' to '{user_recipient.email}'.")
     logger.info("Finished daily check for grant application deadlines.")
+
+@shared_task
+def create_bank_statement_access_granted_notification_task(user_id, document_name, pin_value):
+    """
+    Creates a notification when a user's request for bank statement access is granted.
+    """
+    try:
+        recipient = User.objects.get(id=user_id)
+        message = f"Your request to access the bank statement '{document_name}' has been granted. You can now use PIN: {pin_value} to view the document."
+        # Consider adding a direct link to where the user can enter the PIN if available.
+
+        link = "/finance/validate-bank-statement-pin/" # fix for frontend
+
+        notification = Notification.objects.create(
+            recipient=recipient,
+            message=message,
+            notification_type='bank_statement_access_granted'
+            # assigner is intentionally left None as this is a system notification for the user's own action
+        )
+        send_actual_notification.delay(notification.id)
+        print(f"Bank statement access granted notification prepared for user {user.id} regarding document '{document_name}'.")
+        logger.info(f"Created bank statement access GRANTED notification for document '{document_name}' to user '{recipient.email}'.")
+    except User.DoesNotExist:
+        logger.error(f"User with ID {user_id} not found for bank statement access granted notification.")
+    except Exception as e:
+        logger.error(f"Error creating bank statement access granted notification for user ID {user_id}, document '{document_name}': {e}")

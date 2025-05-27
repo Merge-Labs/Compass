@@ -10,8 +10,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from accounts.permissions import IsSuperAdmin
 from .models import Document, BankStatementAccessRequest
-from .serializers import DocumentSerializer,  BankStatementPreviewSerializer, AccessRequestSerializer
+from .serializers import DocumentSerializer, BankStatementPreviewSerializer, AccessRequestSerializer, ValidatedBankStatementAccessResponseSerializer
 from drf_yasg import openapi # Import openapi for manual parameters
+from notifications.tasks import create_bank_statement_access_granted_notification_task
 from drf_yasg.utils import swagger_auto_schema # Import swagger_auto_schema
 from .filters import DocumentFilter
 
@@ -206,6 +207,12 @@ def grant_bank_statement_access(request, pin):
     access_request = get_object_or_404(BankStatementAccessRequest, pin=pin)
     access_request.is_granted = True
     access_request.save()
+    # Send notification to the user who requested access
+    create_bank_statement_access_granted_notification_task.delay(
+        user_id=access_request.user.id,
+        document_name=access_request.document.name,
+        pin_value=str(access_request.pin)
+    )
     return Response({"message": "Access granted successfully."})
 
 # /api/access/validate/<uuid:pin>/ [POST]
@@ -213,15 +220,7 @@ def grant_bank_statement_access(request, pin):
     method='post',
     operation_description="Validate a PIN to access a bank statement. If valid, returns document details.",
     responses={
-        200: openapi.Response(
-            description="Access granted. Document details returned.",
-            schema=openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING),
-                    'document': DocumentSerializer().fields # This gives the schema for DocumentSerializer
-                })
-        ),
+        200: ValidatedBankStatementAccessResponseSerializer,
         401: 'Unauthorized',
         403: 'Forbidden - Access denied or PIN expired/invalid.',
         404: 'Access Request Not Found (Invalid PIN for this user)'
@@ -235,11 +234,11 @@ def validate_bank_statement_access(request, pin):
 
     if access_request.is_valid():
         document = access_request.document
-        serialized_doc = DocumentSerializer(document).data
-        return Response({
+        response_data = {
             "message": "Access granted.",
-            "document": serialized_doc
-        })
+            "document": DocumentSerializer(document).data
+        }
+        return Response(response_data)
     else:
         return Response({"error": "Access denied or expired."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -253,9 +252,9 @@ def validate_bank_statement_access(request, pin):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def bank_statement_preview_list(request):
-    bank_statements = Document.objects.filter(document_type='bank_statement').order_by('-date_uploaded')
-    serializer = BankStatementPreviewSerializer(bank_statements, many=True)
+def all_documents_preview_list(request):
+    documents = Document.objects.all().order_by('-date_uploaded')
+    serializer = BankStatementPreviewSerializer(documents, many=True)
     return Response(serializer.data)
 
 # TODO: add views and endpoints for searching and filtering bank statements
