@@ -12,12 +12,23 @@ from .models import EmailTemplates
 from .serializers import EmailTemplateSerializer
 from .filters import EmailTemplateFilter
 import urllib.parse 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 def indexTest(request):
     return JsonResponse({"message": "API endpoints working in Email Templates app"})
 
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: EmailTemplateSerializer(many=True)}
+)
+@swagger_auto_schema(
+    method='post',
+    request_body=EmailTemplateSerializer,
+    responses={201: EmailTemplateSerializer()}
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def email_template_list_create_view(request):
@@ -56,6 +67,15 @@ def email_template_list_create_view(request):
 
 
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: EmailTemplateSerializer()}
+)
+@swagger_auto_schema(
+    method='put',
+    request_body=EmailTemplateSerializer,
+    responses={200: EmailTemplateSerializer()}
+)
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def email_template_detail_view(request, pk):
@@ -86,6 +106,41 @@ def email_template_detail_view(request, pk):
 
 
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: openapi.Response(
+        description="Raw template and placeholders info",
+        examples={
+            "application/json": {
+                "template_name": "Welcome",
+                "raw_subject_template": "Subject with {{placeholder}}",
+                "raw_body_template": "Body with {{placeholder}}",
+                "placeholders_hint": "Pass context as POST JSON: { context: { key: value } }"
+            }
+        }
+    )}
+)
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'context': openapi.Schema(type=openapi.TYPE_OBJECT)
+        },
+        required=[]
+    ),
+    responses={200: openapi.Response(
+        description="Rendered subject and body",
+        examples={
+            "application/json": {
+                "template_name": "Welcome",
+                "rendered_subject": "Hello John",
+                "rendered_body_markdown": "Hi **John**",
+                "rendered_body_html": "<p>Hi <strong>John</strong></p>"
+            }
+        }
+    )}
+)
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def render_email_template_view(request, pk):
@@ -120,6 +175,28 @@ def render_email_template_view(request, pk):
         })
 
 
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'context': openapi.Schema(type=openapi.TYPE_OBJECT),
+            'to': openapi.Schema(type=openapi.TYPE_STRING, description="Recipient email")
+        },
+        required=['to']
+    ),
+    responses={200: openapi.Response(
+        description="Gmail compose URL and rendered content",
+        examples={
+            "application/json": {
+                "template_name": "Welcome",
+                "gmail_url": "https://mail.google.com/mail/?view=cm&fs=1&to=...",
+                "rendered_subject": "Hello John",
+                "rendered_body": "<p>Hi <strong>John</strong></p>"
+            }
+        }
+    )}
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def export_email_template_view(request, pk):

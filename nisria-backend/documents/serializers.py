@@ -36,3 +36,6 @@ class BankStatementPreviewSerializer(serializers.ModelSerializer):
         model = Document
         fields = ['id', 'name', 'description', 'division', 'date_uploaded']
 
+class ValidatedBankStatementAccessResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    document = DocumentSerializer()

@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from .models import Grant, GrantExpenditure
+from drf_yasg import openapi # Import openapi for schema hints
 from documents.models import Document  
 from divisions.models import Program 
 
 class BasicGrantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grant
+        ref_name = 'BasicGrant' # Add unique ref_name
         fields = ['id', 'organization_name', 'status']
 
 
@@ -13,10 +15,11 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = '__all__'
+        ref_name = 'GrantDocumentSchema' # Unique ref_name for Swagger
 
 class GrantExpenditureSerializer(serializers.ModelSerializer):
     usage_percent = serializers.SerializerMethodField(read_only=True)
-    grant_id = serializers.IntegerField(source='grant.id', read_only=True)
+    grant_id = serializers.UUIDField(source='grant.id', read_only=True)
     grant_organization_name = serializers.CharField(source='grant.organization_name', read_only=True)
 
     class Meta:
@@ -29,7 +32,11 @@ class GrantExpenditureSerializer(serializers.ModelSerializer):
             'estimated_depletion_date',
             'usage_percent'
         ]
+        ref_name = 'GrantExpenditureSchema' # Ensure this was added from previous suggestions
         read_only_fields = ['id', 'grant_id', 'grant_organization_name', 'usage_percent']
+        swagger_schema_fields = {
+            "usage_percent": openapi.Schema(type=openapi.TYPE_NUMBER, format=openapi.FORMAT_FLOAT, read_only=True, description="Percentage of grant amount used."),
+        }
 
     def get_usage_percent(self, obj):
         # Relies on the model's method for calculation
@@ -84,3 +91,4 @@ class GrantSerializer(serializers.ModelSerializer):
             'date_updated',
             'expenditure',
         ]
+        ref_name = 'FullGrantSchema' # Ensure this was added from previous suggestions
