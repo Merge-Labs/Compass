@@ -7,14 +7,14 @@ import logo from '/logo/Compass.png';
 const CompassLanding = () => {
   return (
     <div
-      className="min-h-screen w-full bg-cover bg-center flex flex-col items-center justify-center relative"
+      className="overflow-hidden min-h-screen w-full bg-cover bg-center flex flex-col items-center justify-center relative"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       {/* Big Compass logo behind the card */}
       <motion.img
         src={logo}
         alt="Compass Logo Background"
-        className="w-72 h-72 absolute top-15 left-1/2 -translate-x-1/2 z-0 opacity-80"
+        className="w-72 h-72 absolute top-14 left-1/2 -translate-x-1/2 z-0 opacity-80"
       />
 
       {/* Card in front */}
