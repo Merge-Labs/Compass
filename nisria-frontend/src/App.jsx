@@ -1,9 +1,22 @@
-import React from 'react'
+// src/App.jsx
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthProvider";
+import { ThemeProvider } from "./context/ThemeProvider";
+import AppRoutes from "./routes/AppRoutes";
 
-const App = () => {
+function App() {
   return (
-    <div className='text-3xl font-bold underline text-red-500'>I love tailwind</div>
-  )
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="App">
+            <AppRoutes />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

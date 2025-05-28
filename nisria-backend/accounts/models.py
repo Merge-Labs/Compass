@@ -71,6 +71,5 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.full_name} - {self.role}"  # Corrected field reference
-    
+        return f"{self.full_name} - {self.role}"  # Corrected field reference        
 # TODO: Email Validation with OTP
