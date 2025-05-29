@@ -16,7 +16,7 @@ import {
   LogOut,
 } from 'lucide-react';
 
-const Sidebar = ({ isSmMenuOpen, toggleSmMenu }) => {
+const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
   const { theme, toggleTheme: globalToggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const [activeItem, setActiveItem] = useState('Dashboard');
@@ -73,6 +73,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu }) => {
 
   const handleItemClick = (label) => {
     setActiveItem(label);
+    if (onNavigate) onNavigate(label);
     if (isSmMenuOpen && toggleSmMenu) { // Close mobile menu on item click
       toggleSmMenu(false); // Assuming toggleSmMenu(false) closes it
     }
@@ -166,7 +167,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu }) => {
             {/* Profile Section */}
             <div className={`flex items-center gap-3 pt-2 lg:pl-4 cursor-pointer
               ${isHoveredForMd && isMdScreen ? 'md:justify-start' : 'md:flex-col md:items-center md:gap-1'} 
-              lg:flex-row lg:justify-start lg:gap-3
+              lg:flex-col lg:justify-start lg:items-start lg:gap-3
             `}>
               {user?.profile_picture_url ? (
                 <img 
@@ -205,7 +206,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu }) => {
             <ul className="space-y-2">
               {menuItems.map((item, index) => {
               const IconComponent = item.icon;
-              const isActive = activeItem === item.label;
+              const isActive = (activeSection || activeItem) === item.label;
             
             return (
               <li key={index}>
