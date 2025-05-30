@@ -204,14 +204,14 @@ const Login = () => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="sr-only"
+                    className=" border-black sr-only"
                   />
                   <div className={`w-4 h-4 rounded border-2 transition-all duration-200 
                                  ${rememberMe 
                                    ? 'bg-red-500 border-red-500 dark:bg-red-500 dark:border-red-500' 
-                                   : 'bg-white/10 dark:bg-black/20 border-white/30 dark:border-white/20'
+                                   : 'bg-white/10 dark:bg-black/20 border-black/30 dark:border-white/20'
                                  } 
-                                 group-hover:border-white/50 dark:group-hover:border-white/30`}>
+                                 group-hover:border-black/50 dark:group-hover:border-white/30`}>
                     {rememberMe && (
                       <svg className="w-3 h-3 text-white absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -233,7 +233,7 @@ const Login = () => {
                          bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700
                          hover:from-red-400 hover:to-red-500 dark:hover:from-red-500 dark:hover:to-red-600
                          focus:outline-none focus:ring-2 focus:ring-red-500/50
-                         backdrop-blur-sm border border-red-500/20"
+                         backdrop-blur-sm border border-red-500/20 cursor-pointer"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
