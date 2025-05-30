@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthProvider";
 import { useTheme } from "../../context/ThemeProvider";
 import DashboardSection from "../../sections/dashboard/DashboardSection";
-import GrantsSection from "../../sections/GrantsSection";
+import GrantsDashboard from "../../sections/grants/GrantsSection";
+import ProgramsDashboard from "../../sections/programs/ProgramsDashboard";
 import Sidebar from "../../components/dashboard/sidebar";
 import Navbar from "../../components/dashboard/Navbar";
 import { Loader2 } from "lucide-react"; 
 
 const SECTION_COMPONENTS = {
   Dashboard: DashboardSection,
-  Grants: GrantsSection,
+  Grants: GrantsDashboard,
+  Programs: ProgramsDashboard,
 
   // Add more mappings as you add more sections
 };
