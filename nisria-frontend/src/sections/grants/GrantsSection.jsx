@@ -1,34 +1,36 @@
-
-import React, { useState, useEffect } from 'react';
-import api from '../../services/api'; // Corrected import path
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  DollarSign, 
-  Building, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import React, { useState, useEffect } from "react";
+import {  Routes, Route, useParams, useNavigate } from "react-router-dom";
+import api from "../../services/api"; 
+import {
+  Search,
+  Filter,
+  Plus,
+  DollarSign,
+  Building,
+  Clock,
+  CheckCircle,
+  XCircle,
   Download,
-} from 'lucide-react';
-import GrantsTable from '../../components/grants/GrantsTable';
-import StatCard from '../../components/grants/card'; 
+} from "lucide-react";
+import GrantsTable from "../../components/grants/GrantsTable";
+import StatCard from "../../components/grants/card";
+import GrantDetailModal from "../../components/grants/GrantDetailModal";
 
-
-const formatCurrency = (amount, currency = 'USD') => {
-  if (amount == null || isNaN(parseFloat(amount))) return 'N/A';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+const formatCurrency = (amount, currency = "USD") => {
+  if (amount == null || isNaN(parseFloat(amount))) return "N/A";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency: currency,
-    minimumFractionDigits: 2, 
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(parseFloat(amount));
 };
 
-
 // Main Component
 const GrantsDashboard = () => {
+  const { grantId } = useParams();
+  const navigate = useNavigate();
+
   const [apiGrants, setApiGrants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,33 +42,53 @@ const GrantsDashboard = () => {
     totalPages: 1,
   });
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedGrants, setSelectedGrants] = useState([]);
+
+  // State for Grant Detail Modal
+  const [selectedGrantDetails, setSelectedGrantDetails] = useState(null);
+  const [isGrantDetailModalOpen, setIsGrantDetailModalOpen] = useState(false);
+  const [grantDetailLoading, setGrantDetailLoading] = useState(false);
+  const [grantDetailError, setGrantDetailError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchGrants = async (page = 1, search = '', status = 'all') => {
+  useEffect(() => {
+    if (grantId) {
+      handleViewGrantDetails(grantId);
+    } else {
+      setIsGrantDetailModalOpen(false);
+      setSelectedGrantDetails(null);
+    }
+    // eslint-disable-next-line
+  }, [grantId]);
+
+  const fetchGrants = async (page = 1, search = "", status = "all") => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      params.append('page', page);
-      if (search) params.append('search', search);
-      if (status !== 'all') params.append('status', status);
+      params.append("page", page);
+      if (search) params.append("search", search);
+      if (status !== "all") params.append("status", status);
 
       const response = await api.get(`/api/grants/?${params.toString()}`);
       setApiGrants(response.data.results || []);
-      const itemsPerPageApi = response.data.results?.length || 10; 
+      const itemsPerPageApi = response.data.results?.length || 10;
       setPaginationInfo({
         count: response.data.count || 0,
         next: response.data.next,
         previous: response.data.previous,
         currentPage: page,
-        totalPages: Math.ceil((response.data.count || 0) / itemsPerPageApi) || 1,
+        totalPages:
+          Math.ceil((response.data.count || 0) / itemsPerPageApi) || 1,
       });
     } catch (err) {
       console.error("Failed to fetch grants:", err);
-      const errorMessage = err.response?.data?.detail || err.message || "Could not load grants data.";
+      const errorMessage =
+        err.response?.data?.detail ||
+        err.message ||
+        "Could not load grants data.";
       setError(errorMessage);
       setApiGrants([]);
     } finally {
@@ -79,62 +101,96 @@ const GrantsDashboard = () => {
   }, [paginationInfo.currentPage, searchTerm, selectedStatus]);
 
   const handleSelectGrant = (grantId) => {
-    setSelectedGrants(prev => 
-      prev.includes(grantId) 
-        ? prev.filter(id => id !== grantId)
+    setSelectedGrants((prev) =>
+      prev.includes(grantId)
+        ? prev.filter((id) => id !== grantId)
         : [...prev, grantId]
     );
   };
-  
+
   const handleSelectAll = () => {
     setSelectedGrants(
       selectedGrants.length === apiGrants.length && apiGrants.length > 0
-        ? [] 
-        : apiGrants.map(grant => grant.id)
+        ? []
+        : apiGrants.map((grant) => grant.id)
     );
   };
 
   const handleStatusChange = async (grantId, newStatus) => {
     // Optimistic update
     const originalGrants = [...apiGrants];
-    setApiGrants(prev => prev.map(grant => 
-      grant.id === grantId ? { ...grant, status: newStatus } : grant
-    ));
+    setApiGrants((prev) =>
+      prev.map((grant) =>
+        grant.id === grantId ? { ...grant, status: newStatus } : grant
+      )
+    );
     try {
       await api.put(`/api/grants/${grantId}/`, { status: newStatus });
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error("Failed to update status:", error);
       setError(error.response?.data?.detail || "Failed to update status.");
-      setApiGrants(originalGrants); 
+      setApiGrants(originalGrants);
     }
   };
 
   const handleDeleteGrant = async (grantId) => {
-    if (window.confirm('Are you sure you want to delete this grant?')) {
+    if (window.confirm("Are you sure you want to delete this grant?")) {
       try {
         await api.delete(`/api/grants/${grantId}/`);
-        setApiGrants(prev => prev.filter(grant => grant.id !== grantId));
-        setSelectedGrants(prev => prev.filter(id => id !== grantId));
+        setApiGrants((prev) => prev.filter((grant) => grant.id !== grantId));
+        setSelectedGrants((prev) => prev.filter((id) => id !== grantId));
         fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
       } catch (error) {
-        console.error('Failed to delete grant:', error);
+        console.error("Failed to delete grant:", error);
         setError(error.response?.data?.detail || "Failed to delete grant.");
       }
     }
   };
 
+  const handleViewGrantDetails = async (grantId) => {
+    setIsGrantDetailModalOpen(true);
+    setGrantDetailLoading(true);
+    setGrantDetailError(null);
+    setSelectedGrantDetails(null); // Clear previous details
+    try {
+      navigate(`/dashboard/compass/grants/${grantId}`);
+      const response = await api.get(`/api/grants/${grantId}/`);
+      console.log("API response for grant details:", response.data);
+      setSelectedGrantDetails(response.data);
+    } catch (err) {
+      console.error("Failed to fetch grant details:", err);
+      setGrantDetailError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Could not load grant details."
+      );
+    } finally {
+      setGrantDetailLoading(false);
+    }
+  };
+
+  const handleCloseGrantDetailModal = () => {
+    navigate("/dashboard/compass/grants");
+    setIsGrantDetailModalOpen(false);
+    setSelectedGrantDetails(null); // Clear details on close
+  };
   const stats = {
     total: paginationInfo.count,
-    
-    totalValue: apiGrants.reduce((sum, grant) => sum + parseFloat(grant.amount_value || 0), 0),
-    
-    approved: apiGrants.filter(g => g.status === 'approved').length,
-    pendingOrApplied: apiGrants.filter(g => g.status === 'pending' || g.status === 'applied').length,
+
+    totalValue: apiGrants.reduce(
+      (sum, grant) => sum + parseFloat(grant.amount_value || 0),
+      0
+    ),
+
+    approved: apiGrants.filter((g) => g.status === "approved").length,
+    pendingOrApplied: apiGrants.filter(
+      (g) => g.status === "pending" || g.status === "applied"
+    ).length,
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= paginationInfo.totalPages) {
-      setPaginationInfo(prev => ({ ...prev, currentPage: newPage }));
+      setPaginationInfo((prev) => ({ ...prev, currentPage: newPage }));
     }
   };
 
@@ -157,8 +213,12 @@ const GrantsDashboard = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Grants Management</h1>
-              <p className="text-gray-600">Manage and track grant applications and funding opportunities</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Grants Management
+              </h1>
+              <p className="text-gray-600">
+                Manage and track grant applications and funding opportunities
+              </p>
             </div>
             <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105">
               <Plus className="w-5 h-5" />
@@ -199,7 +259,6 @@ const GrantsDashboard = () => {
           </div>
         </div>
 
-
         {/* Filters and Search */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -212,12 +271,12 @@ const GrantsDashboard = () => {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setPaginationInfo(prev => ({ ...prev, currentPage: 1 })); // Reset to page 1 on search
+                    setPaginationInfo((prev) => ({ ...prev, currentPage: 1 })); // Reset to page 1 on search
                   }}
                   className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 w-64 transition-all duration-200"
                 />
               </div>
-              <button 
+              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center space-x-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               >
@@ -230,7 +289,7 @@ const GrantsDashboard = () => {
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
-                  setPaginationInfo(prev => ({ ...prev, currentPage: 1 })); // Reset to page 1 on filter change
+                  setPaginationInfo((prev) => ({ ...prev, currentPage: 1 })); // Reset to page 1 on filter change
                 }}
                 className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 transition-all duration-200"
               >
@@ -251,14 +310,15 @@ const GrantsDashboard = () => {
         </div>
 
         {/* Error Message */}
-        {error && !loading && ( // Show error only if not loading and error exists
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
-            <div className="flex items-center">
-              <XCircle className="w-5 h-5 text-red-500 mr-2" />
-              <span className="text-red-700">{error}</span>
+        {error &&
+          !loading && ( // Show error only if not loading and error exists
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+              <div className="flex items-center">
+                <XCircle className="w-5 h-5 text-red-500 mr-2" />
+                <span className="text-red-700">{error}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Grants Table */}
         <GrantsTable
@@ -269,7 +329,7 @@ const GrantsDashboard = () => {
           onSelectGrant={handleSelectGrant}
           onSelectAll={handleSelectAll}
           onStatusChange={handleStatusChange}
-          onViewDetails={(id) => console.log("View details for grant:", id)} // Placeholder
+          onViewDetails={handleViewGrantDetails} // Link to the actual handler
           onEditGrant={(id) => console.log("Edit grant:", id)} // Placeholder
           onDeleteGrant={handleDeleteGrant}
           currentPage={paginationInfo.currentPage}
@@ -277,6 +337,22 @@ const GrantsDashboard = () => {
           onPageChange={handlePageChange}
           totalResults={paginationInfo.count}
         />
+
+        {/* Nested routes for modal */}
+        <Routes>
+          <Route
+            path=":grantId"
+            element={
+              <GrantDetailModal
+                isOpen={isGrantDetailModalOpen}
+                onClose={handleCloseGrantDetailModal}
+                grant={selectedGrantDetails}
+                loading={grantDetailLoading}
+                error={grantDetailError}
+              />
+            }
+          />
+        </Routes>
       </div>
     </div>
   );

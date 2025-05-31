@@ -147,7 +147,11 @@ const GrantsTable = ({
           </thead>
           <tbody className="bg-white/30 divide-y divide-gray-200/50">
             {grants.map((grant) => (
-              <tr key={grant.id} className="hover:bg-white/40 transition-colors">
+              <tr 
+                key={grant.id} 
+                className="hover:bg-white/40 transition-colors cursor-pointer"
+                onClick={() => onViewDetails(grant.id)} // Make the entire row clickable
+              >
                 <td className="px-4 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <input
@@ -155,6 +159,7 @@ const GrantsTable = ({
                       aria-label={`Select grant ${grant.organization_name}`}
                       checked={selectedGrants.includes(grant.id)}
                       onChange={() => onSelectGrant(grant.id)}
+                      onClick={(e) => e.stopPropagation()} // Prevent row click when checkbox is clicked
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
                     />
                     <div className="flex items-center">
@@ -180,6 +185,7 @@ const GrantsTable = ({
                   <select
                     value={grant.status}
                     onChange={(e) => onStatusChange(grant.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()} // Prevent row click when select is interacted with
                     className={`text-xs font-medium border cursor-pointer rounded-full py-1 pl-2 pr-7 appearance-none ${getStatusColor(grant.status)}`}
                     aria-label={`Status of grant ${grant.organization_name}`}
                   >
@@ -219,13 +225,13 @@ const GrantsTable = ({
                 <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500">
                   {(grant.required_documents?.length > 0 || grant.submitted_documents?.length > 0) ? (
                     <div className="flex flex-col space-y-1">
-                      {grant.required_documents?.map(doc => (
-                        <a key={doc.id || doc.name} href={doc.url || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center" onClick={(e) => { if (!doc.url) e.preventDefault(); console.log("View required doc:", doc); }}>
+                      {grant.required_documents?.map((doc, idx) => (
+                        <a key={doc.id || `req-doc-${idx}`} href={doc.url || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center" onClick={(e) => { e.stopPropagation(); if (!doc.url) e.preventDefault(); console.log("View required doc:", doc); }}>
                           <FileText size={14} className="mr-1 flex-shrink-0" /> {doc.name || 'Required Doc'}
                         </a>
                       ))}
-                      {grant.submitted_documents?.map(doc => (
-                        <a key={doc.id || doc.name} href={doc.url || '#'} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline flex items-center" onClick={(e) => { if (!doc.url) e.preventDefault(); console.log("View submitted doc:", doc); }}>
+                      {grant.submitted_documents?.map((doc, idx) => (
+                        <a key={doc.id || `sub-doc-${idx}`} href={doc.url || '#'} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline flex items-center" onClick={(e) => { e.stopPropagation(); if (!doc.url) e.preventDefault(); console.log("View submitted doc:", doc); }}>
                           <FileText size={14} className="mr-1 flex-shrink-0" /> {doc.name || 'Submitted Doc'}
                         </a>
                       ))}
@@ -234,9 +240,24 @@ const GrantsTable = ({
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center space-x-1">
-                    <button onClick={() => onViewDetails(grant.id)} className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50/70" title="View Details"><Eye size={16} /></button>
-                    <button onClick={() => onEditGrant(grant.id)} className="text-gray-400 hover:text-green-600 p-1.5 rounded-md hover:bg-green-50/70" title="Edit Grant"><Edit size={16} /></button>
-                    <button onClick={() => onDeleteGrant(grant.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50/70" title="Delete Grant"><Trash2 size={16} /></button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onViewDetails(grant.id); }} 
+                        className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50/70" 
+                        title="View Details">
+                            <Eye size={16} />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onEditGrant(grant.id); }} 
+                        className="text-gray-400 hover:text-green-600 p-1.5 rounded-md hover:bg-green-50/70" 
+                        title="Edit Grant">
+                            <Edit size={16} />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onDeleteGrant(grant.id); }} 
+                        className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50/70" 
+                        title="Delete Grant">
+                            <Trash2 size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>

@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useAuth } from '../context/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; // Use <a href="/login"> if not using React Router
 import bgImage from '/bg.jpg';
 import logo from '/logo/Compass.png';
 
 const CompassLanding = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard/compass/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
   return (
     <div
       className="overflow-hidden min-h-screen w-full bg-cover bg-center flex flex-col items-center justify-center relative"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthProvider";
 import { useTheme } from "../../context/ThemeProvider";
 import DashboardSection from "../../sections/dashboard/DashboardSection";
@@ -6,43 +6,46 @@ import GrantsDashboard from "../../sections/grants/GrantsSection";
 import ProgramsDashboard from "../../sections/programs/ProgramsDashboard";
 import Sidebar from "../../components/dashboard/sidebar";
 import Navbar from "../../components/dashboard/Navbar";
-import { Loader2 } from "lucide-react"; 
+import GrantDetailModal from "../../components/grants/GrantDetailModal";
+import { Loader2 } from "lucide-react";
+import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 
 const SECTION_COMPONENTS = {
-  Dashboard: DashboardSection,
-  Grants: GrantsDashboard,
-  Programs: ProgramsDashboard,
-
+  dashboard: DashboardSection,
+  grants: GrantsDashboard,
+  programs: ProgramsDashboard,
   // Add more mappings as you add more sections
 };
 
-export const SuperAdminDashboard = () => {
+const DEFAULT_SECTION = "dashboard";
+
+const Dashboard = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const [isSmSidebarOpen, setIsSmSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("Dashboard");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading (replace with your real loading logic if needed)
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get section from URL: /dashboard/compass/:section
+  const section = location.pathname.split("/")[3] || DEFAULT_SECTION;
+  const SectionComponent = SECTION_COMPONENTS[section] || DashboardSection;
+
   useEffect(() => {
-    if (user && theme) {
-      setIsLoading(false);
-    }
+    if (user && theme) setIsLoading(false);
   }, [user, theme]);
 
-
-  // Dynamically select the section component
-  const SectionComponent =
-    SECTION_COMPONENTS[activeSection] || DashboardSection;
-
-  // Pass a handler to Sidebar to update the section
-  const handleSidebarNav = (section) => setActiveSection(section);
+  // Sidebar navigation handler
+  const handleSidebarNav = (sectionLabel) => {
+    navigate(`/dashboard/compass/${sectionLabel.toLowerCase()}`);
+  };
 
   const handleLogout = async () => {
     await logout();
   };
 
-    if (isLoading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-black">
         <Loader2 className="w-12 h-12 animate-spin text-p1 dark:text-p2" />
@@ -53,18 +56,15 @@ export const SuperAdminDashboard = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {" "}
-      {/* Added overflow-hidden to parent */}
       <Sidebar
         isSmMenuOpen={isSmSidebarOpen}
         toggleSmMenu={setIsSmSidebarOpen}
         onNavigate={handleSidebarNav}
-        activeSection={activeSection}
+        activeSection={section.charAt(0).toUpperCase() + section.slice(1)}
       />
-      {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${
-          theme === "light" ? "bg-gray-50" : "bg-black/95" 
+          theme === "light" ? "bg-gray-50" : "bg-black/95"
         }
         ${
           isSmSidebarOpen
@@ -73,22 +73,27 @@ export const SuperAdminDashboard = () => {
         }
       `}
       >
-        {/* Sticky Navbar replacing old header */}
         <div className="sticky top-0 z-20">
-          {" "}
-          {/* Wrapper to ensure stickiness and z-index */}
           <Navbar
             user={user}
             onLogout={handleLogout}
             appTheme={theme}
             onToggleSmSidebar={() => setIsSmSidebarOpen((v) => !v)}
-            appName="Nisria's Compass" 
+            appName="Nisria's Compass"
           />
         </div>
         <main className="flex-1">
-          <SectionComponent />
+          <Routes>
+            <Route path="/" element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardSection />} />
+            <Route path="grants/*" element={<GrantsDashboard />} />
+            <Route path="programs" element={<ProgramsDashboard />} />
+            {/* Add more <Route path="section" ... /> as needed */}
+          </Routes>
         </main>
       </div>
     </div>
   );
 };
+
+export default Dashboard;

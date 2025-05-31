@@ -1,8 +1,6 @@
-
-// src/services/authService.js
 import api from './api.js';
 
-export const authService = {
+const authService = {
   async login(email, password) {
     try {
       const response = await api.post('api/accounts/login/', {
@@ -35,7 +33,6 @@ export const authService = {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear local storage regardless of API call success
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
@@ -72,3 +69,5 @@ export const authService = {
     return roles.includes(user?.role);
   }
 };
+
+export default authService;

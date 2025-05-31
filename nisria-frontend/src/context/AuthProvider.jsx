@@ -1,49 +1,28 @@
-// src/context/AuthProvider.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { authService } from "../services/authService.js";
+import authService from "../services/authService.js";
 
-const AuthContext = createContext(null);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Hydrate auth state from localStorage on mount
   useEffect(() => {
-    // Check if user is already logged in on app start
-    initializeAuth();
-  }, []);
-
-  const initializeAuth = () => {
-    try {
-      const currentUser = authService.getCurrentUser();
-      const isAuth = authService.isAuthenticated();
-
-      if (currentUser && isAuth) {
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error("Error initializing auth:", error);
-    } finally {
-      setIsLoading(false);
+    const storedUser = localStorage.getItem("user");
+    const accessToken = localStorage.getItem("access_token");
+    if (storedUser && accessToken) {
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
     }
-  };
+    setIsLoading(false);
+  }, []);
 
   const login = async (email, password) => {
     setIsLoading(true);
-
     try {
       const result = await authService.login(email, password);
-
       if (result.success) {
         setUser(result.user);
         setIsAuthenticated(true);
@@ -52,7 +31,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error(error);
+      console.error("Login failed:", error);
       return { success: false, error: "An unexpected error occurred" };
     } finally {
       setIsLoading(false);
@@ -61,11 +40,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     setIsLoading(true);
-
     try {
       await authService.logout();
     } catch (error) {
-      console.error("Logout error:", error);
+      // ignore
+      console.error("Logout failed:", error);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
@@ -73,23 +52,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const hasRole = (role) => {
-    return user?.role === role;
-  };
+  const hasRole = (role) => user?.role === role;
+  const hasAnyRole = (roles) => roles.includes(user?.role);
 
-  const hasAnyRole = (roles) => {
-    return roles.includes(user?.role);
-  };
-
-  const value = {
-    user,
-    isLoading,
-    isAuthenticated,
-    login,
-    logout,
-    hasRole,
-    hasAnyRole,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, hasRole, hasAnyRole }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuth = () => useContext(AuthContext);
