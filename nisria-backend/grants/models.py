@@ -4,10 +4,12 @@ from documents.models import Document
 from divisions.models import Program
 from django.utils import timezone
 import uuid
+from core.models import SoftDeleteModel
+
 User = get_user_model()
 
 
-class Grant(models.Model):
+class Grant(SoftDeleteModel):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('applied', 'Applied'),
@@ -130,7 +132,7 @@ class Grant(models.Model):
         return f"{self.organization_name} – {self.amount_currency}{self.amount_value}"
 
 
-class GrantExpenditure(models.Model):
+class GrantExpenditure(SoftDeleteModel):
     grant = models.OneToOneField(Grant, on_delete=models.CASCADE, related_name='expenditure')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     amount_used = models.DecimalField(max_digits=15, decimal_places=2, default=0)

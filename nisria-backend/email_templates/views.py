@@ -1,20 +1,23 @@
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 import markdown
+from django.utils import timezone
 from django.template import Context, Template
-
+from django.contrib.contenttypes.models import ContentType
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from .models import EmailTemplates 
+from .models import EmailTemplates
 from .serializers import EmailTemplateSerializer
 from .filters import EmailTemplateFilter
 import urllib.parse 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from accounts.permissions import IsSuperAdmin
+from core.models import RecycleBinItem # For permanent delete
 
 def indexTest(request):
     return JsonResponse({"message": "API endpoints working in Email Templates app"})
@@ -39,7 +42,8 @@ def email_template_list_create_view(request):
     is_privileged_user = request.user.role in ['super_admin', 'management_lead']
 
     if request.method == 'GET':
-        queryset = EmailTemplates.objects.all().order_by('-date_created')
+        # Default manager 'objects' already filters out is_deleted=True items
+        queryset = EmailTemplates.objects.order_by('-date_created')
 
         if not is_privileged_user:
             queryset = queryset.exclude(template_type='employee_contract')
@@ -47,8 +51,13 @@ def email_template_list_create_view(request):
         filterset = EmailTemplateFilter(request.GET, queryset=queryset)
         filtered_queryset = filterset.qs
 
-        serializer = EmailTemplateSerializer(filtered_queryset, many=True, context={'request': request})
-        return Response(serializer.data)
+        paginator = PageNumberPagination()
+        paginator.page_size = 10 # Or your preferred page size, e.g., from settings
+        result_page = paginator.paginate_queryset(filtered_queryset, request)
+
+        serializer = EmailTemplateSerializer(result_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+
 
     elif request.method == 'POST':
         requested_template_type = request.data.get('template_type')
@@ -79,12 +88,11 @@ def email_template_list_create_view(request):
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def email_template_detail_view(request, pk):
-    
-    template = get_object_or_404(EmailTemplates, pk=pk)
+    # Use the default manager which respects is_deleted=False
+    template = get_object_or_404(EmailTemplates, pk=pk) 
     is_privileged_user = request.user.role in ['super_admin', 'management_lead']
 
     if request.method == 'GET':
-        # If the template is 'employee_contract' and user is not privileged, deny access
         if template.template_type == 'employee_contract' and not is_privileged_user:
             raise PermissionDenied("You do not have permission to view this email template.")
         
@@ -102,7 +110,6 @@ def email_template_detail_view(request, pk):
             serializer.save(updated_by=request.user)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 
@@ -144,11 +151,8 @@ def email_template_detail_view(request, pk):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def render_email_template_view(request, pk):
-    template_obj = get_object_or_404(EmailTemplates, pk=pk)
-
-    if template_obj.template_type == 'employee_contract' and request.user.role not in ['super_admin', 'management_lead']:
-        raise PermissionDenied("Unauthorized access.")
-
+    # Use the default manager which respects is_deleted=False
+    template_obj = get_object_or_404(EmailTemplates, pk=pk) 
     if request.method == 'GET':
         return Response({
             "template_name": template_obj.name,
@@ -157,6 +161,9 @@ def render_email_template_view(request, pk):
             "placeholders_hint": "Pass context as POST JSON: { context: { key: value } }"
         })
     
+    # Permission check for POST (rendering) as well, if it involves sensitive data based on type
+    if template_obj.template_type == 'employee_contract' and request.user.role not in ['super_admin', 'management_lead']:
+        raise PermissionDenied("You do not have permission to render this template.")
     elif request.method == 'POST':
         context_data = request.data.get('context', {})
 
@@ -200,11 +207,12 @@ def render_email_template_view(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def export_email_template_view(request, pk):
-    template_obj = get_object_or_404(EmailTemplates, pk=pk)
+    # Use the default manager which respects is_deleted=False
+    template_obj = get_object_or_404(EmailTemplates, pk=pk) 
 
     # Permission check
     if template_obj.template_type == 'employee_contract' and request.user.role not in ['super_admin', 'management_lead']:
-        return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+        raise PermissionDenied("You do not have permission to export this template.")
 
     # Get context and recipient email
     context_data = request.data.get("context", {}) or {}
@@ -235,3 +243,64 @@ def export_email_template_view(request, pk):
         "rendered_body": rendered_body_html
     })
 # TODO:: IN frontend do window.open(response.data.gmail_url, '_blank');
+
+
+# Soft delete (move to recycle bin)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def email_template_soft_delete(request, pk):
+    # Use default manager, which filters for is_deleted=False
+    template = get_object_or_404(EmailTemplates, pk=pk)
+    # Use the SoftDeleteModel's soft_delete method
+    template.soft_delete(user=request.user)
+    return Response({'detail': 'Moved to recycle bin.'}, status=status.HTTP_204_NO_CONTENT)
+
+# List recycle bin
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def email_template_recycle_bin(request):
+    # Use all_objects manager to fetch soft-deleted items
+    templates = EmailTemplates.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+    
+    paginator = PageNumberPagination()
+    paginator.page_size = 10 # Or your preferred page size
+    result_page = paginator.paginate_queryset(templates, request)
+    
+    serializer = EmailTemplateSerializer(result_page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# Restore from recycle bin
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def email_template_restore(request, pk):
+    # Use all_objects manager to find the soft-deleted item
+    template = EmailTemplates.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not template:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Use the SoftDeleteModel's restore method
+    template.restore() # This will set is_deleted=False and update RecycleBinItem
+    return Response({'detail': 'Restored.'})
+
+# Permanent delete
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def email_template_permanent_delete(request, pk):
+    # Use all_objects manager to find the soft-deleted item
+    template = EmailTemplates.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not template:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    template_pk = template.pk # Store pk before template object is deleted
+    
+    # This will call the SoftDeleteModel's delete method.
+    # If request.user is super_admin and item is_deleted=True, it will perform a hard delete.
+    template.delete(user=request.user) 
+
+    # Also, delete the corresponding RecycleBinItem from the core app
+    # EmailTemplates uses UUIDField for pk, so object_id_uuid is used
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(EmailTemplates),
+        object_id_uuid=template_pk 
+    ).delete()
+    return Response({'detail': 'Permanently deleted.'}, status=status.HTTP_204_NO_CONTENT)

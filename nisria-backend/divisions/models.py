@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from accounts.models import User
+from core.models import SoftDeleteModel
 import uuid
 
 GENDER_CHOICES = [
@@ -13,7 +14,7 @@ GENDER_CHOICES = [
 ]
 
 #for the program details
-class AuditableModel(models.Model):
+class AuditableModel(SoftDeleteModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -34,7 +35,7 @@ class AuditableModel(models.Model):
     class Meta:
         abstract = True
 
-class Division(models.Model):
+class Division(SoftDeleteModel):
     NAME_FIELD_CHOICES = [
         ("nisria", "Nisria"), 
         ("maisha", "Maisha")
@@ -60,7 +61,7 @@ class Division(models.Model):
     def __str__(self):
         return f"{self.name} - {self.description}"
     
-class Program(models.Model):
+class Program(SoftDeleteModel):
     PROGRAM_FIELD_CHOICES = [
         ("education", "Education"), 
         ("microfund", "Microfund"),

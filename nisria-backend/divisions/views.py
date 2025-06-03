@@ -9,6 +9,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.utils import timezone
+from accounts.permissions import IsSuperAdmin
+from django.contrib.contenttypes.models import ContentType
+from core.models import RecycleBinItem
 
 from .models import (
     Division, Program,
@@ -789,3 +793,336 @@ def vocational_program_filter(request, division_name):
 @permission_classes([IsAuthenticated])
 def vocational_program_search(request, division_name):
     return _base_trainee_list_logic(request, division_name, "vocational", search_logic=True)
+
+# --- SOFT DELETE, RESTORE, RECYCLE BIN, PERMANENT DELETE FOR DIVISION ---
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def division_soft_delete(request, pk):
+    division = get_object_or_404(Division, pk=pk) # Ensures it's not already soft-deleted by default manager
+    division.soft_delete(user=request.user)
+    return Response({'detail': 'Division moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def division_restore(request, pk):
+    division = Division.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not division:
+        return Response({'detail': 'Not found in recycle bin.'}, status=status.HTTP_404_NOT_FOUND)
+    division.restore()
+    return Response({'detail': 'Division restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def division_permanent_delete(request, pk):
+    division = Division.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not division:
+        return Response({'detail': 'Not found in recycle bin.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    division_pk = division.pk
+    division.delete(user=request.user) # SoftDeleteModel's delete handles hard delete for super_admin if is_deleted=True
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(Division),
+        object_id_uuid=division_pk
+    ).delete()
+    return Response({'detail': 'Division permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def division_recycle_bin(request):
+    divisions = Division.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(divisions, request)
+    serializer = DivisionSerializer(page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# --- SOFT DELETE, RESTORE, RECYCLE BIN, PERMANENT DELETE FOR PROGRAM ---
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def program_soft_delete(request, pk):
+    program = get_object_or_404(Program, pk=pk)
+    program.soft_delete(user=request.user)
+    return Response({'detail': 'Program moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def program_restore(request, pk):
+    program = Program.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not program:
+        return Response({'detail': 'Not found in recycle bin.'}, status=status.HTTP_404_NOT_FOUND)
+    program.restore()
+    return Response({'detail': 'Program restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def program_permanent_delete(request, pk):
+    program = Program.all_objects.filter(pk=pk, is_deleted=True).first()
+    if not program:
+        return Response({'detail': 'Not found in recycle bin.'}, status=status.HTTP_404_NOT_FOUND)
+
+    program_pk = program.pk
+    program.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(Program),
+        object_id_uuid=program_pk
+    ).delete()
+    return Response({'detail': 'Program permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def program_recycle_bin(request):
+    programs = Program.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(programs, request)
+    serializer = ProgramSerializer(page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+
+
+
+# --- SOFT DELETE, RESTORE, RECYCLE BIN, PERMANENT DELETE FOR PROGRAM DETAILS ---
+
+# --- Education Program Detail ---
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def education_program_soft_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "education")
+    instance = get_object_or_404(meta["model"], pk=pk, program=program)
+    instance.soft_delete(user=request.user)
+    return Response({'detail': 'Education program detail moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def education_program_restore(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "education")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+    instance.restore()
+    return Response({'detail': 'Education program detail restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def education_program_permanent_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "education")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    instance_pk = instance.pk
+    instance.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(meta["model"]),
+        object_id_uuid=instance_pk
+    ).delete()
+    return Response({'detail': 'Education program detail permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def education_program_recycle_bin(request, division_name):
+    meta, program = _get_program_detail_meta_and_program(division_name, "education")
+    queryset = meta["model"].all_objects.filter(program=program, is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = meta["serializer"](page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# --- MicroFund Program Detail ---
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def microfund_program_soft_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "microfund")
+    instance = get_object_or_404(meta["model"], pk=pk, program=program)
+    instance.soft_delete(user=request.user)
+    return Response({'detail': 'MicroFund program detail moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def microfund_program_restore(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "microfund")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+    instance.restore()
+    return Response({'detail': 'MicroFund program detail restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def microfund_program_permanent_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "microfund")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+
+    instance_pk = instance.pk
+    instance.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(meta["model"]),
+        object_id_uuid=instance_pk
+    ).delete()
+    return Response({'detail': 'MicroFund program detail permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def microfund_program_recycle_bin(request, division_name):
+    meta, program = _get_program_detail_meta_and_program(division_name, "microfund")
+    queryset = meta["model"].all_objects.filter(program=program, is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = meta["serializer"](page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# --- Rescue Program Detail ---
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def rescue_program_soft_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "rescue")
+    instance = get_object_or_404(meta["model"], pk=pk, program=program)
+    instance.soft_delete(user=request.user)
+    return Response({'detail': 'Rescue program detail moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def rescue_program_restore(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "rescue")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+    instance.restore()
+    return Response({'detail': 'Rescue program detail restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def rescue_program_permanent_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "rescue")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+
+    instance_pk = instance.pk
+    instance.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(meta["model"]),
+        object_id_uuid=instance_pk
+    ).delete()
+    return Response({'detail': 'Rescue program detail permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def rescue_program_recycle_bin(request, division_name):
+    meta, program = _get_program_detail_meta_and_program(division_name, "rescue")
+    queryset = meta["model"].all_objects.filter(program=program, is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = meta["serializer"](page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# --- Vocational Trainer Detail ---
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def vocational_trainer_soft_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "vocational-trainer")
+    instance = get_object_or_404(meta["model"], pk=pk, program=program)
+    instance.soft_delete(user=request.user)
+    return Response({'detail': 'Vocational trainer moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainer_restore(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "vocational-trainer")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+    instance.restore()
+    return Response({'detail': 'Vocational trainer restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainer_permanent_delete(request, division_name, pk):
+    meta, program = _get_program_detail_meta_and_program(division_name, "vocational-trainer")
+    instance = meta["model"].all_objects.filter(pk=pk, program=program, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this program.'}, status=status.HTTP_404_NOT_FOUND)
+
+    instance_pk = instance.pk
+    instance.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(meta["model"]),
+        object_id_uuid=instance_pk
+    ).delete()
+    return Response({'detail': 'Vocational trainer permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainer_recycle_bin(request, division_name):
+    meta, program = _get_program_detail_meta_and_program(division_name, "vocational-trainer")
+    queryset = meta["model"].all_objects.filter(program=program, is_deleted=True).order_by('-deleted_at')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = meta["serializer"](page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+# --- Vocational Trainee Detail ---
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def vocational_trainee_soft_delete(request, division_name, trainer_pk, pk):
+    # Find division, program, trainer, then trainee
+    division = get_object_or_404(Division, name=division_name.lower())
+    program = get_object_or_404(Program, division=division, name="vocational")
+    trainer = get_object_or_404(VocationalTrainingProgramTrainerDetail.objects.select_related('program__division'), pk=trainer_pk, program=program)
+    instance = get_object_or_404(VocationalTrainingProgramTraineeDetail, pk=pk, trainer=trainer)
+    instance.soft_delete(user=request.user)
+    return Response({'detail': 'Vocational trainee moved to recycle bin.'}, status=204)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainee_restore(request, division_name, trainer_pk, pk):
+    division = get_object_or_404(Division, name=division_name.lower())
+    program = get_object_or_404(Program, division=division, name="vocational")
+    trainer = get_object_or_404(VocationalTrainingProgramTrainerDetail.all_objects.select_related('program__division'), pk=trainer_pk, program=program) # trainer might be soft-deleted
+    instance = VocationalTrainingProgramTraineeDetail.all_objects.filter(pk=pk, trainer=trainer, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this trainer.'}, status=status.HTTP_404_NOT_FOUND)
+    instance.restore()
+    return Response({'detail': 'Vocational trainee restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainee_permanent_delete(request, division_name, trainer_pk, pk):
+    division = get_object_or_404(Division, name=division_name.lower())
+    program = get_object_or_404(Program, division=division, name="vocational")
+    trainer = get_object_or_404(VocationalTrainingProgramTrainerDetail.all_objects.select_related('program__division'), pk=trainer_pk, program=program) # trainer might be soft-deleted
+    instance = VocationalTrainingProgramTraineeDetail.all_objects.filter(pk=pk, trainer=trainer, is_deleted=True).first()
+    if not instance:
+        return Response({'detail': 'Not found in recycle bin or does not belong to this trainer.'}, status=status.HTTP_404_NOT_FOUND)
+
+    instance_pk = instance.pk
+    instance.delete(user=request.user)
+
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(VocationalTrainingProgramTraineeDetail),
+        object_id_uuid=instance_pk
+    ).delete()
+    return Response({'detail': 'Vocational trainee permanently deleted.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def vocational_trainee_recycle_bin(request, division_name, trainer_pk):
+    division = get_object_or_404(Division, name=division_name.lower())
+    program = get_object_or_404(Program, division=division, name="vocational")
+    # Trainer itself could be soft-deleted, so use all_objects if listing its soft-deleted trainees
+    trainer = get_object_or_404(VocationalTrainingProgramTrainerDetail.all_objects.select_related('program__division'), pk=trainer_pk, program=program)
+    
+    queryset = VocationalTrainingProgramTraineeDetail.all_objects.filter(trainer=trainer, is_deleted=True).order_by('-deleted_at')
+    
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = VocationalTrainingProgramTraineeDetailSerializer(page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)

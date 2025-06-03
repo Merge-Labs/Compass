@@ -11,10 +11,13 @@ from rest_framework.generics import ListAPIView
 from accounts.permissions import IsSuperAdmin
 from .models import Document, BankStatementAccessRequest
 from .serializers import DocumentSerializer, BankStatementPreviewSerializer, AccessRequestSerializer, ValidatedBankStatementAccessResponseSerializer
+from core.models import RecycleBinItem # Import RecycleBinItem for permanent delete
 from drf_yasg import openapi # Import openapi for manual parameters
 from notifications.tasks import create_bank_statement_access_granted_notification_task
 from drf_yasg.utils import swagger_auto_schema # Import swagger_auto_schema
 from .filters import DocumentFilter
+from django.contrib.contenttypes.models import ContentType # Add this import
+from django.utils import timezone
 
 # Reusable pagination class
 class StandardResultsSetPagination(PageNumberPagination):
@@ -258,3 +261,60 @@ def all_documents_preview_list(request):
     return Response(serializer.data)
 
 # TODO: add views and endpoints for searching and filtering bank statements
+
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def document_soft_delete(request, id):
+    document = Document.objects.filter(id=id, is_deleted=False).first()
+    if not document:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Use the SoftDeleteModel's soft_delete method
+    # This will also create a RecycleBinItem in the core app
+    document.soft_delete(user=request.user)
+    return Response({'detail': 'Moved to recycle bin.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin]) # Changed to IsSuperAdmin
+def document_recycle_bin(request):
+    # Use all_objects manager to fetch soft-deleted items
+    documents = Document.all_objects.filter(is_deleted=True).order_by('-deleted_at') # Added order_by
+    paginator = StandardResultsSetPagination() # Use the defined pagination class
+    result_page = paginator.paginate_queryset(documents, request)
+    serializer = DocumentSerializer(result_page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin]) # Changed to IsSuperAdmin
+def document_restore(request, id):
+    # Use all_objects manager to find the soft-deleted item
+    document = Document.all_objects.filter(id=id, is_deleted=True).first()
+    if not document:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Use the SoftDeleteModel's restore method
+    document.restore() # This will set is_deleted=False and update RecycleBinItem's restored_at
+    return Response({'detail': 'Restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin]) # Changed to IsSuperAdmin
+def document_permanent_delete(request, id):
+    # Use all_objects manager to find the soft-deleted item
+    document = Document.all_objects.filter(id=id, is_deleted=True).first()
+    if not document:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    document_pk = document.pk # Store pk before document object is deleted
+    # This will call the SoftDeleteModel's delete method.
+    # If request.user is super_admin, it will perform a hard delete.
+    document.delete(user=request.user)
+
+    # Also, delete the corresponding RecycleBinItem from the core app
+    # Note: Document uses BigAutoField, so object_id_int is used
+    RecycleBinItem.objects.filter( # Changed from all_objects to objects
+        content_type=ContentType.objects.get_for_model(Document),
+        object_id_int=document_pk 
+    ).delete()
+    return Response({'detail': 'Permanently deleted.'}, status=204)

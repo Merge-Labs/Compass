@@ -1,5 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
@@ -7,11 +9,14 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from drf_yasg.utils import swagger_auto_schema
+from django.contrib.contenttypes.models import ContentType # Add this import
 from drf_yasg import openapi
 import datetime
 
 from .models import Grant, GrantExpenditure
-from documents.models import Document  
+from documents.models import Document 
+from core.models import RecycleBinItem # For permanent delete
+from accounts.permissions import IsSuperAdmin 
 
 from .serializers import GrantSerializer, DocumentSerializer, GrantExpenditureSerializer
 from .filters import GrantFilter, GrantExpenditureFilter
@@ -225,3 +230,63 @@ def grant_expenditure_detail(request, grant_id):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def grant_soft_delete(request, id):
+    grant = Grant.objects.filter(id=id, is_deleted=False).first()
+    if not grant:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Use the SoftDeleteModel's soft_delete method
+    # This will also create a RecycleBinItem in the core app
+    grant.soft_delete(user=request.user)
+    return Response({'detail': 'Moved to recycle bin.'}, status=204)
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def grant_recycle_bin(request):
+    # Use all_objects manager to fetch soft-deleted items
+    grants = Grant.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+    paginator = PageNumberPagination()
+    paginator.page_size = 10  # or your preferred page size
+    result_page = paginator.paginate_queryset(grants, request)
+    serializer = GrantSerializer(result_page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsSuperAdmin])
+def grant_restore(request, id):
+   # Use all_objects manager to find the soft-deleted item
+    grant = Grant.all_objects.filter(id=id, is_deleted=True).first()
+    if not grant:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Use the SoftDeleteModel's restore method
+    grant.restore() # This will set is_deleted=False and update RecycleBinItem's restored_at
+
+    # If you need to set restored_by on the RecycleBinItem, the model's restore()
+    # method or the RecycleBinItem logic would need to  be enhanced to accept a user.
+    # For now, the grant object is restored, and RecycleBinItem.restored_at is set.
+    return Response({'detail': 'Restored.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def grant_permanent_delete(request, id):
+    # Use all_objects manager to find the soft-deleted item
+    grant = Grant.all_objects.filter(id=id, is_deleted=True).first()
+    if not grant:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    grant_pk = grant.pk # Store pk before grant object is deleted
+    # This will call the SoftDeleteModel's delete method.
+    # If request.user is super_admin, it will perform a hard delete.
+    grant.delete(user=request.user) 
+
+    # Also, delete the corresponding RecycleBinItem from the core app
+    RecycleBinItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(Grant),
+        object_id_uuid=grant_pk 
+    ).delete()
+    return Response({'detail': 'Permanently deleted.'}, status=204)

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'analytics',
     'notifications',
     'task_manager',
+    'core',
     'cloudinary',
     'rest_framework',
     'rest_framework.authtoken',
@@ -224,6 +225,10 @@ CELERY_BEAT_SCHEDULE = {
     'check_grant_deadlines_daily': {
         'task': 'notifications.tasks.check_grant_deadlines_and_notify_task',
         'schedule': crontab(minute='17', hour='15'),  
+    },
+     'cleanup-expired-bin-items-daily': {
+        'task': 'core.tasks.cleanup_expired_recycle_bin_items',
+        'schedule': crontab(hour=0, minute=0), # Runs daily at midnight
     },
 }
 
