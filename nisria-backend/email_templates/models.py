@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 import uuid
-class EmailTemplates(models.Model):
+from core.models import SoftDeleteModel
+class EmailTemplates(SoftDeleteModel):
     TEMPLATE_TYPE_CHOICES = [
         ('grant_application', 'Grant Application'),
         ('partnership_appeal', 'Partnership Appeal'),

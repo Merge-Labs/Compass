@@ -66,29 +66,8 @@ class GrantSerializer(serializers.ModelSerializer):
     program_name = serializers.CharField(source='program.__str__', read_only=True, allow_null=True)
     submitted_by = serializers.StringRelatedField()  # optional: make this User-readable
 
+    
     class Meta:
         model = Grant
-        fields = [
-            'id',
-            'organization_name',
-            'application_link',
-            'amount_currency',
-            'amount_value',
-            'program',
-            'program_name',
-            'notes',
-            'status',
-            'required_documents',
-            'submitted_documents',
-            'contact_tel',
-            'contact_email',
-            'location',
-            'organization_type',
-            'application_deadline',
-            'submitted_by',
-            'award_date',
-            'date_created',
-            'date_updated',
-            'expenditure',
-        ]
+        fields =  '__all__'
         ref_name = 'FullGrantSchema' # Ensure this was added from previous suggestions

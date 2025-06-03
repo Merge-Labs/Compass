@@ -3,10 +3,11 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 import uuid
 from datetime import timedelta
+from core.models import SoftDeleteModel
 
 User = get_user_model()
 
-class Document(models.Model):
+class Document(SoftDeleteModel):
     DOCUMENT_TYPE_CHOICES = [
         ('bank_statement', 'Bank Statement'),
         ('cbo_cert', 'CBO Certificate'),

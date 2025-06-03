@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from .models import User
 from .serializers import UserSerializer, RegisterUserSerializer, ChangePasswordSerializer
 from .permissions import IsSuperAdmin
@@ -92,6 +93,29 @@ def list_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
+@swagger_auto_schema(
+    method='DELETE',
+    operation_description="Delete a user account. Only accessible by Super Admins.",
+    responses={
+        204: 'User deleted successfully',
+        400: 'Bad Request (e.g., trying to delete self)',
+        401: 'Unauthorized',
+        403: 'Permission Denied',
+        404: 'User Not Found'
+    }
+)
+@api_view(['DELETE'])
+@permission_classes([IsSuperAdmin])
+def delete_user(request, pk):
+    user_to_delete = get_object_or_404(User, pk=pk)
+
+    if request.user == user_to_delete:
+        return Response({"error": "Super admin cannot delete their own account."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user_to_delete.delete()
+    return Response({"message": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer

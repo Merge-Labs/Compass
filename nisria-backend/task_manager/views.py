@@ -149,15 +149,23 @@ def update_task(request, pk):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# @api_view(['DELETE'])
-# @permission_classes([drf_permissions.IsAuthenticated, CanManageAllTasks])
-# def delete_task(request, pk):
-#     task = get_object_or_404(Task, pk=pk)
-#     # CanManageAllTasks already ensures only super_admin/management_lead can access this view.
-#     # No further object-level check is strictly needed here if only those roles can delete.
-#     task.delete()
-#     return Response(status=status.HTTP_204_NO_CONTENT)
-
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Delete a task. Only accessible by Super Admins or Management Leads.",
+    responses={
+        204: 'Task deleted successfully',
+        401: 'Unauthorized',
+        403: 'Permission Denied',
+        404: 'Task Not Found'
+    }
+)
+@api_view(['DELETE'])
+@permission_classes([drf_permissions.IsAuthenticated, CanManageAllTasks])
+def delete_task(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    # The CanManageAllTasks permission already ensures that only users with 'super_admin' or 'management_lead' roles can access this.
+    task.delete() # This will be a hard delete as Task model doesn't use SoftDeleteModel
+    return Response({"message": "Task deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 @swagger_auto_schema(
     method='post',
     responses={200: TaskSerializer()}

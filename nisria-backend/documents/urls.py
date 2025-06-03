@@ -13,4 +13,9 @@ urlpatterns = [
     path('access/grant/<uuid:pin>/', views.grant_bank_statement_access, name='grant-access'),
     path('access/validate/<uuid:pin>/', views.validate_bank_statement_access, name='validate-access'),
     path('preview/', views.all_documents_preview_list, name='all_documents_preview_list'),
+
+    path('<int:id>/soft-delete/', views.document_soft_delete, name='document-soft-delete'),
+    path('recycle-bin/', views.document_recycle_bin, name='document-recycle-bin'),
+    path('<int:id>/restore/', views.document_restore, name='document-restore'),
+    path('<int:id>/permanent-delete/', views.document_permanent_delete, name='document-permanent-delete'),
 ]
