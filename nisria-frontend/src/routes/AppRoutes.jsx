@@ -1,92 +1,40 @@
-// src/routes/AppRoutes.jsx
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthProvider';
-import { getDashboardRoute, ROLES } from '../constants/roles.js';
+import { ROLES } from "../constants/roles";
+import Dashboard from "../pages/dashboards/Dashboard";
+import ProtectedRoute from "./ProtectedRoute";
+import Login from "../pages/Login";
+import Landing from "../pages/Landing";
+// import Unauthorized from "../pages/Unauthorized"; // create this if you want
 
-// Import your page components
-import Landing from '../pages/Landing';
-import Login from '../pages/Login';
-import {SuperAdminDashboard} from '../pages/dashboards/SuperAdminDashboard';
-import {AdminDashboard} from '../pages/dashboards/AdminDashboard';
-import {ManagementLeadDashboard} from '../pages/dashboards/ManagementLeadDashboard';
-import {GrantOfficerDashboard} from '../pages/dashboards/GrantOfficerDashboard';
+import { Routes, Route, Navigate } from "react-router-dom";
 
-// Import ProtectedRoute
-import ProtectedRoute from './ProtectedRoute';
-
-const AppRoutes = () => {
-  const { isAuthenticated, user } = useAuth();
-
+function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route 
-        path="/" 
-        element={
-          isAuthenticated ? 
-            <Navigate to={getDashboardRoute(user?.role)} replace /> : 
-            <Landing />
-        } 
-      />
-      
-      <Route 
-        path="/login" 
-        element={
-          isAuthenticated ? 
-            <Navigate to={getDashboardRoute(user?.role)} replace /> : 
-            <Login />
-        } 
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}
+
+      <Route
+        path="/dashboard/compass"
+        element={<Navigate to="/dashboard/compass/dashboard" replace />}
       />
 
-      {/* Protected Dashboard Routes */}
-      <Route 
-        path="/dashboard/super-admin" 
+      <Route
+        path="/dashboard/compass/*"
         element={
-          <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
-            <SuperAdminDashboard />
+          <ProtectedRoute allowedRoles={[
+            ROLES.SUPER_ADMIN,
+            ROLES.ADMIN,
+            ROLES.MANAGEMENT_LEAD,
+            ROLES.GRANT_OFFICER
+          ]}>
+            <Dashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-
-      <Route 
-        path="/dashboard/admin" 
-        element={
-          <ProtectedRoute requiredRole={ROLES.ADMIN}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } 
-      />
-
-      <Route 
-        path="/dashboard/management-lead" 
-        element={
-          <ProtectedRoute requiredRole={ROLES.MANAGEMENT_LEAD}>
-            <ManagementLeadDashboard />
-          </ProtectedRoute>
-        } 
-      />
-
-      <Route 
-        path="/dashboard/grant-officer" 
-        element={
-          <ProtectedRoute requiredRole={ROLES.GRANT_OFFICER}>
-            <GrantOfficerDashboard />
-          </ProtectedRoute>
-        } 
-      />
-
-      {/* Catch-all route - redirect to appropriate dashboard or login */}
-      <Route 
-        path="*" 
-        element={
-          isAuthenticated ? 
-            <Navigate to={getDashboardRoute(user?.role)} replace /> : 
-            <Navigate to="/login" replace />
-        } 
-      />
+      {/* Add other routes here */}
     </Routes>
   );
-};
+}
 
 export default AppRoutes;

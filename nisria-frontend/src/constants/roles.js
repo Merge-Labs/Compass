@@ -10,25 +10,25 @@ export const ROLE_PERMISSIONS = {
   [ROLES.SUPER_ADMIN]: {
     label: 'Super Admin',
     description: 'Full system access',
-    dashboard: '/dashboard/super-admin',
+    dashboard: '/dashboard/compass/dashboard',
     permissions: ['all']
   },
   [ROLES.ADMIN]: {
     label: 'Admin',
     description: 'Administrative access',
-    dashboard: '/dashboard/admin',
+    dashboard: '/dashboard/compass/dashboard',
     permissions: ['manage_users', 'view_reports', 'manage_grants']
   },
   [ROLES.MANAGEMENT_LEAD]: {
     label: 'Management Lead',
     description: 'Management oversight',
-    dashboard: '/dashboard/management-lead',
+    dashboard: '/dashboard/compass/dashboard',
     permissions: ['view_reports', 'manage_team', 'approve_grants']
   },
   [ROLES.GRANT_OFFICER]: {
     label: 'Grant Officer',
     description: 'Grant processing',
-    dashboard: '/dashboard/grant-officer',
+    dashboard: '/dashboard/compass/dashboard',
     permissions: ['process_applications', 'view_grants']
   }
 };

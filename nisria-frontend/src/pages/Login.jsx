@@ -4,6 +4,7 @@ import { Eye, EyeOff, LogIn, AlertCircle, DoorOpen } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
 import { getDashboardRoute } from '../constants/roles';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import bgImage from '/bg.jpg';
 import logo from '/logo/Compass.png';
