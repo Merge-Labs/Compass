@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import {  Routes, Route, useParams, useNavigate } from "react-router-dom";
-import api from "../../services/api"; 
+import React, { useState, useEffect, useCallback } from "react"; // Added useCallback
+import { Routes, Route, useParams, useNavigate, Outlet } from "react-router-dom";
+import api from "../../services/api";
 import {
   Search,
   Filter,
@@ -15,6 +15,10 @@ import {
 import GrantsTable from "../../components/grants/GrantsTable";
 import StatCard from "../../components/grants/card";
 import GrantDetailModal from "../../components/grants/GrantDetailModal";
+import GrantForm from "../../components/grants/GrantForm";
+import GrantFormUpdate from "../../components/grants/GrantFormUpdate"; // Import the new update form
+import GrantExpendituresTable from "../../components/grants/GrantExpendituresTable"; // Import Expenditures Table
+import GrantExpenditureForm from "../../components/grants/GrantExpenditureForm"; // Import Expenditure Form
 
 const formatCurrency = (amount, currency = "USD") => {
   if (amount == null || isNaN(parseFloat(amount))) return "N/A";
@@ -26,10 +30,15 @@ const formatCurrency = (amount, currency = "USD") => {
   }).format(parseFloat(amount));
 };
 
+const API_PAGE_SIZE = 10; // Define a constant for the page size your API uses or you expect.
+
 // Main Component
 const GrantsDashboard = () => {
-  const { grantId } = useParams();
   const navigate = useNavigate();
+  const routeParams = useParams(); // Get the params object
+  const pathSegments = routeParams['*'] ? routeParams['*'].split('/') : [];
+  const primaryActionOrId = pathSegments[0]; 
+  const secondaryAction = pathSegments[1]; // e.g., 'edit'
 
   const [apiGrants, setApiGrants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,35 +62,219 @@ const GrantsDashboard = () => {
   const [grantDetailError, setGrantDetailError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    if (grantId) {
-      handleViewGrantDetails(grantId);
-    } else {
-      setIsGrantDetailModalOpen(false);
-      setSelectedGrantDetails(null);
+  // State for Grant Form Modal
+  const [isGrantFormOpen, setIsGrantFormOpen] = useState(false);
+
+  // State for Grant Update Form Modal
+  const [isGrantUpdateFormOpen, setIsGrantUpdateFormOpen] = useState(false);
+  const [grantToEditDetails, setGrantToEditDetails] = useState(null);
+  const [grantEditLoading, setGrantEditLoading] = useState(false);
+  const [grantEditError, setGrantEditError] = useState(null);
+
+  // State for Expenditures Tab
+  const [activeTab, setActiveTab] = useState("grants"); // "grants" or "expenditures"
+  const [expendituresData, setExpendituresData] = useState([]);
+  const [expendituresLoading, setExpendituresLoading] = useState(false);
+  const [expendituresError, setExpendituresError] = useState(null);
+  const [isExpenditureFormOpen, setIsExpenditureFormOpen] = useState(false);
+  const [expenditureToEdit, setExpenditureToEdit] = useState(null);
+
+  const loadAndShowGrantDetails = useCallback(async (currentGrantId) => {
+    setIsGrantDetailModalOpen(true);
+    setGrantDetailLoading(true);
+    setGrantDetailError(null);
+    setSelectedGrantDetails(null);
+    try {
+      const response = await api.get(`/api/grants/${currentGrantId}/`);
+      console.log("API response for grant details:", response.data);
+      setSelectedGrantDetails(response.data);
+    } catch (err) {
+      console.error("Failed to fetch grant details:", err);
+      setGrantDetailError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Could not load grant details."
+      );
+    } finally {
+      setGrantDetailLoading(false);
     }
-    // eslint-disable-next-line
-  }, [grantId]);
+  }, []); // Dependencies: stable setters, api assumed stable
+
+  const loadAndShowGrantForEditing = useCallback(async (grantIdForEdit) => {
+    setIsGrantUpdateFormOpen(true); // Open modal shell immediately
+    setGrantEditLoading(true);
+    setGrantEditError(null);
+    setGrantToEditDetails(null);
+    try {
+      const response = await api.get(`/api/grants/${grantIdForEdit}/`);
+      setGrantToEditDetails(response.data);
+    } catch (err) {
+      console.error("Failed to fetch grant for editing:", err);
+      setGrantEditError(err.response?.data?.detail || err.message || "Could not load grant for editing.");
+      // Potentially close modal or show error within it
+    } finally {
+      setGrantEditLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log(
+      "[GrantsDashboard useEffect] Triggered. ID:", primaryActionOrId, 
+      "Action:", secondaryAction,
+      "Current Edit ID:", grantToEditDetails?.id,
+      "Current View ID:", selectedGrantDetails?.id
+    );
+
+    if (primaryActionOrId === "newgrant") {
+      console.log("[GrantsDashboard useEffect] Branch: newgrant");
+      setIsGrantFormOpen(true);
+      setIsGrantDetailModalOpen(false);
+      setIsGrantUpdateFormOpen(false);
+      // No need to clear details here, as they are not relevant for 'newgrant'
+      // and clearing them might cause other effects if they were dependencies elsewhere.
+    } else if (primaryActionOrId && secondaryAction === "edit") {
+      console.log("[GrantsDashboard useEffect] Branch: edit grant ID:", primaryActionOrId);
+      // Only load if the ID changed or no grant is loaded for editing
+      if (!grantToEditDetails || grantToEditDetails.id !== parseInt(primaryActionOrId)) {
+        console.log("[GrantsDashboard useEffect] Edit - Loading data for ID:", primaryActionOrId);
+        loadAndShowGrantForEditing(primaryActionOrId);
+      }
+      setIsGrantUpdateFormOpen(true);
+      setIsGrantFormOpen(false);
+      setIsGrantDetailModalOpen(false);
+    } else if (primaryActionOrId) { // Viewing a grant
+      console.log("[GrantsDashboard useEffect] Branch: view grant ID:", primaryActionOrId);
+      // Only load if the ID changed or no grant is loaded for viewing
+      if (!selectedGrantDetails || selectedGrantDetails.id !== parseInt(primaryActionOrId)) {
+        console.log("[GrantsDashboard useEffect] View - Loading data for ID:", primaryActionOrId);
+        loadAndShowGrantDetails(primaryActionOrId);
+      }
+      setIsGrantDetailModalOpen(true);
+      setIsGrantFormOpen(false);
+      setIsGrantUpdateFormOpen(false);
+    } else {
+      // Base path /grants, close all modals
+      console.log("[GrantsDashboard useEffect] Branch: base path, closing modals");
+      setIsGrantFormOpen(false);
+      setIsGrantDetailModalOpen(false);
+      setIsGrantUpdateFormOpen(false);
+      // It's generally safer to clear details when modals are explicitly closed or navigated away from
+      // if (selectedGrantDetails) setSelectedGrantDetails(null); // Optional: clear if you want to ensure fresh load next time
+      // if (grantToEditDetails) setGrantToEditDetails(null); // Optional
+    }
+  }, [primaryActionOrId, secondaryAction, loadAndShowGrantDetails, loadAndShowGrantForEditing]);
+
+  const handleOpenGrantForm = () => {
+    navigate("/dashboard/compass/grants/newgrant");
+  };
+
+  const handleCloseGrantForm = () => {
+    navigate("/dashboard/compass/grants");
+  };
+
+  const handleGrantAdded = (newGrant) => {
+    console.log("Grant added:", newGrant);
+    fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus); // Refresh grants list
+    handleCloseGrantForm(); // Close the form modal
+  };
+
+  const handleEditGrantClick = (grantId) => {
+    console.log("[GrantsDashboard handleEditGrantClick] Navigating to edit for grantId:", grantId);
+    // Clear any previously viewed grant details to ensure edit form loads fresh if same ID was viewed
+    if (selectedGrantDetails && selectedGrantDetails.id === grantId) setSelectedGrantDetails(null);
+    navigate(`/dashboard/compass/grants/${grantId}/edit`);
+  };
+
+  const handleCloseGrantFormUpdate = () => {
+    navigate("/dashboard/compass/grants"); // Or to the grant detail page: `/dashboard/compass/grants/${grantToEditDetails.id}`
+  };
+
+  const handleGrantUpdated = (updatedGrant) => {
+    fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
+    // Optionally, update selectedGrantDetails if the user was viewing this grant
+    if (selectedGrantDetails && selectedGrantDetails.id === updatedGrant.id) setSelectedGrantDetails(updatedGrant);
+    // If the updated grant's status is 'approved', refresh expenditures
+    if (updatedGrant.status === 'approved' && activeTab === 'expenditures') {
+      fetchGrantExpenditures();
+    }
+    handleCloseGrantFormUpdate();
+  };
+
+  // Expenditures Tab Logic
+  const fetchGrantExpenditures = useCallback(async () => {
+    setExpendituresLoading(true);
+    setExpendituresError(null);
+    try {
+      const grantsResponse = await api.get("/api/grants/?limit=10000&status=approved"); // Fetch only approved grants
+      const approvedGrants = grantsResponse.data.results || [];
+
+      if (approvedGrants.length === 0) {
+        setExpendituresData([]);
+        setExpendituresLoading(false);
+        return;
+      }
+
+      const expenditurePromises = approvedGrants.map(grant =>
+        api.get(`/api/grants/${grant.id}/expenditure/`)
+          .then(response => ({ ...response.data, grantId: grant.id, grantName: grant.organization_name, amount_currency: grant.amount_currency }))
+          .catch(err => {
+            if (err.response && err.response.status === 404) { // Expenditure record might not exist yet
+              return { grantId: grant.id, grantName: grant.organization_name, amount_currency: grant.amount_currency, amount_used: null, estimated_depletion_date: null, isPlaceholder: true };
+            }
+            console.error(`Failed to fetch expenditure for grant ${grant.id}:`, err.message);
+            return { grantId: grant.id, grantName: grant.organization_name, amount_currency: grant.amount_currency, error: `Could not load for ${grant.organization_name}` };
+          })
+      );
+      
+      const settledExpenditures = await Promise.all(expenditurePromises);
+      setExpendituresData(settledExpenditures);
+
+    } catch (err) {
+      console.error("Failed to fetch grant expenditures:", err);
+      setExpendituresError("Could not load grant expenditures data.");
+      setExpendituresData([]);
+    } finally {
+      setExpendituresLoading(false);
+    }
+  }, []); 
+
+  useEffect(() => {
+    if (activeTab === "expenditures") {
+      fetchGrantExpenditures();
+    }
+    // No need to fetch grants here if activeTab is 'grants', as the other useEffect handles it.
+  }, [activeTab, fetchGrantExpenditures]);
 
   const fetchGrants = async (page = 1, search = "", status = "all") => {
     setLoading(true);
     setError(null);
     try {
+      let baseEndpoint = "/api/grants/";
       const params = new URLSearchParams();
       params.append("page", page);
-      if (search) params.append("search", search);
-      if (status !== "all") params.append("status", status);
 
-      const response = await api.get(`/api/grants/?${params.toString()}`);
+      const trimmedSearch = search.trim();
+
+      if (trimmedSearch !== "") {
+        baseEndpoint = "/api/grants/search/";
+        params.append("q", trimmedSearch); // Assuming 'q' is the query param for the search endpoint
+        if (status !== "all") {
+          params.append("status", status); // Assuming search endpoint can also filter by status
+        }
+      } else if (status !== "all") {
+        baseEndpoint = "/api/grants/filter/";
+        params.append("status", status);
+      }
+      // If search is empty AND status is "all", baseEndpoint remains "/api/grants/"
+
+      const response = await api.get(`${baseEndpoint}?${params.toString()}`);
       setApiGrants(response.data.results || []);
-      const itemsPerPageApi = response.data.results?.length || 10;
       setPaginationInfo({
         count: response.data.count || 0,
         next: response.data.next,
         previous: response.data.previous,
         currentPage: page,
-        totalPages:
-          Math.ceil((response.data.count || 0) / itemsPerPageApi) || 1,
+        totalPages: Math.ceil((response.data.count || 0) / API_PAGE_SIZE) || 1,
       });
     } catch (err) {
       console.error("Failed to fetch grants:", err);
@@ -98,7 +291,9 @@ const GrantsDashboard = () => {
 
   useEffect(() => {
     fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
-  }, [paginationInfo.currentPage, searchTerm, selectedStatus]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationInfo.currentPage, searchTerm, selectedStatus]); // fetchGrants is stable due to useCallback if we wrap it, but not currently wrapped
+
 
   const handleSelectGrant = (grantId) => {
     setSelectedGrants((prev) =>
@@ -126,6 +321,10 @@ const GrantsDashboard = () => {
     );
     try {
       await api.put(`/api/grants/${grantId}/`, { status: newStatus });
+      // If status changed to 'approved' and expenditures tab is active, refresh expenditures
+      if (newStatus === 'approved' && activeTab === 'expenditures') {
+        fetchGrantExpenditures();
+      }
     } catch (error) {
       console.error("Failed to update status:", error);
       setError(error.response?.data?.detail || "Failed to update status.");
@@ -139,7 +338,9 @@ const GrantsDashboard = () => {
         await api.delete(`/api/grants/${grantId}/`);
         setApiGrants((prev) => prev.filter((grant) => grant.id !== grantId));
         setSelectedGrants((prev) => prev.filter((id) => id !== grantId));
-        fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
+        // Refresh current view
+        if (activeTab === 'grants') fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
+        if (activeTab === 'expenditures') fetchGrantExpenditures();
       } catch (error) {
         console.error("Failed to delete grant:", error);
         setError(error.response?.data?.detail || "Failed to delete grant.");
@@ -147,32 +348,27 @@ const GrantsDashboard = () => {
     }
   };
 
-  const handleViewGrantDetails = async (grantId) => {
-    setIsGrantDetailModalOpen(true);
-    setGrantDetailLoading(true);
-    setGrantDetailError(null);
-    setSelectedGrantDetails(null); // Clear previous details
-    try {
-      navigate(`/dashboard/compass/grants/${grantId}`);
-      const response = await api.get(`/api/grants/${grantId}/`);
-      console.log("API response for grant details:", response.data);
-      setSelectedGrantDetails(response.data);
-    } catch (err) {
-      console.error("Failed to fetch grant details:", err);
-      setGrantDetailError(
-        err.response?.data?.detail ||
-          err.message ||
-          "Could not load grant details."
-      );
-    } finally {
-      setGrantDetailLoading(false);
-    }
-  };
-
   const handleCloseGrantDetailModal = () => {
     navigate("/dashboard/compass/grants");
-    setIsGrantDetailModalOpen(false);
-    setSelectedGrantDetails(null); // Clear details on close
+    // The useEffect hook will handle closing the modal when primaryActionOrId becomes null.
+    // Explicitly clear selected details to ensure clean state.
+    setSelectedGrantDetails(null);
+  };
+
+  const handleEditExpenditure = (expenditure) => {
+    setExpenditureToEdit(expenditure);
+    setIsExpenditureFormOpen(true);
+  };
+
+  const handleCloseExpenditureForm = () => {
+    setIsExpenditureFormOpen(false);
+    setExpenditureToEdit(null);
+  };
+
+  const handleExpenditureUpdated = () => {
+    // Refetch all expenditures to get the latest state
+    fetchGrantExpenditures();
+    handleCloseExpenditureForm();
   };
   const stats = {
     total: paginationInfo.count,
@@ -220,7 +416,10 @@ const GrantsDashboard = () => {
                 Manage and track grant applications and funding opportunities
               </p>
             </div>
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105">
+            <button
+              onClick={handleOpenGrantForm}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105"
+            >
               <Plus className="w-5 h-5" />
               <span>New Grant</span>
             </button>
@@ -320,26 +519,96 @@ const GrantsDashboard = () => {
             </div>
           )}
 
-        {/* Grants Table */}
-        <GrantsTable
-          grants={apiGrants}
-          loading={loading && apiGrants.length > 0} // Show table-specific loader if data already exists but is refreshing
-          error={null} // Error is handled above the table for now
-          selectedGrants={selectedGrants}
-          onSelectGrant={handleSelectGrant}
-          onSelectAll={handleSelectAll}
-          onStatusChange={handleStatusChange}
-          onViewDetails={handleViewGrantDetails} // Link to the actual handler
-          onEditGrant={(id) => console.log("Edit grant:", id)} // Placeholder
-          onDeleteGrant={handleDeleteGrant}
-          currentPage={paginationInfo.currentPage}
-          totalPages={paginationInfo.totalPages}
-          onPageChange={handlePageChange}
-          totalResults={paginationInfo.count}
-        />
+        {/* Tab Navigation */}
+        <div className="mb-6 flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("grants")}
+            className={`px-6 py-3 text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none ${
+              activeTab === "grants"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Grants List
+          </button>
+          <button
+            onClick={() => setActiveTab("expenditures")}
+            className={`px-6 py-3 text-sm font-medium transition-colors duration-150 ease-in-out focus:outline-none ${
+              activeTab === "expenditures"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Grant Expenditures
+          </button>
+        </div>
+
+        {/* Conditional Content Based on Tab */}
+        {activeTab === "grants" && (
+          <GrantsTable
+            grants={apiGrants}
+            loading={loading && apiGrants.length === 0} // Show full loader only on initial load
+            error={null} // Error is handled above the table
+            selectedGrants={selectedGrants}
+            onSelectGrant={handleSelectGrant}
+            onSelectAll={handleSelectAll}
+            onStatusChange={handleStatusChange}
+            onViewDetails={(id) => navigate(`/dashboard/compass/grants/${id}`)}
+            onEditGrant={handleEditGrantClick}
+            onDeleteGrant={handleDeleteGrant}
+            currentPage={paginationInfo.currentPage}
+            totalPages={paginationInfo.totalPages}
+            onPageChange={handlePageChange}
+            totalResults={paginationInfo.count}
+          />
+        )}
+
+        {activeTab === "expenditures" && (
+          <GrantExpendituresTable
+            expenditures={expendituresData}
+            loading={expendituresLoading}
+            error={expendituresError}
+            onEditExpenditure={handleEditExpenditure}
+          />
+        )}
 
         {/* Nested routes for modal */}
         <Routes>
+          {/* Order matters: specific 'newgrant' before dynamic ':grantId' */}
+          <Route
+            path="newgrant"
+            element={
+              <>
+                {/* Diagnostic log in the console */}
+                {/* {console.log(
+                  `[GrantsDashboard] Route "/newgrant" element render attempt. pathSuffix: ${pathSuffix}, isGrantFormOpen: ${isGrantFormOpen}`
+                )} */}
+                {isGrantFormOpen ? (
+                  <GrantForm
+                    isOpen={true} // Explicitly true here as per condition
+                    onClose={handleCloseGrantForm}
+                    onGrantAdded={handleGrantAdded}
+                  />
+                ) : null}
+              </>
+            }
+          />
+          <Route
+            path=":grantId/edit" // Matches the navigation for editing
+            element={
+              isGrantUpdateFormOpen ? (
+                <>
+                <GrantFormUpdate
+                  isOpen={true}
+                  onClose={handleCloseGrantFormUpdate}
+                  onGrantUpdated={handleGrantUpdated}
+                  existingGrant={grantToEditDetails} // Pass the grant data to be edited
+                  // You might also pass loading/error states for the form if needed
+                />
+                </>
+              ) : null // Or a loader if grantToEditDetails is still loading
+            }
+          />
           <Route
             path=":grantId"
             element={
@@ -353,6 +622,17 @@ const GrantsDashboard = () => {
             }
           />
         </Routes>
+        {/* Modal for Expenditure Form - not tied to react-router routes here */}
+        {isExpenditureFormOpen && expenditureToEdit && (
+          <GrantExpenditureForm
+            isOpen={isExpenditureFormOpen}
+            onClose={handleCloseExpenditureForm}
+            onExpenditureUpdated={handleExpenditureUpdated}
+            existingExpenditure={expenditureToEdit}
+          />
+        )}
+
+        <Outlet /> {/* If you have other nested routes not handled by the modal logic */}
       </div>
     </div>
   );

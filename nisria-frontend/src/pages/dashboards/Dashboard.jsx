@@ -87,7 +87,7 @@ const Dashboard = () => {
             <Route path="/" element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardSection />} />
             <Route path="grants/*" element={<GrantsDashboard />} />
-            <Route path="programs" element={<ProgramsDashboard />} />
+            <Route path="programs/*" element={<ProgramsDashboard />} />
             {/* Add more <Route path="section" ... /> as needed */}
           </Routes>
         </main>
