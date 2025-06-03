@@ -4,6 +4,7 @@ from .views import (
     create_task,
     retrieve_task,
     update_task,
+    delete_task,
     mark_task_as_complete,
     change_task_status
 )
@@ -11,9 +12,9 @@ from .views import (
 urlpatterns = [
     path('', list_tasks, name='task-list'),
     path('create/', create_task, name='task-create'),
-    path('<int:pk>/', retrieve_task, name='task-detail'),
-    path('<int:pk>/update/', update_task, name='task-update'),
-    # path('<int:pk>/delete/', delete_task, name='task-delete'),
-    path('<int:pk>/mark_complete/', mark_task_as_complete, name='task-mark-complete'),
-    path('<int:pk>/change_status/', change_task_status, name='task-change-status'),
+    path('<uuid:pk>/', retrieve_task, name='task-detail'),
+    path('<uuid:pk>/update/', update_task, name='task-update'),
+    path('<uuid:pk>/delete/', delete_task, name='task-delete'),
+    path('<uuid:pk>/mark_complete/', mark_task_as_complete, name='task-mark-complete'),
+    path('<uuid:pk>/change_status/', change_task_status, name='task-change-status'),
 ]

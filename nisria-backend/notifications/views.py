@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from drf_yasg.utils import swagger_auto_schema
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 
 from .models import Notification
@@ -83,3 +84,21 @@ def mark_all_notifications_as_read(request):
 def unread_notifications_count(request):
     count = Notification.objects.filter(recipient=request.user, read_status=False).count()
     return Response({"unread_count": count}, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Delete a specific notification. Users can only delete their own notifications.",
+    responses={
+        204: 'Notification deleted successfully',
+        401: 'Unauthorized',
+        403: 'Permission Denied (should not happen if logic is correct, as 404 will be raised)',
+        404: 'Notification Not Found or access denied'
+    }
+)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_notification(request, notification_id):
+    # get_object_or_404 will ensure the notification exists AND belongs to the request.user
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    notification.delete() # Hard delete as Notification model doesn't use SoftDeleteModel
+    return Response({"message": "Notification deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
