@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, LogOut, Menu as MenuIcon, Bell } from 'lucide-react';
 import api from '../../services/api'; // Import the configured Axios instance
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
+
+
+
 
 const Navbar = ({ user, onLogout, onToggleSmSidebar, appTheme, appName = "Nisria's Compass" }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -28,6 +32,20 @@ const Navbar = ({ user, onLogout, onToggleSmSidebar, appTheme, appName = "Nisria
     // Implement your search logic here
   };
 
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper functions moved from Sidebar
+  const getInitials = (name) => {
+    if (!name || typeof name !== 'string' || name.trim() === '') return 'U';
+    const names = name.trim().split(/\s+/);
+    if (names.length === 1) return names[0].substring(0, Math.min(2, names[0].length)).toUpperCase();
+    return (names[0][0] + (names.length > 1 ? names[names.length - 1][0] : '')).toUpperCase();
+  };
+
+  const formatRole = (role) => {
+    if (!role || typeof role !== 'string') return 'User Role';
+    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
   // --- Notifications Logic ---
   const fetchNotifications = async () => {
     const token = localStorage.getItem('access_token'); // Check token from localStorage
@@ -298,19 +316,36 @@ const Navbar = ({ user, onLogout, onToggleSmSidebar, appTheme, appName = "Nisria
             )}
           </div>
 
-          {/* Logout Button */}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                appTheme === 'dark'
-                  ? 'bg-red-900/20 border-red-800 text-red-400 hover:bg-red-900/30'
-                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-              }`}>
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          )}
+          {/* Profile Section (Moved from Sidebar) */}
+          <div
+            className={`flex items-center gap-3 cursor-pointer`}
+            onClick={() => navigate('/dashboard/compass/settings')} // Navigate to settings on click
+            title={user?.full_name || 'User Profile'} // Add title for hover
+          >
+            {user?.profile_picture_url ? (
+              <img
+                src={user.profile_picture_url}
+                alt="Profile"
+                className="w-10 h-10 rounded-full object-cover shrink-0" // Simplified size for navbar
+              />
+            ) : (
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-p2 to-p5 flex items-center justify-center shrink-0`}> {/* Simplified size */}
+                <span className={`text-white font-medium text-sm`}> {/* Simplified size */}
+                  {getInitials(user?.full_name)}
+                </span>
+              </div>
+            )}
+            {/* Name and Role - Show on larger screens */}
+            <div className={`text-left hidden lg:block`}> {/* Hide on md, show on lg+ */}
+              <p className={`font-medium text-sm ${appTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {user?.full_name || 'User Name'}
+              </p>
+              <p className={`text-xs ${appTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                {formatRole(user?.role) || 'User Role'}
+              </p>
+            </div>
+          </div>
+          
         </div>
       </div>
 

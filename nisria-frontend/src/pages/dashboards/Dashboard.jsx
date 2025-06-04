@@ -6,6 +6,12 @@ import GrantsDashboard from "../../sections/grants/GrantsSection";
 import ProgramsDashboard from "../../sections/programs/ProgramsDashboard";
 import Sidebar from "../../components/dashboard/sidebar";
 import Navbar from "../../components/dashboard/Navbar";
+import Grants from '../../sections/grants/Grants';
+import TasksSection from "../../sections/tasks/TasksSection";
+import DocumentsPage from "../../sections/documents/DocumentsPage";
+import Team from '../../sections/team/Team'
+import Settings from "../../sections/settings/Settings";
+import NotificationsPage from "../../sections/notifications/NotificationsPage";
 import GrantDetailModal from "../../components/grants/GrantDetailModal";
 import { Loader2 } from "lucide-react";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
@@ -13,7 +19,13 @@ import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-
 const SECTION_COMPONENTS = {
   dashboard: DashboardSection,
   grants: GrantsDashboard,
+  // grants: Grants,
   programs: ProgramsDashboard,
+  documents: DocumentsPage,
+  team: Team,
+  tasks: TasksSection,
+  settings: Settings,
+  notifications: NotificationsPage,
   // Add more mappings as you add more sections
 };
 
@@ -87,7 +99,13 @@ const Dashboard = () => {
             <Route path="/" element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardSection />} />
             <Route path="grants/*" element={<GrantsDashboard />} />
+            {/* <Route path="grants/*" element={<Grants />} /> */}
             <Route path="programs/*" element={<ProgramsDashboard />} />
+            <Route path="documents/*" element={<DocumentsPage />} />
+            <Route path="team/*" element={<Team />} />
+            <Route path="tasks/*" element={<TasksSection />} />
+            <Route path="settings/*" element={<Settings />} />
+            <Route path="notifications/*" element={<NotificationsPage />} />
             {/* Add more <Route path="section" ... /> as needed */}
           </Routes>
         </main>

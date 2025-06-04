@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeProvider';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useAuth } from '../../context/AuthProvider';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  FolderOpen, 
-  CheckSquare, 
-  Bell, 
-  Users, 
+import {
+  LayoutDashboard,
+  FileText,
+  FolderOpen,
+  CheckSquare,
+  Bell,
+  Users,
   File,
   Moon,
   Sun,
   Settings,
   WavesLadder,
   LogOut,
+  Home, // Assuming Home icon for Dashboard
 } from 'lucide-react';
 
 const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
@@ -21,6 +23,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
   const { user, logout } = useAuth();
   const [activeItem, setActiveItem] = useState('Dashboard');
   const [isHoveredForMd, setIsHoveredForMd] = useState(false);
+  const navigate = useNavigate(); 
   const [isMdScreen, setIsMdScreen] = useState(false);
 
   useEffect(() => {
@@ -41,35 +44,20 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
     await logout();
   };
 
+
   const initialMenuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard' },
+    { icon: LayoutDashboard, label: 'Dashboard' }, // Using LayoutDashboard as per your code
     { icon: WavesLadder, label: 'Programs' },
     { icon: FileText, label: 'Grants' },
     { icon: FolderOpen, label: 'Documents' },
     { icon: CheckSquare, label: 'Tasks' },
     { icon: Bell, label: 'Notifications' },
-    { icon: File, label: 'Templates' },
   ];
 
   const menuItems = [...initialMenuItems];
 
   // Conditionally add "Users" item for super_admin
-  if (user?.role === 'super_admin') {
-    const usersItem = { icon: Users, label: 'Users' };
-    // Insert "Users" after "Notifications" or before "Templates"
-    const notificationsIndex = menuItems.findIndex(item => item.label === 'Notifications');
-    if (notificationsIndex !== -1) {
-      menuItems.splice(notificationsIndex + 1, 0, usersItem);
-    } else {
-      // Fallback: if "Notifications" is not found, try to insert before "Templates"
-      const templatesIndex = menuItems.findIndex(item => item.label === 'Templates');
-      if (templatesIndex !== -1) {
-        menuItems.splice(templatesIndex, 0, usersItem);
-      } else {
-        menuItems.push(usersItem); // Add to end as last resort
-      }
-    }
-  }
+  if (user?.role === 'super_admin') { menuItems.push({ icon: Users, label: 'Team' }); }
 
   const handleItemClick = (label) => {
     setActiveItem(label);
@@ -149,58 +137,24 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
             ${isHoveredForMd && isMdScreen ? 'md:p-6' : 'md:p-3 md:py-4'} lg:p-6
           `}>
             {/* Logo and Title */}
-            <div className={`flex items-center gap-2 mb-4 pb-2 
+            <div className={`flex items-center gap-2 mb-1 pb-0
               ${isHoveredForMd && isMdScreen ? 'md:pl-2' : 'md:justify-center md:pl-0'} lg:pl-2 lg:justify-start
             `}>
               <div className="w-12 h-12 md:w-10 md:h-10 lg:w-16 lg:h-16 shrink-0">
                 <img src="/logo/compass-logo.png" alt="Compass logo" className="object-contain w-full h-full" />
               </div>
               <div className={`
-                font-bold text-lg 
+                font-semibold text-lg 
                 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
                 ${showLabelClass}
               `}>
-                Compass
-              </div>
+              <span className="text-red-500">C</span>ompass
             </div>
-
-            {/* Profile Section */}
-            <div className={`flex items-center gap-3 pt-2 lg:pl-4 cursor-pointer
-              ${isHoveredForMd && isMdScreen ? 'md:justify-start' : 'md:flex-col md:items-center md:gap-1'} 
-              lg:flex-col lg:justify-start lg:items-start lg:gap-3
-            `}>
-              {user?.profile_picture_url ? (
-                <img 
-                  src={user.profile_picture_url} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full object-cover shrink-0 
-                             md:w-8 md:h-8 lg:w-10 lg:h-10"
-                />
-              ) : (
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-p2 to-p5 flex items-center justify-center shrink-0
-                                 md:w-8 md:h-8 lg:w-10 lg:h-10`}>
-                  <span className={`text-white font-medium text-sm
-                                    md:text-xs lg:text-sm`}>
-                    {getInitials(user?.full_name)}
-                  </span>
-                </div>
-              )}
-              <div className={`
-                text-left
-                ${showLabelClass}
-                ${isHoveredForMd && isMdScreen ? 'md:text-left' : ''} `}>
-                <p className={`font-medium text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  {user?.full_name || 'User Name'}
-                </p>
-                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {formatRole(user?.role) || 'User Role'}
-                </p>
-              </div>
             </div>
           </div>
 
           {/* Navigation Menu */}
-          <nav className={`flex-1 p-4 pt-6 
+          <nav className={`flex-1 p-4 pt-1
             ${isHoveredForMd && isMdScreen ? 'md:p-4 md:pt-6' : 'md:p-2 md:pt-4'} lg:p-4 lg:pt-10
           `}>
             <ul className="space-y-2">
@@ -257,8 +211,10 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
               ${isHoveredForMd && isMdScreen ? '' : 'md:items-center'} lg:items-stretch
             `}>
               {/* Settings Button */}
-              <button 
+              <button
+                type="button" // Added type="button"
                 title="Settings"
+                onClick={() => handleItemClick('Settings')} // Use handleItemClick for navigation
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 hover:cursor-pointer
                   ${isHoveredForMd && isMdScreen ? '' : 'md:justify-center'} lg:justify-start
                   ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-s3' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
@@ -271,6 +227,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
                 onClick={globalToggleTheme}
                 title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 hover:cursor-pointer
+                type="button" // Added type="button"
                   ${isHoveredForMd && isMdScreen ? '' : 'md:justify-center'} lg:justify-start
                   ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-s3' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
               >
@@ -281,6 +238,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
               <button 
                 title="logout"
                 onClick={handleLogout}
+                type="button" // Added type="button"
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 hover:cursor-pointer
                   ${isHoveredForMd && isMdScreen ? '' : 'md:justify-center'} lg:justify-start
                   ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-s3' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
