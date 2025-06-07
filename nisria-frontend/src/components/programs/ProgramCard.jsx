@@ -1,8 +1,8 @@
 import React from 'react';
 import ProgramBaseCard from './ProgramBaseCard';
-import { BookOpen, DollarSign, Heart, Briefcase, Users, ChevronRight } from 'lucide-react';
+import { BookOpen, DollarSign, Heart, Briefcase, Users, ChevronRight, Edit } from 'lucide-react';
 
-const ProgramCard = ({ program, onSelect }) => {
+const ProgramCard = ({ program, onSelect, onEdit }) => { // Added onEdit prop
   const programIcons = {
     education: BookOpen,
     microfund: DollarSign,
@@ -34,7 +34,7 @@ const ProgramCard = ({ program, onSelect }) => {
   };
 
   return (
-    <ProgramBaseCard className="p-6 hover:shadow-lg transition-all duration-200" onClick={() => onSelect(program)}>
+    <ProgramBaseCard className="p-6 hover:shadow-lg transition-all duration-200 flex flex-col justify-between">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
@@ -45,7 +45,17 @@ const ProgramCard = ({ program, onSelect }) => {
             <p className="text-sm text-gray-500">{divisionNameDisplayString} Division</p>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          {/* Edit Button */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEdit(program); }} // Prevent card click when editing
+            className="p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <ChevronRight className="w-5 h-5 text-gray-400 cursor-pointer" onClick={() => onSelect(program)} /> {/* Keep Chevron for navigation */}
+        </div>
+
       </div>
 
       <p className="text-gray-600 mb-4 text-sm">{programDescriptionString}</p>

@@ -1,38 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import { X, AlertCircle, User, Calendar as CalendarIcon, MapPin, Phone, Info, CheckSquare, Users as GenderIcon } from 'lucide-react';
-
-const initialFormData = {
-  child_name: '',
-  age: '',
-  gender: 'prefer_not_to_say', // Default to a valid backend value
-  date_joined: '', // Changed from date_found to date_joined
-  place_found: '',
-  rescuer_contact: '',
-  circumstances: '',
-  is_reunited: false,
-};
+import { X, AlertCircle, User, Calendar as CalendarIcon, MapPin, Phone, Info, Users as GenderIcon, Loader2 } from 'lucide-react';
 
 const genderOptions = [
-  { value: 'male', label: 'Male' }, // Changed value to lowercase
-  { value: 'female', label: 'Female' }, // Changed value to lowercase
-  { value: 'other', label: 'Other' }, // Changed value to lowercase
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' }, // Changed value and label
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
 ];
 
-const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId, divisionName }) => {
-  const [formData, setFormData] = useState(initialFormData);
+const RescueBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated, existingBeneficiary, programId, divisionName }) => {
+  const [formData, setFormData] = useState({
+    child_name: '',
+    age: '',
+    gender: 'prefer_not_to_say',
+    date_joined: '',
+    place_found: '',
+    rescuer_contact: '',
+    circumstances: '',
+    is_reunited: false,
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(initialFormData);
-      setErrors({});
+  const resetForm = (beneficiary) => {
+    if (beneficiary) {
+      setFormData({
+        child_name: beneficiary.child_name || '',
+        age: beneficiary.age || '',
+        gender: beneficiary.gender || 'prefer_not_to_say',
+        date_joined: beneficiary.date_joined ? beneficiary.date_joined.split('T')[0] : '',
+        place_found: beneficiary.place_found || '',
+        rescuer_contact: beneficiary.rescuer_contact || '',
+        circumstances: beneficiary.circumstances || '',
+        is_reunited: beneficiary.is_reunited || false,
+      });
+    } else {
+      setFormData({
+        child_name: '',
+        age: '',
+        gender: 'prefer_not_to_say',
+        date_joined: '',
+        place_found: '',
+        rescuer_contact: '',
+        circumstances: '',
+        is_reunited: false,
+      });
     }
-  }, [isOpen]);
+    setErrors({});
+  };
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && existingBeneficiary) {
+      resetForm(existingBeneficiary);
+    }
+  }, [isOpen, existingBeneficiary]);
+
+  if (!isOpen || !existingBeneficiary) return null;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,9 +70,9 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
   const validateForm = () => {
     const newErrors = {};
     if (!formData.child_name.trim()) newErrors.child_name = "Child's name is required.";
-    if (!formData.age.trim()) newErrors.age = "Age is required.";
-    else if (isNaN(parseInt(formData.age)) || parseInt(formData.age) < 0) newErrors.age = "Age must be a valid number.";
-    if (!formData.date_joined) newErrors.date_joined = "Date joined is required."; // Changed validation key
+    if (formData.age === '' || formData.age === null) newErrors.age = "Age is required.";
+    else if (isNaN(parseInt(formData.age)) || parseInt(formData.age) < 0) newErrors.age = "Age must be a valid positive number.";
+    if (!formData.date_joined) newErrors.date_joined = "Date joined is required.";
     if (!formData.place_found.trim()) newErrors.place_found = "Place found is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,8 +80,8 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm() || !programId || !divisionName) {
-      setErrors(prev => ({ ...prev, form: "Program or Division information is missing." }));
+    if (!validateForm() || !existingBeneficiary?.id || !programId || !divisionName) {
+      setErrors(prev => ({ ...prev, form: "Beneficiary ID, Program or Division information is missing." }));
       return;
     }
     setIsSubmitting(true);
@@ -66,18 +90,19 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
       ...formData,
       program_id: programId,
       age: parseInt(formData.age),
+      date_joined: formData.date_joined || null,
     };
 
     try {
-      const endpoint = `/api/programs/${divisionName.toLowerCase()}/rescue/`;
-      const response = await api.post(endpoint, payload);
-      onBeneficiaryAdded(response.data);
+      const endpoint = `/api/programs/${divisionName.toLowerCase()}/rescue/${existingBeneficiary.id}/`;
+      const response = await api.put(endpoint, payload);
+      if (onBeneficiaryUpdated) onBeneficiaryUpdated(response.data);
       onClose();
     } catch (error) {
-      console.error("Error adding rescue beneficiary:", error.response?.data || error.message);
+      console.error("Error updating rescue beneficiary:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
       if (typeof backendErrors === 'object' && backendErrors !== null) {
-        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Submission failed. Please check fields."}));
+        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Update failed. Please check fields."}));
       } else {
         setErrors({ form: "An unexpected error occurred." });
       }
@@ -86,16 +111,21 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
     }
   };
 
+  const handleCancelAndClose = () => {
+    resetForm(existingBeneficiary);
+    onClose();
+  };
+
   const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 placeholder-gray-500";
   const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5";
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && handleCancelAndClose()}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Add Rescue Beneficiary</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
+          <h3 className="text-xl font-bold text-gray-800">Update Rescue Beneficiary</h3>
+          <button onClick={handleCancelAndClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -126,9 +156,9 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="date_joined" className={labelClasses}>Date Joined*</label> {/* Changed label */}
-              <div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="date_joined" name="date_joined" value={formData.date_joined} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div> {/* Changed name and id */}
-              {errors.date_joined && <p className={errorClasses}><AlertCircle size={14}/>{errors.date_joined}</p>} {/* Changed error key */}
+              <label htmlFor="date_joined" className={labelClasses}>Date Joined*</label>
+              <div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="date_joined" name="date_joined" value={formData.date_joined} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>
+              {errors.date_joined && <p className={errorClasses}><AlertCircle size={14}/>{errors.date_joined}</p>}
             </div>
             <div>
               <label htmlFor="place_found" className={labelClasses}>Place Found*</label>
@@ -155,17 +185,17 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
           </div>
 
           <div className="flex justify-end gap-4 pt-5 mt-6 border-t border-gray-200">
-            <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
+            <button type="button" onClick={handleCancelAndClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium flex items-center justify-center min-w-[150px]">
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Adding...
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Updating...
                 </>
               ) : (
-                "Add Beneficiary"
+                "Update Beneficiary"
               )}
             </button>
           </div>
@@ -175,4 +205,4 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
   );
 };
 
-export default RescueBeneficiaryForm;
+export default RescueBeneficiaryUpdateForm;

@@ -17,7 +17,7 @@ import api from '../../services/api';
 
 const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedWeekStartDate, setSelectedWeekStartDate] = useState(null); // State to hold the start date of the selected week
   const [grantsData, setGrantsData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -104,7 +104,7 @@ const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
     newDate.setDate(1); // Avoid issues with month lengths
     newDate.setMonth(currentDate.getMonth() + direction);
     setCurrentDate(newDate);
-    setSelectedDate(null);
+    setSelectedWeekStartDate(null); // Clear selected week when changing month
   };
 
   const getGrantsForDate = (day) => {
@@ -116,26 +116,66 @@ const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
   const hasGrants = (day) => getGrantsForDate(day).length > 0;
 
   const getDominantStatus = (day) => {
+    // Only calculate dominant status for days with grants
+    if (!day || !hasGrants(day)) return null;
+
     const grants = getGrantsForDate(day);
     if (grants.length === 0) return null;
+    // Prioritize award date, then standard statuses
     const priorities = ['award', 'approved', 'applied', 'pending', 'denied', 'expired'];
     for (const priority of priorities) {
       const grant = grants.find(g => (g.type === 'award' && priority === 'award') || g.status === priority);
       if (grant) return grant.statusConfig;
     }
+    // Fallback to the first grant's status config if no priority match (shouldn't happen with 'pending' fallback)
     return grants[0].statusConfig;
   };
+
+  // Helper to get the start date (Sunday) of a week
+  const getWeekStartDate = (date) => {
+    const d = new Date(date);
+    const dayOfWeek = d.getDay(); // 0 (Sun) - 6 (Sat)
+    const diff = dayOfWeek; // Difference to get to Sunday
+    d.setDate(d.getDate() - diff);
+    return d;
+  };
+
+  // Memoized function to get all grants for the selected week
+  const getGrantsForSelectedWeek = useMemo(() => {
+    if (!selectedWeekStartDate) return [];
+    const grantsInWeek = [];
+    const weekStart = new Date(selectedWeekStartDate);
+
+    for (let i = 0; i < 7; i++) {
+      const currentDateInWeek = new Date(weekStart);
+      currentDateInWeek.setDate(weekStart.getDate() + i);
+      const dateKey = currentDateInWeek.toISOString().split('T')[0]; // YYYY-MM-DD
+      if (grantsByDate[dateKey]) {
+        grantsInWeek.push(...grantsByDate[dateKey]);
+      }
+    }
+    // Sort grants by date and then maybe type (deadline before award) for better readability
+    grantsInWeek.sort((a, b) => {
+      const dateA = new Date(a.application_deadline || a.award_date);
+      const dateB = new Date(b.application_deadline || b.award_date);
+      if (dateA - dateB !== 0) return dateA - dateB;
+      if (a.type === 'deadline' && b.type === 'award') return -1;
+      if (a.type === 'award' && b.type === 'deadline') return 1;
+      return 0;
+    });
+    return grantsInWeek;
+  }, [selectedWeekStartDate, grantsByDate]); // Depend on selectedWeekStartDate and grantsByDate
 
   const formatCurrency = (amount, currency) => new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const mainBgColor = appTheme === 'light' ? 'bg-white' : 'bg-[var(--color-s1)]';
+  const mainBgColor = appTheme === 'light' ? 'bg-white' : 'bg-[var(--color-black/70)] ';
   const textColor = appTheme === 'light' ? 'text-gray-900' : 'text-gray-100';
   const subTextColor = appTheme === 'light' ? 'text-gray-700' : 'text-gray-300';
   const mutedTextColor = appTheme === 'light' ? 'text-gray-500' : 'text-gray-400';
-  const borderColor = appTheme === 'light' ? 'border-gray-100' : 'border-gray-700';
+  const borderColor = appTheme === 'light' ? 'border-gray-100' : 'border-gray-200';
   const hoverBgColor = appTheme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-gray-700/50';
 
   return (
@@ -176,23 +216,26 @@ const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
         {error && <div className={`text-center py-8 ${appTheme === 'light' ? 'text-red-500' : 'text-red-400'}`}><AlertTriangle className="w-8 h-8 mx-auto mb-2" />{error}</div>}
         {!isLoading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 h-full">
-            <div className="space-y-2 md:space-y-4 flex flex-col">
+            <div className="space-y-2 md:space-y-4 flex flex-col"> {/* Removed h-full */}
               <div className="grid grid-cols-7 gap-1">
                 {weekdays.map(day => <div key={day} className={`text-center text-xs md:text-sm font-medium ${mutedTextColor} py-1 md:py-2`}>{day}</div>)}
               </div>
-              <div className="grid grid-cols-7 gap-1 flex-grow">
+              <div className="grid grid-cols-7 gap-1"> {/* Removed flex-grow to make the day grid compact */}
                 {getCalendarDays().map((day, index) => {
                   const grants = getGrantsForDate(day);
                   const dominantStatus = getDominantStatus(day);
-                  const isSelected = selectedDate === day;
+                  const dayDate = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
+                  const weekStartForDay = dayDate ? getWeekStartDate(dayDate) : null;
+                  // Check if the day's week matches the selected week
+                  const isSelectedWeek = selectedWeekStartDate && weekStartForDay && weekStartForDay.getTime() === selectedWeekStartDate.getTime();
                   return (
                     <button
                       key={index}
-                      onClick={() => day && setSelectedDate(day)}
+                      onClick={() => day && setSelectedWeekStartDate(getWeekStartDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day)))}
                       disabled={!day}
                       className={`relative aspect-square flex items-center justify-center text-xs md:text-sm font-medium rounded-md md:rounded-lg transition-all duration-200
                         ${!day ? 'invisible' : (appTheme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-gray-700/50')}
-                        ${isSelected ? (appTheme === 'light' ? 'ring-2 ring-blue-500 bg-blue-50' : 'ring-2 ring-blue-400 bg-blue-900/30') : ''}
+                        ${isSelectedWeek ? (appTheme === 'light' ? 'ring-2 ring-blue-500 bg-blue-50' : 'ring-2 ring-blue-400 bg-blue-900/30') : ''}
                         ${hasGrants(day) && dominantStatus ? `${dominantStatus.color} text-white shadow-lg ${dominantStatus.glowColor} hover:shadow-xl` : (appTheme === 'light' ? 'text-gray-700' : 'text-gray-300')}
                       `}
                     >
@@ -208,14 +251,18 @@ const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
               </div>
             </div>
 
-            <div className="space-y-2 md:space-y-4 flex flex-col h-full">
+            <div className="space-y-2 md:space-y-4 flex flex-col"> {/* Removed h-full */}
               <h5 className={`text-md md:text-lg font-semibold ${textColor}`}>
-                {selectedDate ? `Grants for ${monthNames[currentDate.getMonth()]} ${selectedDate}` : 'Select a date'}
+                {selectedWeekStartDate ?
+                  `Grants for the week of ${monthNames[selectedWeekStartDate.getMonth()]} ${selectedWeekStartDate.getDate()}`
+                  : 'Select a date'}
               </h5>
-              <div className="space-y-3 flex-grow overflow-y-auto pr-1">
-                {selectedDate ? (
-                  getGrantsForDate(selectedDate).length > 0 ? (
-                    getGrantsForDate(selectedDate).map((grant, index) => {
+              {/* Scrollable container for grants list or messages - Added max-h-full */}
+              <div className="space-y-3 flex-grow overflow-y-auto pr-1 min-h-0 max-h-full">
+                {selectedWeekStartDate ? (
+                  getGrantsForSelectedWeek.length > 0 ? (
+                    // Map and display grants for the entire selected week
+                    getGrantsForSelectedWeek.map((grant, index) => {
                       const IconComponent = grant.statusConfig.icon;
                       return (
                         <div key={grant.id || index} className={`p-3 md:p-4 rounded-lg border-2 ${grant.statusConfig.bgColor} ${grant.statusConfig.borderColor}`}>
@@ -236,15 +283,13 @@ const GrantsCalendar = ({ className = '', appTheme = 'light' }) => {
                             </div>
                           </div>
                           {grant.notes && <p className={`text-xs ${mutedTextColor} mt-2 pl-10 md:pl-11`}>{grant.notes}</p>}
-                        </div>
-                      );
+                        </div>);
                     })
                   ) : (
                     <div className={`text-center py-8 ${mutedTextColor}`}>
                       <Info className={`w-6 h-6 md:w-8 md:h-8 mx-auto mb-2 ${appTheme === 'light' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      <p className="text-sm">No grants scheduled for this date</p>
-                    </div>
-                  )
+                      <p className="text-sm">No grants scheduled for this week.</p>
+                    </div>)
                 ) : (
                   <div className={`text-center py-8 ${mutedTextColor}`}>
                     <CalendarIcon className={`w-6 h-6 md:w-8 md:h-8 mx-auto mb-2 ${appTheme === 'light' ? 'text-gray-300' : 'text-gray-600'}`} />

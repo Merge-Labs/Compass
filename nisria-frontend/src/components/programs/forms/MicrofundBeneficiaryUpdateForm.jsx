@@ -1,30 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import { X, AlertCircle, User, Users, MapPin, Phone, CheckSquare, Calendar as CalendarIcon } from 'lucide-react'; // Import CalendarIcon
+import { X, AlertCircle, User, Users, MapPin, Phone, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 
-const initialFormData = {
-  person_name: '',
-  chama_group: '',
-  location: '',
-  telephone: '',
-  is_active: true,
-  start_date: '', // Added start_date field
-  // program_id will be passed as a prop
-};
-
-const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId, divisionName }) => {
-  const [formData, setFormData] = useState(initialFormData);
+const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated, existingBeneficiary, programId, divisionName }) => {
+  const [formData, setFormData] = useState({
+    person_name: '',
+    chama_group: '',
+    location: '',
+    telephone: '',
+    is_active: true,
+    start_date: '',
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(initialFormData);
-      setErrors({});
+  const resetForm = (beneficiary) => {
+    if (beneficiary) {
+      setFormData({
+        person_name: beneficiary.person_name || '',
+        chama_group: beneficiary.chama_group || '',
+        location: beneficiary.location || '',
+        telephone: beneficiary.telephone || '',
+        is_active: beneficiary.is_active === undefined ? true : beneficiary.is_active,
+        start_date: beneficiary.start_date ? beneficiary.start_date.split('T')[0] : '',
+      });
+    } else {
+      setFormData({
+        person_name: '',
+        chama_group: '',
+        location: '',
+        telephone: '',
+        is_active: true,
+        start_date: '',
+      });
     }
-  }, [isOpen]);
+    setErrors({});
+  };
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && existingBeneficiary) {
+      resetForm(existingBeneficiary);
+    }
+  }, [isOpen, existingBeneficiary]);
+
+  if (!isOpen || !existingBeneficiary) return null;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,36 +59,35 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
     if (!formData.person_name.trim()) newErrors.person_name = "Person's name is required.";
     if (!formData.chama_group.trim()) newErrors.chama_group = "Chama group is required.";
     if (!formData.telephone.trim()) newErrors.telephone = "Telephone number is required.";
-    if (!formData.start_date) newErrors.start_date = "Start date is required."; // Added validation for start_date
-    // Add more specific validation for telephone if needed (e.g., format)
+    if (!formData.start_date) newErrors.start_date = "Start date is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm() || !programId || !divisionName) {
-      setErrors(prev => ({ ...prev, form: "Program or Division information is missing." }));
+    if (!validateForm() || !existingBeneficiary?.id || !programId || !divisionName) {
+      setErrors(prev => ({ ...prev, form: "Beneficiary ID, Program or Division information is missing." }));
       return;
     }
     setIsSubmitting(true);
 
     const payload = {
       ...formData,
-      start_date: formData.start_date || null, // Ensure date is sent, or null if empty
-      program_id: programId, // API expects program_id
+      start_date: formData.start_date || null,
+      program_id: programId, // Ensure program_id is part of the payload if backend expects it for updates
     };
 
     try {
-      const endpoint = `/api/programs/${divisionName.toLowerCase()}/microfund/`;
-      const response = await api.post(endpoint, payload);
-      onBeneficiaryAdded(response.data);
+      const endpoint = `/api/programs/${divisionName.toLowerCase()}/microfund/${existingBeneficiary.id}/`;
+      const response = await api.put(endpoint, payload);
+      if (onBeneficiaryUpdated) onBeneficiaryUpdated(response.data);
       onClose();
     } catch (error) {
-      console.error("Error adding microfund beneficiary:", error.response?.data || error.message);
+      console.error("Error updating microfund beneficiary:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
       if (typeof backendErrors === 'object' && backendErrors !== null) {
-        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Submission failed. Please check fields."}));
+        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Update failed. Please check fields."}));
       } else {
         setErrors({ form: "An unexpected error occurred." });
       }
@@ -78,16 +96,21 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
     }
   };
 
+  const handleCancelAndClose = () => {
+    resetForm(existingBeneficiary);
+    onClose();
+  };
+
   const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 placeholder-gray-500";
   const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5";
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && handleCancelAndClose()}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Add Microfund Beneficiary</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
+          <h3 className="text-xl font-bold text-gray-800">Update Microfund Beneficiary</h3>
+          <button onClick={handleCancelAndClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -117,7 +140,6 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
             {errors.telephone && <p className={errorClasses}><AlertCircle size={14}/>{errors.telephone}</p>}
           </div>
 
-          {/* Start Date */}
           <div>
             <label htmlFor="start_date" className={labelClasses}>Start Date*</label>
             <div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="start_date" name="start_date" value={formData.start_date} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>
@@ -130,17 +152,17 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
           </div>
 
           <div className="flex justify-end gap-4 pt-5 mt-6 border-t border-gray-200">
-            <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
+            <button type="button" onClick={handleCancelAndClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium flex items-center justify-center min-w-[150px]">
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Adding...
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Updating...
                 </>
               ) : (
-                "Add Beneficiary"
+                "Update Beneficiary"
               )}
             </button>
           </div>
@@ -150,4 +172,4 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
   );
 };
 
-export default MicrofundBeneficiaryForm;
+export default MicrofundBeneficiaryUpdateForm;

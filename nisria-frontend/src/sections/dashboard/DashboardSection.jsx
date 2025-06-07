@@ -6,6 +6,7 @@ import {
   Mail,
   Award,
   FileText,
+  LayoutGrid, // Added for the new card
   Loader2,
   AlertTriangle,
 } from "lucide-react";
@@ -17,13 +18,21 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
-import { DashboardCard } from "../../components/layout/card";
+} from "recharts"; // Removed DashboardCard as we'll use GradientCard for the top section
+import { DashboardCard, GradientCard } from "../../components/layout/card"; // Added GradientCard
 import TasksSection from "../../components/dashboard/TasksSection";
 import GrantsCalendar from "../../components/dashboard/GrantsCalendar";
 import api from "../../services/api";
 
 const DashboardSection = () => {
+  // Define colors for the user roles pie chart for better distinction
+  // Matching the colors used in DummyDashboard's mock deviceData for variety,
+  // or you can define a new set.
+  const PIE_COLORS = [
+    "var(--color-p1)", // Red
+    "var(--color-p2)", // Blue
+    "var(--color-s3)", // Medium Blue
+  ];
   
   const { theme } = useTheme();
 
@@ -64,7 +73,17 @@ const DashboardSection = () => {
       setUsersByRoleError(null);
       try {
         const response = await api.get("/api/analytics/users/by-role/");
-        setUsersByRoleData(response.data);
+        // Assuming the API returns an array like [{ role: "admin", count: 5 }, ...]
+        const users = response.data;
+        // Map roles to more readable names
+        const mappedUsers = users.map(item => ({
+          ...item,
+          name: item.role
+            .split('_') // Split by underscore
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+            .join(' ') // Join back with space
+        }));
+        setUsersByRoleData(mappedUsers);
       } catch (error) {
         console.error("Failed to fetch users by role data:", error);
         const errorMessage =
@@ -136,47 +155,47 @@ const DashboardSection = () => {
           {!isLoadingAnalytics && !analyticsError && analyticsData && (
             <>
               {/* Main Stats - First 3 cards with gradient backgrounds */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <DashboardCard
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <GradientCard
                   title="Total Users"
                   value={
                     analyticsData.accounts?.total_users?.toString() || "N/A"
                   }
                   icon={Users}
-                  // Using your theme colors for gradients
-                  backgroundColor="bg-gradient-to-r from-[var(--color-p2)] to-[var(--color-s4)]" // Blue primary 2 to Strong blue
-                  textColor="text-white"
-                  iconBgColor="bg-white/20"
-                  iconColor="text-white"
-                  trend="up"
-                  trendValue="+3" // Dummy trend
+                  gradient="bg-gradient-to-br from-cyan-400 to-blue-500"
+                  changeType="up"
+                  change="+3" // Dummy trend, represents the text next to the trend icon
                 />
-                <DashboardCard
+                <GradientCard
                   title="Total Programs"
                   value={
                     analyticsData.divisions_programs?.total_programs?.toString() ||
                     "N/A"
                   }
                   icon={Briefcase}
-                  backgroundColor="bg-gradient-to-r from-[var(--color-s3)] to-[var(--color-s5)]" // Medium blue to Dark muted blue
-                  textColor="text-white"
-                  iconBgColor="bg-white/20"
-                  iconColor="text-white"
-                  trend="up"
-                  trendValue="+1" // Dummy trend
+                  gradient="bg-gradient-to-br from-purple-400 to-purple-600"
+                  changeType="up"
+                  change="+1" // Dummy trend
                 />
-                <DashboardCard
+                <GradientCard
                   title="Email Templates"
                   value={
                     analyticsData.email_templates?.total_templates?.toString() ||
                     "N/A"
                   }
                   icon={Mail}
-                  backgroundColor="bg-gradient-to-r from-[var(--color-p1)] to-[var(--color-p3)]" // Red primary 1 to Semi-transparent red
-                  textColor="text-white"
-                  iconBgColor="bg-white/20"
-                  iconColor="text-white"
-                  showTrend={false}
+                  gradient="bg-gradient-to-br from-emerald-400 to-green-500"
+                  // No change or changeType props if trend is not applicable
+                />
+                <GradientCard
+                  title="Total Divisions"
+                  value={
+                    analyticsData.divisions_programs?.total_divisions?.toString() ||
+                    "N/A"
+                  }
+                  icon={LayoutGrid} // Using LayoutGrid as an example, Briefcase is also an option
+                  gradient="bg-gradient-to-br from-pink-400 to-rose-500" // Using the fourth gradient style
+                  // No change or changeType props if trend is not applicable
                 />
               </div>
 
@@ -202,7 +221,7 @@ const DashboardSection = () => {
                     analyticsData.grants?.total_amount_requested || 0
                   ).toLocaleString()}`}
                   backgroundColor={
-                    theme === "light" ? "bg-white" : "bg-[var(--color-s1)]"
+                    theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }
                   textColor={
                     theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -255,7 +274,7 @@ const DashboardSection = () => {
                   trend="up" // Dummy trend
                   trendValue="+2 types"
                   backgroundColor={
-                    theme === "light" ? "bg-white" : "bg-[var(--color-s1)]"
+                    theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }
                   textColor={
                     theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -323,7 +342,7 @@ const DashboardSection = () => {
                   trend="up" // Dummy trend
                   trendValue="+10%"
                   backgroundColor={
-                    theme === "light" ? "bg-white" : "bg-[var(--color-s1)]"
+                    theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }
                   textColor={
                     theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -373,8 +392,8 @@ const DashboardSection = () => {
 
                 {/* Users by Role Pie Chart Section */}
                 <div
-                  className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col ${ // Added explicit height and flex
-                    theme === "light" ? "bg-white" : "bg-[var(--color-s1)]"
+                  className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col border-1 border-black/50 ${ // Added explicit height and flex
+                    theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }`}
                 >
                   <h2
@@ -409,36 +428,34 @@ const DashboardSection = () => {
                   )}
                   {!isLoadingUsersByRole &&
                     !usersByRoleError &&
-                    usersByRoleData.length > 0 && (
-                      <ResponsiveContainer width="100%" height="90%"> {/* Adjusted height to fit within new container */}
+                    usersByRoleData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%"> {/* Ensure container takes full height */}
                         <PieChart>
+                          <defs>
+                            {PIE_COLORS.map((color, index) => (
+                              <linearGradient key={`gradient-${index}`} id={`roleGradient${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor={color} stopOpacity={0.9} />
+                                <stop offset="100%" stopColor={color} stopOpacity={0.5} />
+                              </linearGradient>
+                            ))}
+                          </defs>
                           <Pie
                             data={usersByRoleData}
                             cx="50%"
                             cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) =>
-                              `${name}: ${(percent * 100).toFixed(0)}%`
-                            }
-                            outerRadius="70%" // Made radius responsive
-                            fill="#8884d8"
+                            innerRadius={70} // Increased innerRadius for a larger chart
+                            outerRadius={110} // Increased outerRadius for a larger chart
+                            paddingAngle={5} // Matching DummyDashboard
                             dataKey="count"
-                            nameKey="role"
+                            nameKey="name" // Use the mapped 'name' property
                           >
                             {usersByRoleData.map((entry, index) => {
-                              // Define your theme colors or a new set for pie chart segments
-                              const PIE_COLORS = [
-                                "var(--color-p1)", // Red
-                                "var(--color-p2)", // Blue
-                                "var(--color-s3)", // Medium Blue
-                                "var(--color-s4)", // Strong Blue
-                                "var(--color-p5)", // Light Blue
-                                "var(--color-p3)", // Semi-transparent Red
-                              ];
                               return (
                                 <Cell
                                   key={`cell-${index}`}
-                                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                                  fill={`url(#roleGradient${index % PIE_COLORS.length})`}
+                                  stroke={theme === 'light' ? '#fff' : 'var(--color-s1)'} // Optional: add a stroke for better segment separation
+                                  strokeWidth={1} // Optional: stroke width
                                 />
                               );
                             })}
@@ -454,13 +471,19 @@ const DashboardSection = () => {
                                   : "var(--color-s2)"),
                             }}
                             itemStyle={{
-                              color: theme === "light" ? "#000" : "#fff",
+                              color: theme === "light" ? "#000000" : "#E0E0E0", // Darker off-white for dark theme
+                            }}
+                            formatter={(value, name, props) => [`${value} users`, props.payload.name]} // Matching DummyDashboard tooltip format
+                          />
+                          <Legend
+                            wrapperStyle={{
+                              color: theme === "light" ? "#374151" : "#D1D5DB", // Dark gray for light, lighter gray for dark
+                              // paddingTop: "10px" // Optional: if you need more space above legend
                             }}
                           />
-                          <Legend />
                         </PieChart>
                       </ResponsiveContainer>
-                    )}
+                    ) : null } {/* Render null if no data to prevent errors */}
                   {!isLoadingUsersByRole &&
                     !usersByRoleError &&
                     usersByRoleData.length === 0 && (
@@ -482,7 +505,7 @@ const DashboardSection = () => {
             {/* Tasks Section Column */}
             <div className="lg:col-span-1">
               {isLoadingTasks && (
-                <div className={`flex justify-center items-center h-64 p-6 rounded-xl shadow-lg ${theme === 'light' ? 'bg-white' : 'bg-[var(--color-s1)]'}`}>
+                <div className={`flex justify-center items-center h-64 p-6 rounded-xl shadow-lg ${theme === 'light' ? 'bg-white' : 'bg-[var(--color-black/50)]'}`}>
                   <Loader2 className={`w-10 h-10 animate-spin ${theme === 'light' ? 'text-[var(--color-p2)]' : 'text-[var(--color-p5)]'}`} />
                 </div>
               )}
@@ -493,7 +516,7 @@ const DashboardSection = () => {
                 </div>
               )}
               {!isLoadingTasks && !tasksError && (
-                <div className="h-[550px] xl:h-[600px]"> {/* Explicit height for TasksSection */}
+                <div className="h-[550px] xl:h-[600px] border-1 border-black/50 rounded-3xl"> {/* Explicit height for TasksSection */}
                   <TasksSection
                     tasks={tasksData}
                     appTheme={theme}
@@ -504,7 +527,7 @@ const DashboardSection = () => {
             </div>
 
             {/* Grants Calendar Column */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 border-1 border-black/50 rounded-3xl">
               {/* The GrantsCalendar component manages its own title and data fetching */}
               <div className="h-[550px] xl:h-[600px]"> {/* Explicit height for GrantsCalendar */}
                 <GrantsCalendar appTheme={theme} />

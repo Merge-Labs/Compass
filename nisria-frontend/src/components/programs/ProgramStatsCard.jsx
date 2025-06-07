@@ -1,12 +1,16 @@
 import React from 'react';
 import ProgramBaseCard from './ProgramBaseCard';
+import { useTheme } from '../../context/ThemeProvider'; // Import useTheme
+
 
 const ProgramStatsCard = ({ icon: Icon, title, value, subtitle, color = 'blue' }) => {
+    const { theme } = useTheme();
+  
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200'
+    green: `text-green-600 border-green-200 ${theme === 'light' ? 'bg-green-50' : 'text-gray-900'}`,
+    purple: `text-purple-600 border-purple-200 ${theme === 'light' ? 'bg-purple-50' : 'text-gray-900'}`,
+    orange: `text-orange-600 border-orange-200 ${theme === 'light' ? 'bg-orange-50' : 'text-gray-900'}`
   };
 
   return (

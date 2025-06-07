@@ -19,6 +19,7 @@ import GrantForm from "../../components/grants/GrantForm";
 import GrantFormUpdate from "../../components/grants/GrantFormUpdate"; // Import the new update form
 import GrantExpendituresTable from "../../components/grants/GrantExpendituresTable"; // Import Expenditures Table
 import GrantExpenditureForm from "../../components/grants/GrantExpenditureForm"; // Import Expenditure Form
+import ConfirmDeleteModal from "../../components/shared/ConfirmDeleteModal"; // Import the modal
 
 const formatCurrency = (amount, currency = "USD") => {
   if (amount == null || isNaN(parseFloat(amount))) return "N/A";
@@ -78,6 +79,11 @@ const GrantsDashboard = () => {
   const [expendituresError, setExpendituresError] = useState(null);
   const [isExpenditureFormOpen, setIsExpenditureFormOpen] = useState(false);
   const [expenditureToEdit, setExpenditureToEdit] = useState(null);
+
+  // State for Confirm Delete Modal
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [grantToDelete, setGrantToDelete] = useState(null);
+  const [isDeletingGrant, setIsDeletingGrant] = useState(false);
 
   const loadAndShowGrantDetails = useCallback(async (currentGrantId) => {
     setIsGrantDetailModalOpen(true);
@@ -332,19 +338,51 @@ const GrantsDashboard = () => {
     }
   };
 
-  const handleDeleteGrant = async (grantId) => {
-    if (window.confirm("Are you sure you want to delete this grant?")) {
-      try {
-        await api.delete(`/api/grants/${grantId}/`);
-        setApiGrants((prev) => prev.filter((grant) => grant.id !== grantId));
-        setSelectedGrants((prev) => prev.filter((id) => id !== grantId));
-        // Refresh current view
-        if (activeTab === 'grants') fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
-        if (activeTab === 'expenditures') fetchGrantExpenditures();
-      } catch (error) {
-        console.error("Failed to delete grant:", error);
-        setError(error.response?.data?.detail || "Failed to delete grant.");
+  // Opens the confirmation modal
+  const handleOpenConfirmDeleteModal = (grantId) => {
+    const grant = apiGrants.find(g => g.id === grantId);
+    if (grant) {
+      setGrantToDelete(grant);
+      setIsConfirmDeleteModalOpen(true);
+    } else {
+      console.error("Grant not found for deletion:", grantId);
+      setError("Could not find the grant to delete.");
+    }
+  };
+
+  // Closes the confirmation modal
+  const handleCloseConfirmDeleteModal = () => {
+    setIsConfirmDeleteModalOpen(false);
+    setGrantToDelete(null);
+    setIsDeletingGrant(false); // Reset loading state
+  };
+
+  // Performs the actual soft delete
+  const handleConfirmSoftDeleteGrant = async () => {
+    if (!grantToDelete) return;
+
+    setIsDeletingGrant(true);
+    setError(null); // Clear previous errors
+
+    try {
+      await api.delete(`/api/grants/${grantToDelete.id}/soft-delete/`);
+      
+      setApiGrants((prev) => prev.filter((grant) => grant.id !== grantToDelete.id));
+      setSelectedGrants((prev) => prev.filter((id) => id !== grantToDelete.id));
+      
+      if (activeTab === 'grants') {
+        fetchGrants(paginationInfo.currentPage, searchTerm, selectedStatus);
       }
+      if (activeTab === 'expenditures') {
+        fetchGrantExpenditures();
+      }
+      handleCloseConfirmDeleteModal();
+    } catch (error) {
+      console.error("Failed to soft delete grant:", error);
+      setError(error.response?.data?.detail || "Failed to soft delete grant. Please try again.");
+      // Keep modal open on error, or close and show a toast notification
+    } finally {
+      setIsDeletingGrant(false);
     }
   };
 
@@ -555,7 +593,7 @@ const GrantsDashboard = () => {
             onStatusChange={handleStatusChange}
             onViewDetails={(id) => navigate(`/dashboard/compass/grants/${id}`)}
             onEditGrant={handleEditGrantClick}
-            onDeleteGrant={handleDeleteGrant}
+            onDeleteGrant={handleOpenConfirmDeleteModal} // Changed to open modal
             currentPage={paginationInfo.currentPage}
             totalPages={paginationInfo.totalPages}
             onPageChange={handlePageChange}
@@ -632,6 +670,21 @@ const GrantsDashboard = () => {
           />
         )}
 
+        {/* Confirm Soft Delete Modal */}
+        {isConfirmDeleteModalOpen && grantToDelete && (
+          <ConfirmDeleteModal
+            isOpen={isConfirmDeleteModalOpen}
+            onClose={handleCloseConfirmDeleteModal}
+            onConfirm={handleConfirmSoftDeleteGrant}
+            itemName={grantToDelete.organization_name || 'this grant'}
+            itemType="grant"
+            isProcessing={isDeletingGrant}
+            title="Confirm Soft Delete"
+            message={`Are you sure you want to send the grant "${grantToDelete.organization_name || 'this grant'}" to the recycle bin? This action can usually be undone by an administrator.`}
+            confirmButtonText="Send to Recycle Bin"
+            confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+          />
+        )}
         <Outlet /> {/* If you have other nested routes not handled by the modal logic */}
       </div>
     </div>

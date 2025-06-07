@@ -12,6 +12,44 @@ import {
   Award,
 } from "lucide-react";
 
+// Gradient Card Component (moved from DummyDashboard.jsx)
+export const GradientCard = ({
+  title,
+  value,
+  change,
+  changeType,
+  // eslint-disable-next-line no-unused-vars
+  icon: Icon,
+  gradient,
+}) => (
+  <div
+    className={`relative overflow-hidden rounded-2xl p-6 text-white ${gradient}`}
+  >
+    <div className="absolute inset-0 bg-black/10"></div>
+    <div className="relative z-10">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-white/80 text-sm font-medium">{title}</p>
+          <p className="text-2xl font-bold mt-1">{value}</p>
+          {change && changeType && (
+            <div className="flex items-center mt-2 gap-1">
+              {changeType === "up" ? (
+                <TrendingUp className="w-4 h-4 text-white/90" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-white/90" />
+              )}
+              <span className="text-xs text-white/90">{change}</span>
+            </div>
+          )}
+        </div>
+        <div className="bg-white/20 p-3 rounded-xl">
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // Main DashboardCard component
 export const DashboardCard = ({
   title,
@@ -87,7 +125,7 @@ export const DashboardCard = ({
   if (layout === "detailed") {
     return (
       <div
-        className={`${backgroundColor} ${textColor} rounded-xl shadow-sm border border-gray-100 ${sizeClasses[size]} ${className}`}
+        className={`${backgroundColor} ${textColor} rounded-xl shadow-sm border border-black/50 ${sizeClasses[size]} ${className}`}
       >
         <div className="flex items-start justify-between mb-4">
           <div

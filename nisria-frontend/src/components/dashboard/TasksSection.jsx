@@ -10,10 +10,15 @@ import {
   Search,
   Plus
 } from 'lucide-react';
+import TaskDetailModal from '../../components/tasks/TaskDetailModal';
 
 const TasksSection = ({ tasks = [], title = "Tasks Overview", showHeader = true, appTheme = 'light' }) => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // State for TaskDetailModal
+  const [selectedTaskForModal, setSelectedTaskForModal] = useState(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Priority colors and icons
   const getPriorityConfig = (priority) => {
@@ -117,11 +122,41 @@ const TasksSection = ({ tasks = [], title = "Tasks Overview", showHeader = true,
     return task.status?.toLowerCase() === filter;
   });
 
+  const transformTaskForModal = (task) => {
+    if (!task) return null;
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      assignedTo: task.assigned_to_details?.full_name || "Unassigned",
+      dueDate: formatDate(task.due_date), // Use the same formatting as in TaskItem
+      status: task.status, // TaskDetailModal's TaskStatusBadge handles capitalization
+      category: task.is_grant_follow_up_task ? "Grant" : null,
+      isOverdue: isOverdue(task.due_date, task.status),
+      priority: task.priority, // TaskDetailModal's PriorityBadge handles capitalization
+      date_created: task.created_at, // Assuming 'created_at' is available from API
+      date_updated: task.updated_at, // Assuming 'updated_at' is available from API
+    };
+  };
+
+  const handleOpenTaskModal = (task) => {
+    const modalTaskData = transformTaskForModal(task);
+    setSelectedTaskForModal(modalTaskData);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTaskForModal(null);
+  };
+
   const TaskItem = ({ task }) => {
     const statusConfig = getStatusConfig(task.status);
     const priorityConfig = getPriorityConfig(task.priority);
     const StatusIcon = statusConfig.icon;
     const isTaskOverdue = isOverdue(task.due_date, task.status);
+
+    
 
     return (
       <div className={`flex items-start space-x-3 p-3 rounded-lg transition-colors duration-150 group ${appTheme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-gray-700/30'}`}>
@@ -130,7 +165,10 @@ const TasksSection = ({ tasks = [], title = "Tasks Overview", showHeader = true,
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
+          <div 
+            className="flex items-start justify-between cursor-pointer"
+            onClick={() => handleOpenTaskModal(task)} // Make title area clickable
+          >
             <div className="flex-1">
               <h4 className={`text-sm font-medium truncate ${appTheme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>
                 {task.title}
@@ -184,7 +222,7 @@ const TasksSection = ({ tasks = [], title = "Tasks Overview", showHeader = true,
   };
 
   return (
-    <div className={`rounded-xl shadow-sm border h-full flex flex-col ${appTheme === 'light' ? 'bg-white border-gray-100' : 'bg-[var(--color-s1)] border-gray-700'}`}>
+    <div className={`rounded-xl shadow-sm border h-full flex flex-col ${appTheme === 'light' ? 'bg-white border-gray-100' : 'bg-[var(--color-black/50)] border-gray-200'}`}>
       {showHeader && (
         <div className={`p-6 border-b ${appTheme === 'light' ? 'border-gray-100' : 'border-gray-700'}`}>
           <div className="flex items-center justify-between mb-4">
@@ -257,6 +295,13 @@ const TasksSection = ({ tasks = [], title = "Tasks Overview", showHeader = true,
           </span>
         </div>
       </div>
+
+      <TaskDetailModal
+        isOpen={isTaskModalOpen}
+        onClose={handleCloseTaskModal}
+        task={selectedTaskForModal}
+        // loading and error props can be added if fetching individual task details
+      />
     </div>
   );
 };

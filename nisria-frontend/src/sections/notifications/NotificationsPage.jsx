@@ -1,79 +1,32 @@
-import React, { useState } from 'react';
-import { Bell, AlertTriangle, User, MessageCircle, Clock, FileText, Settings, Filter, MoreVertical, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Bell, AlertTriangle, User, MessageCircle, Clock, FileText, Settings, Filter, MoreVertical, Check, X, Loader2 } from 'lucide-react';
+import api from '../../services/api'; // Assuming api service is setup
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    // More user-friendly format, e.g., "Oct 23, 2023, 10:30 AM"
+    // or relative time like "2 hours ago" if you add a library like date-fns
+    return date.toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+    });
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return dateString;
+  }
+};
 
 const NotificationsPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'system',
-      context: 'grant',
-      title: 'Grant Expiration Warning',
-      message: 'Your research grant will expire in 7 days. Please renew to avoid interruption.',
-      sender: 'System',
-      timestamp: '2 hours ago',
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      id: 2,
-      type: 'admin-alert',
-      context: 'policy',
-      title: 'New Policy Updates Available',
-      message: 'Important policy changes have been implemented. Please review the updated guidelines.',
-      sender: 'SuperAdmin',
-      timestamp: '4 hours ago',
-      isRead: false,
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      type: 'task-based',
-      context: 'document',
-      title: 'Missing Report Upload',
-      message: 'Please upload your quarterly progress report by end of week.',
-      sender: 'System',
-      timestamp: '1 day ago',
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      id: 4,
-      type: 'direct-msg',
-      context: 'message',
-      title: 'New Message from Ren',
-      message: 'Hey! Can we schedule a meeting to discuss the project timeline?',
-      sender: 'Ren Martinez',
-      timestamp: '2 days ago',
-      isRead: false,
-      priority: 'low'
-    },
-    {
-      id: 5,
-      type: 'request-action',
-      context: 'document',
-      title: 'Access Request Pending',
-      message: 'Sarah Johnson requested access to Financial Statement Q3. Approval needed.',
-      sender: 'Sarah Johnson',
-      timestamp: '3 days ago',
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      id: 6,
-      type: 'system',
-      context: 'event',
-      title: 'Meeting Reminder',
-      message: 'Team standup meeting starts in 30 minutes in Conference Room A.',
-      sender: 'System',
-      timestamp: '1 week ago',
-      isRead: true,
-      priority: 'low'
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
+  const getNotificationIcon = (notificationType) => {
+    // Assuming notification_type from API matches these keys or can be mapped
+    switch (notificationType?.toLowerCase()) {
       case 'system': return <Bell className="w-5 h-5 text-blue-500" />;
       case 'admin-alert': return <AlertTriangle className="w-5 h-5 text-red-500" />;
       case 'task-based': return <FileText className="w-5 h-5 text-orange-500" />;
@@ -83,40 +36,100 @@ const NotificationsPage = () => {
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'border-l-red-500 bg-red-50';
-      case 'medium': return 'border-l-yellow-500 bg-yellow-50';
-      case 'low': return 'border-l-green-500 bg-green-50';
-      default: return 'border-l-gray-300 bg-gray-50';
+  // For styling the tag based on notification_type
+  const getNotificationTypeTagStyle = (notificationType) => {
+    switch (notificationType?.toLowerCase()) {
+      case 'system': return 'bg-blue-100 text-blue-700'; // Was 'grant'
+      case 'admin-alert': return 'bg-red-100 text-red-700'; // Was 'policy'
+      case 'task-based': return 'bg-orange-100 text-orange-700'; // Was 'document'
+      case 'direct-msg': return 'bg-green-100 text-green-700'; // Was 'message'
+      case 'request-action': return 'bg-purple-100 text-purple-700'; // Was 'event' / 'request-action'
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
-  const filteredNotifications = notifications.filter(notification => {
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/api/notifications/');
+      // Assuming API returns { results: [], ... } or just []
+      const data = response.data.results || response.data || [];
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+      setError(err.response?.data?.detail || err.message || "Could not load notifications.");
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await api.get('/api/notifications/unread-count/');
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (err) {
+      console.error("Failed to fetch unread count:", err);
+      // Optionally set an error state for unread count
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadCount();
+  }, [fetchNotifications, fetchUnreadCount]);
+
+  const processedNotifications = useMemo(() => {
+    return notifications.map(n => ({
+      id: n.id,
+      type: n.notification_type, // Use notification_type for icon and tag
+      title: n.title,
+      message: n.message,
+      sender: n.assigner_full_name || 'System',
+      timestamp: formatDate(n.created_at),
+      isRead: n.read_status,
+      link: n.link,
+      // priority and context are removed as they are not directly in the API model
+    })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by original date
+  }, [notifications]);
+
+  const filteredNotifications = processedNotifications.filter(notification => {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'unread') return !notification.isRead;
     return notification.type === activeFilter;
   });
 
-  const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const markAsRead = async (id) => {
+    try {
+      await api.post(`/api/notifications/${id}/mark-as-read/`);
+      fetchNotifications(); // Refetch to update list
+      fetchUnreadCount();   // Refetch unread count
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+      // Optionally show an error to the user
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/api/notifications/mark-all-as-read/');
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const deleteNotification = async (id) => {
+    try {
+      await api.delete(`/api/notifications/${id}/delete/`);
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
   };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const filterOptions = [
     { key: 'all', label: 'All Notifications', count: notifications.length },
@@ -127,6 +140,20 @@ const NotificationsPage = () => {
     { key: 'direct-msg', label: 'Messages', count: notifications.filter(n => n.type === 'direct-msg').length },
     { key: 'request-action', label: 'Requests', count: notifications.filter(n => n.type === 'request-action').length },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex justify-center items-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 text-center text-red-500">Error: {error}</div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -202,9 +229,9 @@ const NotificationsPage = () => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-white rounded-lg shadow-sm border-l-4 border-r border-t border-b border-gray-200 transition-all hover:shadow-md ${
-                  getPriorityColor(notification.priority)
-                } ${!notification.isRead ? 'ring-2 ring-blue-100' : ''}`}
+                className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all hover:shadow-md ${
+                  !notification.isRead ? 'ring-2 ring-blue-100 bg-blue-50' : 'bg-white'
+                }`} // Simplified: no priority border, subtle bg for unread
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between">
@@ -237,17 +264,24 @@ const NotificationsPage = () => {
                             <Clock className="w-3 h-3" />
                             <span>{notification.timestamp}</span>
                           </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            notification.context === 'grant' ? 'bg-blue-100 text-blue-700' :
-                            notification.context === 'policy' ? 'bg-red-100 text-red-700' :
-                            notification.context === 'document' ? 'bg-orange-100 text-orange-700' :
-                            notification.context === 'message' ? 'bg-green-100 text-green-700' :
-                            notification.context === 'event' ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {notification.context}
-                          </span>
+                          {notification.type && (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getNotificationTypeTagStyle(notification.type)}`}>
+                              {notification.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          )}
                         </div>
+                        {notification.link && (
+                          <div className="mt-2">
+                            <a
+                              href={notification.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              View Details
+                            </a>
+                        </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
@@ -279,7 +313,7 @@ const NotificationsPage = () => {
         </div>
 
         {/* Load More Button */}
-        {filteredNotifications.length > 0 && (
+        {processedNotifications.length > 0 && notifications.length > filteredNotifications.length && ( // Example condition if pagination was implemented
           <div className="mt-6 text-center">
             <button className="px-6 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               Load More Notifications
