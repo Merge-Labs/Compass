@@ -7,6 +7,7 @@ urlpatterns = [
     # path('api/bank-statements/previews/', views.bank_statement_preview_list, name='bank_statement_previews'),
     path('filter/', views.DocumentFilterView.as_view(), name='document-filter'),
     path('search/', views.document_search, name='document-search'),
+    path('bank-statements/previews/', views.bank_statement_preview_list, name='bank_statement_previews'),
 
     # Bank Statement Access Endpoints
     path('access/request/<int:document_id>/', views.request_bank_statement_access, name='request-access'),

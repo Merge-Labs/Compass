@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework import status, permissions
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
@@ -9,6 +9,7 @@ from .models import User
 from .serializers import UserSerializer, RegisterUserSerializer, ChangePasswordSerializer
 from .permissions import IsSuperAdmin
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import CustomTokenObtainPairSerializer
 from drf_yasg.utils import swagger_auto_schema
@@ -23,6 +24,7 @@ def indexTest(request):
 )
 @api_view(['POST'])
 @permission_classes([IsSuperAdmin])  # Only Super Admin can create users
+@parser_classes([MultiPartParser, FormParser])
 def register_user(request):
     serializer = RegisterUserSerializer(data=request.data)
     if serializer.is_valid():
