@@ -14,6 +14,7 @@ from pathlib import Path
 from decouple import config
 import cloudinary
 from datetime import timedelta
+import os
 from celery.schedules import crontab # For Celery Beat
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,10 +28,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['compass.azurewebsites.net']
 
+# Static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Application definition
 
@@ -70,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 # CORS settings

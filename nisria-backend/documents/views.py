@@ -49,7 +49,10 @@ class StandardResultsSetPagination(PageNumberPagination):
 @permission_classes([IsAuthenticated])
 def document_list_create(request):
     if request.method == 'GET':
-        documents = Document.objects.exclude(document_type='bank_statement').order_by('-date_uploaded')
+        if request.user.role == 'super_admin':
+            documents = Document.objects.all().order_by('-date_uploaded')
+        else:
+            documents = Document.objects.exclude(document_type='bank_statement').order_by('-date_uploaded')
         paginator = StandardResultsSetPagination()
         result_page = paginator.paginate_queryset(documents, request)
         serializer = DocumentSerializer(result_page, many=True)
@@ -94,8 +97,8 @@ def document_detail_update(request, pk):
     if request.method == 'GET':
         # Check if document is a bank statement
         if document.document_type == 'bank_statement':
-            # Only allow superusers to see it
-            if not request.user.is_superuser:
+            # Only allow super_admin role to see it directly
+            if not request.user.role == 'super_admin':
                 return Response(
                     {"message": "Access denied. Bank statement requires special access approval."},
                     status=status.HTTP_403_FORBIDDEN
@@ -106,8 +109,8 @@ def document_detail_update(request, pk):
 
     elif request.method == 'PUT':
         if document.document_type == 'bank_statement':
-            # Only allow superusers to update it
-            if not request.user.is_superuser:
+            # Only allow super_admin role to update it
+            if not request.user.role == 'super_admin':
                 return Response(
                     {"message": "Access denied. Bank statement requires special access approval."},
                     status=status.HTTP_403_FORBIDDEN
@@ -248,21 +251,42 @@ def validate_bank_statement_access(request, pin):
 @swagger_auto_schema(
     method='get',
     operation_description="Retrieve a list of previews for bank statement documents (ID, name, description, division, date_uploaded).",
-    responses={
-        200: BankStatementPreviewSerializer(many=True),
+     responses={
+        200: BankStatementPreviewSerializer(many=True), # drf-yasg handles pagination structure
         401: 'Unauthorized'
     }
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def all_documents_preview_list(request):
+def bank_statement_preview_list(request):
+    """
+    Retrieve a paginated list of previews specifically for bank statement documents.
+    """
+    documents = Document.objects.filter(document_type='bank_statement').order_by('-date_uploaded')
+    paginator = StandardResultsSetPagination()
+    result_page = paginator.paginate_queryset(documents, request)
+    serializer = BankStatementPreviewSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve a paginated list of previews for all documents (ID, name, description, division, date_uploaded).",
+    responses={
+        200: BankStatementPreviewSerializer(many=True), 
+        401: 'Unauthorized'
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def all_documents_preview_list(request): # Renamed from a_documents_preview_list
+    """
+    Retrieve a paginated list of previews for all documents.
+    """
     documents = Document.objects.all().order_by('-date_uploaded')
-    serializer = BankStatementPreviewSerializer(documents, many=True)
-    return Response(serializer.data)
-
-# TODO: add views and endpoints for searching and filtering bank statements
-
-
+    paginator = StandardResultsSetPagination() # Added pagination
+    result_page = paginator.paginate_queryset(documents, request)
+    serializer = BankStatementPreviewSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
