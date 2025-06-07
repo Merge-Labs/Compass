@@ -32,7 +32,8 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allowed Hosts
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='compass-webapp.azurewebsites.net', cast=Csv)
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='compass-webapp.azurewebsites.net', cast=Csv)
+ALLOWED_HOSTS =['compass-webapp.azurewebsites.net']
 
 
 # Static files
