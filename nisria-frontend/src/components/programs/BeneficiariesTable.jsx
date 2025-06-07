@@ -1,8 +1,8 @@
 import React from 'react';
-import { Eye, Edit, Trash2, MapPin, Phone, AlertCircle, Loader2, Calendar, User, Plus } from 'lucide-react';
-
-// Utility function to format date (can be moved to a shared utils file if needed)
-const formatDateDisplay = (dateString) => {
+import { Eye, Edit, Trash2, User, Users, BookOpen, Heart, Briefcase as VocationalIcon, DollarSign, UserPlus, List, Plus } from 'lucide-react';
+import { useTheme } from '../../context/ThemeProvider';
+ 
+const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   try {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -11,176 +11,175 @@ const formatDateDisplay = (dateString) => {
       day: 'numeric',
     });
   } catch (e) {
-    console.error("Invalid date for display:", dateString, e);
+    console.error('Error formatting date:', e);
     return 'Invalid Date';
   }
 };
 
-// Utility function to get display data based on program type
-const getDisplayData = (beneficiary, programType) => {
-  const type = programType?.toLowerCase();
+const BeneficiariesTable = ({ beneficiaries, programType, loading, error, onViewDetails, onEditBeneficiary, onDeleteBeneficiary, onViewTrainees, onAddNewBeneficiary, searchTerm }) => {
+   const { theme } = useTheme();
+  
+  const getProgramSpecificColumns = () => {
+    switch (programType) {
+      case 'education':
+        return [
+          { header: 'Student Name', accessor: 'student_name' },
+          { header: 'Level', accessor: 'education_level' },
+          { header: 'School', accessor: 'school_associated' },
+          { header: 'Start Date', accessor: 'start_date', render: (data) => formatDate(data) },
+        ];
+      case 'microfund':
+        return [
+          { header: 'Person Name', accessor: 'person_name' },
+          { header: 'Chama Group', accessor: 'chama_group' },
+          { header: 'Telephone', accessor: 'telephone' },
+          { header: 'Status', accessor: 'is_active', render: (data) => data ? 'Active' : 'Inactive' },
+        ];
+      case 'rescue':
+        return [
+          { header: 'Child Name', accessor: 'child_name' },
+          { header: 'Age', accessor: 'age' },
+          { header: 'Gender', accessor: 'gender' },
+          { header: 'Date Joined', accessor: 'date_joined', render: (data) => formatDate(data) },
+          { header: 'Reunited', accessor: 'is_reunited', render: (data) => data ? 'Yes' : 'No' },
+        ];
+      case 'vocational-trainer':
+        return [
+          { header: 'Trainer Name', accessor: 'trainer_name' },
+          { header: 'Association', accessor: 'trainer_association' },
+          { header: 'Phone', accessor: 'trainer_phone' },
+          { header: 'Email', accessor: 'trainer_email' },
+          { header: 'Gender', accessor: 'gender' },
+        ];
+      case 'vocational-trainee':
+        return [
+          { header: 'Trainee Name', accessor: 'trainee_name' }, // Example field
+          { header: 'Course', accessor: 'course_enrolled' }, // Example field
+          { header: 'Training Center', accessor: 'training_center' },
+          { header: 'Start Date', accessor: 'start_date', render: (data) => formatDate(data) },
+          { 
+            header: 'Status', 
+            accessor: 'under_training', 
+            render: (data) => data ? 'Under Training' : 'Training Completed' 
+          },
+        ];
+      default:
+        return [{ header: 'Name', accessor: 'name' }, { header: 'Details', accessor: 'details' }];
+    }
+  };
 
-  switch (type) {
-    case 'education':
-      return {
-        name: beneficiary.student_name || 'N/A',
-        subtitle: `${beneficiary.education_level || 'N/A'} • ${beneficiary.school_associated || 'N/A'}`,
-        location: beneficiary.student_location || 'N/A',
-        contact: beneficiary.student_contact || 'N/A',
-        extra: `${beneficiary.start_date || 'N/A'} - ${beneficiary.end_date || 'N/A'}`,
-        created_at: beneficiary.created_at,
-        // Add other relevant fields if needed
-      };
-    case 'microfund':
-      return {
-        name: beneficiary.person_name || 'N/A',
-        subtitle: beneficiary.chama_group || 'N/A',
-        location: beneficiary.location || 'N/A',
-        contact: beneficiary.telephone || 'N/A',
-        extra: beneficiary.is_active !== undefined ? (beneficiary.is_active ? 'Active' : 'Inactive') : 'N/A',
-        created_at: beneficiary.created_at,
-        // Add other relevant fields if needed
-      };
-    case 'rescue':
-      return {
-        name: beneficiary.child_name || 'N/A',
-        subtitle: `Age ${beneficiary.age || 'N/A'} • ${beneficiary.place_found || 'N/A'}`,
-        location: beneficiary.place_found || 'N/A',
-        contact: beneficiary.rescuer_contact || 'N/A',
-        extra: beneficiary.is_reunited !== undefined ? (beneficiary.is_reunited ? 'Reunited' : 'Under Care') : 'N/A',
-        created_at: beneficiary.created_at,
-        // Add other relevant fields if needed
-      };
-    case 'vocational': // Assuming vocational-trainers endpoint returns these fields
-      return {
-        name: beneficiary.trainee_name || beneficiary.trainer_name || 'N/A',
-        subtitle: beneficiary.trainee_association || beneficiary.trainer_association || 'N/A',
-        location: beneficiary.location || 'N/A', // Assuming location might exist
-        contact: beneficiary.trainee_phone || beneficiary.trainer_phone || 'N/A',
-        extra: beneficiary.under_training !== undefined ? (beneficiary.under_training ? 'In Training' : 'Completed') : 'N/A',
-        created_at: beneficiary.created_at,
-        // Add other relevant fields if needed
-      };
-    default:
-      return {
-        name: beneficiary.name || 'Unknown Beneficiary',
-        subtitle: 'N/A',
-        location: 'N/A',
-        contact: 'N/A',
-        extra: 'N/A',
-        created_at: beneficiary.created_at,
-      };
-  }
-};
+  const columns = [
+    ...getProgramSpecificColumns(),
+    { header: 'Actions', accessor: 'actions' },
+  ];
 
-const BeneficiariesTable = ({
-  beneficiaries,
-  programType,
-  loading,
-  error,
-  // Add action handlers as props if needed later
-  onViewDetails,
-  onEditBeneficiary,
-  onDeleteBeneficiary,
-  onAddNewBeneficiary, // New prop for the add button
-}) => {
   if (loading) {
-    return (
-      <div className="text-center py-10">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-        <p className="text-gray-600">Loading beneficiaries...</p>
-      </div>
-    );
+    return <div className="text-center py-10">Loading beneficiaries...</div>;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-100 border border-red-300 rounded-lg p-4 my-6 text-center">
-        <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-        <p className="text-red-700 text-sm">{error}</p>
-      </div>
-    );
+    return <div className="text-center py-10 text-red-500">Error loading beneficiaries: {typeof error === 'string' ? error : error.message}</div>;
   }
+
+  // Determine the item type based on programType for the empty state message
+  const itemType = programType === 'vocational-trainer' ? 'trainers' 
+                 : programType === 'vocational-trainee' ? 'trainees' 
+                 : 'beneficiaries';
 
   if (!beneficiaries || beneficiaries.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-500">
-        <p>No beneficiaries found for this program.</p>
-        {/* Optionally, show Add button even if table is empty, if onAddNewBeneficiary is provided */}
+      <div className="text-center py-8 mt-4">
+        <Users className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No {itemType} found
+        </h3>
+        <p className="text-gray-600 mb-6">
+          {searchTerm ? 'Try adjusting your search terms or ' : ''}
+          Get started by adding a new {itemType.slice(0, -1)} to this program. {/* Remove 's' for singular */}
+        </p>
+        {onAddNewBeneficiary && (
+          <button
+            onClick={onAddNewBeneficiary}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          ><Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />Add New {itemType.slice(0, -1)}</button>
+        )}
       </div>
     );
   }
 
-  // Define table columns - can be made dynamic based on programType if needed
-  const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'subtitle', label: 'Details' },
-    { key: 'location', label: 'Location', icon: MapPin },
-    { key: 'contact', label: 'Contact', icon: Phone },
-    { key: 'extra', label: 'Status/Extra' },
-    { key: 'created_at', label: 'Added On', icon: Calendar },
-    { key: 'actions', label: 'Actions' },
-  ];
-
   return (
-    <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm overflow-hidden">
-      {/* Table Header with Add Button */}
-      {onAddNewBeneficiary && (
-        <div className="p-4 border-b border-gray-200/50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-700">Beneficiaries List</h3>
-          <button
-            onClick={onAddNewBeneficiary}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add New</span>
-          </button>
-        </div>
-      )}
-
+    <div className={`shadow-md rounded-lg overflow-hidden ${theme === 'light' ? 'bg-white' : 'bg-gray-800'}`}>
+      
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200/50">
-          <thead className="bg-gray-50/50">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className={`${theme === 'light' ? 'bg-white' : 'bg-gray-800'}`}>
             <tr>
-              {columns.map(col => (
-                <th key={col.key} scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {col.icon && <col.icon className="w-4 h-4 inline-block mr-1" />} {col.label}
+              {columns.map((col) => (
+                <th
+                  key={col.header}
+                  scope="col"                  
+                  className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'light' ? 'text-gray-500' : 'text-gray-300'}`}
+
+                >
+                  {col.header}
                 </th>
               ))}
             </tr>
-          </thead>
-          <tbody className="bg-white/30 divide-y divide-gray-200/50">
-            {beneficiaries.map((beneficiary) => {
-              const data = getDisplayData(beneficiary, programType);
-              return (
-                <tr key={beneficiary.id} className="hover:bg-white/40 transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{data.name}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{data.subtitle}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{data.location}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{data.contact}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{data.extra}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{formatDateDisplay(data.created_at)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
-                    <div className="flex items-center space-x-1">
-                      {/* Placeholder buttons - implement onClick handlers later */}
-                      <button onClick={() => onViewDetails && onViewDetails(beneficiary.id)} className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50/70" title="View Details"><Eye size={16} /></button>
-                      <button onClick={() => onEditBeneficiary && onEditBeneficiary(beneficiary.id)} className="text-gray-400 hover:text-green-600 p-1.5 rounded-md hover:bg-green-50/70" title="Edit Beneficiary"><Edit size={16} /></button>
-                      <button onClick={() => onDeleteBeneficiary && onDeleteBeneficiary(beneficiary.id)} className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50/70" title="Delete Beneficiary"><Trash2 size={16} /></button>
-                    </div>
+
+          </thead>          
+          <tbody className={`${theme === 'light' ? 'bg-white' : 'bg-gray-800'} divide-y divide-gray-200`}>
+            {beneficiaries.map((beneficiary) => (
+              <tr key={beneficiary.id || beneficiary.temp_id} className={`${theme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-gray-500'} transition-colors`}>
+                {columns.map((col) => (
+                  <td key={col.accessor} className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                    {col.accessor === 'actions' ? (
+                    
+                      <div className="flex space-x-2">                   
+                        <button
+                          onClick={() => onViewDetails(beneficiary)}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded-md hover:bg-blue-100"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button 
+                          onClick={() => onEditBeneficiary && onEditBeneficiary(beneficiary)}
+                          className="text-green-600 hover:text-green-800 p-1 rounded-md hover:bg-green-100"
+                          title="Edit"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        {programType === 'vocational-trainer' && onViewTrainees && (
+                          <button
+                            onClick={() => onViewTrainees(beneficiary)}
+                            className="text-purple-600 hover:text-purple-800 p-1 rounded-md hover:bg-purple-100"
+                            title="View Trainees"
+                          >
+                            <List size={18} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onDeleteBeneficiary && onDeleteBeneficiary(beneficiary)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-100"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ) : col.render ? (
+                      col.render(beneficiary[col.accessor])
+                    ) : (
+                      beneficiary[col.accessor] || 'N/A'
+                    )}
                   </td>
-                </tr>
-              );
-            })}
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-      {/* Pagination can be added here if needed */}
     </div>
   );
-};
-
-BeneficiariesTable.defaultProps = {
-  beneficiaries: [],
 };
 
 export default BeneficiariesTable;

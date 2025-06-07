@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeProvider';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useAuth } from '../../context/AuthProvider';
 import {
   LayoutDashboard,
@@ -15,15 +14,15 @@ import {
   Settings,
   WavesLadder,
   LogOut,
-  Home, // Assuming Home icon for Dashboard
+  Home, 
+  ArchiveX,
 } from 'lucide-react';
 
 const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
-  const { theme, toggleTheme: globalToggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { theme} = useTheme();
+  const { user } = useAuth();
   const [activeItem, setActiveItem] = useState('Dashboard');
   const [isHoveredForMd, setIsHoveredForMd] = useState(false);
-  const navigate = useNavigate(); 
   const [isMdScreen, setIsMdScreen] = useState(false);
 
   useEffect(() => {
@@ -40,11 +39,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
-
+  
   const initialMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard' }, // Using LayoutDashboard as per your code
     { icon: WavesLadder, label: 'Programs' },
@@ -57,7 +52,8 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
   const menuItems = [...initialMenuItems];
 
   // Conditionally add "Users" item for super_admin
-  if (user?.role === 'super_admin') { menuItems.push({ icon: Users, label: 'Team' }); }
+    
+  if (user?.role === 'super_admin') { menuItems.push({ icon: Users, label: 'Team' }, { icon: ArchiveX, label: 'Bin' }); }
 
   const handleItemClick = (label) => {
     setActiveItem(label);
@@ -65,21 +61,6 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
     if (isSmMenuOpen && toggleSmMenu) { // Close mobile menu on item click
       toggleSmMenu(false); // Assuming toggleSmMenu(false) closes it
     }
-  };
-
-  const getInitials = (name) => {
-    if (!name || typeof name !== 'string' || name.trim() === '') return 'U';
-    const names = name.trim().split(/\s+/);
-    if (names.length === 1) return names[0].substring(0, Math.min(2, names[0].length)).toUpperCase();
-    return (names[0][0] + (names.length > 1 ? names[names.length - 1][0] : '')).toUpperCase();
-  };
-
-  const formatRole = (role) => {
-    if (!role || typeof role !== 'string') return 'User Role';
-    return role
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   };
 
   // Define showLabelClass in the component scope
@@ -222,30 +203,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
                 <Settings size={18} className="shrink-0" />
                 <span className={`font-medium text-sm whitespace-nowrap ${showLabelClass}`}>Settings</span>
               </button>
-              {/* Theme Toggle Button */}
-              <button
-                onClick={globalToggleTheme}
-                title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 hover:cursor-pointer
-                type="button" // Added type="button"
-                  ${isHoveredForMd && isMdScreen ? '' : 'md:justify-center'} lg:justify-start
-                  ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-s3' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
-              >
-                {theme === 'dark' ? <Sun size={18} className="shrink-0" /> : <Moon size={18} className="shrink-0" />}
-                <span className={`font-medium text-sm whitespace-nowrap ${showLabelClass}`}>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-              </button>
-              {/* logout Button */}
-              <button 
-                title="logout"
-                onClick={handleLogout}
-                type="button" // Added type="button"
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 hover:cursor-pointer
-                  ${isHoveredForMd && isMdScreen ? '' : 'md:justify-center'} lg:justify-start
-                  ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-s3' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
-              >
-                <LogOut size={18} className="shrink-0" />
-                <span className={`font-medium text-sm whitespace-nowrap ${showLabelClass}`}>LogOut</span>
-              </button>
+              
             </div>
           </div>
           </div>

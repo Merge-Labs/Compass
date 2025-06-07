@@ -6,26 +6,25 @@ import GrantsDashboard from "../../sections/grants/GrantsSection";
 import ProgramsDashboard from "../../sections/programs/ProgramsDashboard";
 import Sidebar from "../../components/dashboard/sidebar";
 import Navbar from "../../components/dashboard/Navbar";
-import Grants from '../../sections/grants/Grants';
 import TasksSection from "../../sections/tasks/TasksSection";
 import DocumentsPage from "../../sections/documents/DocumentsPage";
 import Team from '../../sections/team/Team'
 import Settings from "../../sections/settings/Settings";
 import NotificationsPage from "../../sections/notifications/NotificationsPage";
-import GrantDetailModal from "../../components/grants/GrantDetailModal";
+import RecycleBin from "../../sections/bin/RecycleBin"
 import { Loader2 } from "lucide-react";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 
 const SECTION_COMPONENTS = {
   dashboard: DashboardSection,
   grants: GrantsDashboard,
-  // grants: Grants,
   programs: ProgramsDashboard,
   documents: DocumentsPage,
   team: Team,
   tasks: TasksSection,
   settings: Settings,
   notifications: NotificationsPage,
+  bin: RecycleBin
   // Add more mappings as you add more sections
 };
 
@@ -106,7 +105,7 @@ const Dashboard = () => {
             <Route path="tasks/*" element={<TasksSection />} />
             <Route path="settings/*" element={<Settings />} />
             <Route path="notifications/*" element={<NotificationsPage />} />
-            {/* Add more <Route path="section" ... /> as needed */}
+            <Route path="bin/*" element={<RecycleBin />} />
           </Routes>
         </main>
       </div>

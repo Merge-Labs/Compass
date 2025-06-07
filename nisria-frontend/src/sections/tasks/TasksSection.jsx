@@ -1,322 +1,546 @@
-import React, { useState } from 'react';
-import { Search, Filter, Plus, ChevronLeft, ChevronRight, Calendar, User, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  User,
+  Calendar,
+  MoreVertical,
+  Filter,
+  Search,
+  Plus,
+  Loader2, // Added for loading state
+  AlertTriangle as ErrorIcon, // Added for error state
+  Edit3,
+  Trash2,
+  CheckSquare,
+  ChevronDown,
+} from 'lucide-react';
+import TaskDetailModal from '../../components/tasks/TaskDetailModal';
+import api from '../../services/api'; // Import your API service
+import CreateTaskModal from '../../components/tasks/CreateTaskModal'; // Import the new CreateTaskModal
+import { useAuth } from '../../context/AuthProvider'; // Import useAuth to check user role
+import ConfirmDeleteModal from '../../components/shared/ConfirmDeleteModal'; // Import ConfirmDeleteModal
+import UpdateTaskModal from '../../components/tasks/UpdateTaskModal'; // Import UpdateTaskModal
 
-const TasksSection = () => {
-  const [activeTab, setActiveTab] = useState('All');
+const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'light' }) => {
+  const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
-  const [currentYear, setCurrentYear] = useState(2025);
-  const [selectedDate, setSelectedDate] = useState(null);
 
-  const tabs = ['All', 'To Do', 'In Progress', 'Completed', 'Assigned', 'Unassigned', 'Overdue', 'Grant Tasks'];
+  // State for fetched tasks, loading, and error
+  const [allTasks, setAllTasks] = useState([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+  const [tasksError, setTasksError] = useState(null);
 
-  const tasks = [
-    {
-      id: 1,
-      title: "Follow up: Grant 'Loreal' is pending",
-      description: "The grant application for 'Loreal' (ID: 949b84a4-0910-4987-a008-d8792b8fd450) has been marked as 'pending' on 2025-06-03 11:59. Please review and take necessary actions.",
-      assignedTo: "Wahome Jere...",
-      dueDate: "Jul 12",
-      status: "pending",
-      category: "Grant"
-    },
-    {
-      id: 2,
-      title: "Update bank statement",
-      description: "update to the newest bank statement",
-      assignedTo: "Manasseh Ki...",
-      dueDate: "Dec 31, 2024",
-      status: "overdue",
-      category: null,
-      isOverdue: true
-    }
-  ];
+  // State for TaskDetailModal
+  const [selectedTaskForModal, setSelectedTaskForModal] = useState(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // State for CreateTaskModal
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const { user } = useAuth(); // Get user from AuthProvider
 
-  const getDaysInMonth = (month, year) => {
-    return new Date(year, month + 1, 0).getDate();
+  // State for ConfirmDeleteModal
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
+  // State for UpdateTaskModal
+  const [isUpdateTaskModalOpen, setIsUpdateTaskModalOpen] = useState(false);
+  const [taskToUpdate, setTaskToUpdate] = useState(null);
+
+  // Priority colors and icons
+  const getPriorityConfig = (priority) => {
+    const configs = {
+      high: {
+        color: appTheme === 'light' ? 'text-red-500' : 'text-red-400',
+        bgColor: appTheme === 'light' ? 'bg-red-50' : 'bg-red-900/30',
+        dotColor: appTheme === 'light' ? 'bg-red-500' : 'bg-red-400',
+        label: 'High'
+      },
+      medium: {
+        color: appTheme === 'light' ? 'text-yellow-500' : 'text-yellow-400',
+        bgColor: appTheme === 'light' ? 'bg-yellow-50' : 'bg-yellow-900/30',
+        dotColor: appTheme === 'light' ? 'bg-yellow-500' : 'bg-yellow-400',
+        label: 'Medium'
+      },
+      low: {
+        color: appTheme === 'light' ? 'text-green-500' : 'text-green-400',
+        bgColor: appTheme === 'light' ? 'bg-green-50' : 'bg-green-900/30',
+        dotColor: appTheme === 'light' ? 'bg-green-500' : 'bg-green-400',
+        label: 'Low'
+      }
+    };
+    return configs[priority.toLowerCase()] || configs.medium;
   };
 
-  const getFirstDayOfMonth = (month, year) => {
-    return new Date(year, month, 1).getDay();
+  // Status colors and icons
+  const getStatusConfig = (status) => {
+    const configs = {
+      todo: {
+        icon: Clock,
+        color: appTheme === 'light' ? 'text-blue-500' : 'text-blue-400',
+        bgColor: appTheme === 'light' ? 'bg-blue-50' : 'bg-blue-900/30',
+        label: 'To Do'
+      },
+      'in-progress': {
+        icon: AlertCircle,
+        color: appTheme === 'light' ? 'text-orange-500' : 'text-orange-400',
+        bgColor: appTheme === 'light' ? 'bg-orange-50' : 'bg-orange-900/30',
+        label: 'In Progress'
+      },
+      completed: {
+        icon: CheckCircle2,
+        color: appTheme === 'light' ? 'text-green-500' : 'text-green-400',
+        bgColor: appTheme === 'light' ? 'bg-green-50' : 'bg-green-900/30',
+        label: 'Completed'
+      }
+    };
+    return configs[status.toLowerCase()] || configs.todo;
   };
 
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-    const days = [];
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-8"></div>);
-    }
-
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(
-        <div
-          key={day}
-          className={`h-8 w-8 flex items-center justify-center text-sm cursor-pointer hover:bg-gray-100 rounded ${
-            selectedDate === day ? 'bg-blue-500 text-white' : 'text-gray-700'
-          }`}
-          onClick={() => setSelectedDate(day)}
-        >
-          {day}
-        </div>
-      );
-    }
-
-    return days;
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-400';
-      case 'applied': return 'bg-blue-400';
-      case 'approved': return 'bg-green-400';
-      case 'denied': return 'bg-red-400';
-      case 'expired': return 'bg-gray-400';
-      case 'award-date': return 'bg-purple-400';
-      default: return 'bg-gray-300';
-    }
-  };
-
-  const getStatusIcon = (status, isOverdue) => {
-    if (isOverdue) {
-      return <div className="w-2 h-2 bg-red-500 rounded-full"></div>;
-    }
-    return <div className={`w-2 h-2 ${getStatusColor(status)} rounded-full`}></div>;
-  };
-
-  const filteredTasks = tasks.filter(task => {
-    if (searchTerm && !task.title.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No due date';
+    const date = new Date(dateString);
+    const now = new Date();
     
-    switch (activeTab) {
-      case 'Overdue':
-        return task.isOverdue;
-      case 'Grant Tasks':
-        return task.category === 'Grant';
-      default:
-        return true;
+    // Clear time part for accurate day difference calculation
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diffTime = dateOnly - nowOnly; // Difference in ms
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === -1) return 'Yesterday';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays > -7 && diffDays < 0) return `${Math.abs(diffDays)} days ago`;
+    if (diffDays < 7 && diffDays > 0) return `In ${diffDays} days`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  // Check if due date is overdue
+  const isOverdue = (dueDateString, status) => {
+    if (!dueDateString || status === 'completed') return false;
+    const dueDate = new Date(dueDateString);
+    const now = new Date();
+    // Set time to end of day for due date to ensure tasks due 'today' aren't overdue until tomorrow
+    dueDate.setHours(23, 59, 59, 999); 
+    return dueDate < now;
+  };
+
+  // Fetch tasks from API
+  const fetchTasksData = useCallback(async () => {
+    setIsLoadingTasks(true);
+    setTasksError(null);
+    try {
+      const response = await api.get("/api/tasks/"); // Adjust endpoint if needed
+      const tasksFromApi = response.data.results || response.data;
+      if (Array.isArray(tasksFromApi)) {
+        // Sort by newest first, or any other default sorting
+        setAllTasks(tasksFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      } else {
+        console.error("Tasks API response is not an array:", response.data);
+        setAllTasks([]);
+        setTasksError("Received an unexpected format for tasks.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch tasks data:", error);
+      setTasksError(error.response?.data?.detail || error.message || "Could not load tasks.");
+      setAllTasks([]);
+    } finally {
+      setIsLoadingTasks(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchTasksData();
+  }, [fetchTasksData]);
+
+  // Filter tasks
+  const filteredTasks = allTasks.filter(task => {
+    const matchesSearch = (task.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (task.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (filter === 'all') return true;
+    if (filter === 'assigned') return task.assigned_to_details;
+    if (filter === 'unassigned') return !task.assigned_to_details;
+    if (filter === 'overdue') return isOverdue(task.due_date, task.status);
+    if (filter === 'my_tasks' && user?.email) return task.assigned_to_details?.email === user.email;
+    if (filter === 'grant') return task.is_grant_follow_up_task;
+    return task.status?.toLowerCase() === filter;
   });
 
-  const overdueTasks = tasks.filter(task => task.isOverdue).length;
+  const transformTaskForModal = (task) => {
+    if (!task) return null;
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      assignedTo: task.assigned_to_details?.full_name || "Unassigned",
+      dueDate: formatDate(task.due_date), // Use the same formatting as in TaskItem
+      status: task.status, // TaskDetailModal's TaskStatusBadge handles capitalization
+      category: task.is_grant_follow_up_task ? "Grant" : null,
+      isOverdue: isOverdue(task.due_date, task.status),
+      priority: task.priority, // TaskDetailModal's PriorityBadge handles capitalization
+      date_created: task.created_at, // Assuming 'created_at' is available from API
+      date_updated: task.updated_at, // Assuming 'updated_at' is available from API
+    };
+  };
 
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Left Panel - Tasks Overview */}
-      <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-800">Tasks Overview</h1>
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-500 cursor-pointer" />
-              <Plus className="w-5 h-5 text-gray-500 cursor-pointer" />
-            </div>
-          </div>
-          
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+  const handleOpenTaskModal = (task) => {
+    const modalTaskData = transformTaskForModal(task);
+    setSelectedTaskForModal(modalTaskData);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTaskForModal(null);
+  };
+
+  const handleOpenUpdateModal = (task) => {
+    setTaskToUpdate(task);
+    setIsUpdateTaskModalOpen(true);
+  };
+
+  const handleTaskUpdated = () => {
+    fetchTasksData(); // Refresh tasks list
+    // If the detailed modal was open for this task, refresh its data or close it
+    if (selectedTaskForModal && taskToUpdate && selectedTaskForModal.id === taskToUpdate.id) {
+      // Option 1: Close detail modal
+      // handleCloseTaskModal();
+      // Option 2: Refetch detail modal data (if it fetches its own data)
+      // Or, update selectedTaskForModal directly if possible
+      const updatedTaskFromList = allTasks.find(t => t.id === taskToUpdate.id);
+      if (updatedTaskFromList) {
+        setSelectedTaskForModal(transformTaskForModal(updatedTaskFromList));
+      }
+    }
+  };
+
+  const handleDeleteInitiated = (task) => {
+    setTaskToDelete(task);
+    setDeleteError(null);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!taskToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.delete(`/api/tasks/${taskToDelete.id}/delete/`);
+      setIsConfirmDeleteOpen(false);
+      setTaskToDelete(null);
+      fetchTasksData(); // Refresh tasks list
+       // If the detailed modal was open for this task, close it
+      if (selectedTaskForModal && selectedTaskForModal.id === taskToDelete.id) {
+        handleCloseTaskModal();
+      }
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      setDeleteError(error.response?.data?.detail || "Could not delete task. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleMarkComplete = async (taskId) => {
+    try {
+      await api.post(`/api/tasks/${taskId}/mark_complete/`);
+      fetchTasksData(); // Refresh tasks list
+    } catch (error) {
+      console.error("Failed to mark task complete:", error);
+      // Add user feedback, e.g., a toast notification
+    }
+  };
+
+  const handleChangeStatus = async (taskId, newStatus) => {
+    try {
+      await api.post(`/api/tasks/${taskId}/change_status/`, { status: newStatus });
+      fetchTasksData();
+    } catch (error) {
+      console.error("Failed to change task status:", error);
+      // Add user feedback
+    }
+  };
+
+  const TaskItem = ({ task }) => {
+    const statusConfig = getStatusConfig(task.status);
+    const priorityConfig = getPriorityConfig(task.priority);
+    const StatusIcon = statusConfig.icon;
+    const isTaskOverdue = isOverdue(task.due_date, task.status);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = React.useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuRef.current && !menuRef.current.contains(event.target)) {
+          setIsMenuOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+      <div className={`flex items-start space-x-3 p-3 rounded-lg transition-colors duration-150 group ${appTheme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-gray-700/30'}`}>
+        <div className={`${statusConfig.bgColor} p-2 rounded-full flex-shrink-0 mt-0.5`}>
+          <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
         </div>
 
-        {/* Tabs */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
+        <div className="flex-1 min-w-0">
+          <div
+            className="flex items-start justify-between cursor-pointer"
+            onClick={() => handleOpenTaskModal(task)} // Make title area clickable
+          >
+            <div className="flex-1">
+              <h4 className={`text-sm font-medium truncate ${appTheme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>
+                {task.title}
+              </h4>
+              <p className={`text-xs mt-1 line-clamp-2 ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                {task.description}
+              </p>
+            </div>
+
+            <div className="relative flex items-center space-x-2 ml-3 flex-shrink-0" ref={menuRef}>
+              <div className={`w-2 h-2 rounded-full ${priorityConfig.dotColor}`}></div>
               <button
-                key={tab}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                  activeTab === tab
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab(tab)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
               >
-                {tab}
+                <MoreVertical className={`w-4 h-4 ${appTheme === 'light' ? 'text-gray-400 hover:text-gray-600' : 'text-gray-500 hover:text-gray-300'}`} />
               </button>
-            ))}
-          </div>
-          
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex items-center gap-2">
-              <ChevronLeft className="w-4 h-4 text-gray-400" />
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div className="bg-gray-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* Tasks List */}
-        <div className="flex-1 overflow-y-auto">
-          {filteredTasks.map((task) => (
-            <div key={task.id} className="p-6 border-b border-gray-100 hover:bg-gray-50">
-              <div className="flex items-start gap-3">
-                <div className="mt-2">
-                  {getStatusIcon(task.status, task.isOverdue)}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-800 mb-2">{task.title}</h3>
-                  <p className="text-sm text-gray-600 mb-3 leading-relaxed">{task.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{task.assignedTo}</span>
-                      </div>
-                      {task.category && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                          {task.category}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className={`text-sm ${task.isOverdue ? 'text-red-500' : 'text-gray-600'}`}>
-                        {task.dueDate} {task.isOverdue && '(Overdue)'}
-                      </span>
-                    </div>
+              {isMenuOpen && (
+                <div className={`absolute right-0 top-full mt-1 w-48 z-10 rounded-md shadow-lg border ${appTheme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'}`}>
+                  <div className="py-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleOpenUpdateModal(task); setIsMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-300 hover:bg-gray-700'}`}
+                    >
+                      <Edit3 size={14} className="mr-2" /> Edit Task
+                    </button>
+                    {task.status !== 'completed' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleMarkComplete(task.id); setIsMenuOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-green-600 hover:bg-green-50' : 'text-green-400 hover:bg-green-700/30'}`}
+                      >
+                        <CheckSquare size={14} className="mr-2" /> Mark Complete
+                      </button>
+                    )}
+                    {/* Basic Change Status - could be a submenu for more options */}
+                    {task.status !== 'todo' && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleChangeStatus(task.id, 'todo'); setIsMenuOpen(false); }}
+                            className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-300 hover:bg-gray-700'}`}
+                        >Mark as To Do</button>
+                    )}
+                    {task.status !== 'in_progress' && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleChangeStatus(task.id, 'in_progress'); setIsMenuOpen(false); }}
+                            className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-300 hover:bg-gray-700'}`}
+                        >Mark In Progress</button>
+                    )}
+                     {task.status !== 'on_hold' && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleChangeStatus(task.id, 'on_hold'); setIsMenuOpen(false); }}
+                            className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-300 hover:bg-gray-700'}`}
+                        >Mark On Hold</button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteInitiated(task); setIsMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs flex items-center ${appTheme === 'light' ? 'text-red-600 hover:bg-red-50' : 'text-red-400 hover:bg-red-700/30'}`}
+                    >
+                      <Trash2 size={14} className="mr-2" /> Delete Task
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>{filteredTasks.length} tasks</span>
-            <span className="text-red-500">{overdueTasks} overdue</span>
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center space-x-4">
+              {task.assigned_to_details ? (
+                <div className="flex items-center space-x-1">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${appTheme === 'light' ? 'bg-gray-200' : 'bg-gray-600'}`}>
+                    <User className={`w-3 h-3 ${appTheme === 'light' ? 'text-gray-600' : 'text-gray-300'}`} />
+                  </div>
+                  <span className={`text-xs truncate max-w-20 ${appTheme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                    {task.assigned_to_details.full_name?.trim() || 'N/A'}
+                  </span>
+                </div>
+              ) : (
+                <span className={`text-xs ${appTheme === 'light' ? 'text-gray-400' : 'text-gray-500'}`}>Unassigned</span>
+              )}
+
+              {task.is_grant_follow_up_task && (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${appTheme === 'light' ? 'bg-purple-100 text-purple-800' : 'bg-purple-900/50 text-purple-300'}`}>
+                  Grant
+                </span>
+              )}
+            </div>
+
+            <div className={`flex items-center space-x-1 text-xs ${
+              isTaskOverdue ? (appTheme === 'light' ? 'text-red-500' : 'text-red-400') : (appTheme === 'light' ? 'text-gray-500' : 'text-gray-400')
+            }`}>
+              <Calendar className="w-3 h-3" />
+              <span>{formatDate(task.due_date)}</span>
+              {isTaskOverdue && <span className="font-medium">(Overdue)</span>}
+            </div>
           </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Right Panel - Grants Calendar */}
-      <div className="w-1/2 bg-white flex flex-col">
-        {/* Calendar Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-800">Grants Calendar</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => {
-                  if (currentMonth === 0) {
-                    setCurrentMonth(11);
-                    setCurrentYear(currentYear - 1);
-                  } else {
-                    setCurrentMonth(currentMonth - 1);
-                  }
-                }}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
+  return (
+    <div className={`rounded-xl shadow-sm border h-full flex flex-col ${appTheme === 'light' ? 'bg-white border-gray-100' : 'bg-[var(--color-s1)] border-gray-700'}`}>
+      {showHeader && (
+        <div className={`p-6 border-b ${appTheme === 'light' ? 'border-gray-100' : 'border-gray-700'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold ${appTheme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>{title}</h3>
+            <div className="flex items-center space-x-2">
+              <button className={`p-1 rounded ${appTheme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-gray-700'}`}>
+                <Filter className={`w-4 h-4 ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`} />
               </button>
-              <span className="font-medium text-gray-800 min-w-[120px] text-center">
-                {monthNames[currentMonth]} {currentYear}
-              </span>
-              <button 
-                onClick={() => {
-                  if (currentMonth === 11) {
-                    setCurrentMonth(0);
-                    setCurrentYear(currentYear + 1);
-                  } else {
-                    setCurrentMonth(currentMonth + 1);
-                  }
-                }}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              </button>
+              {user?.role === 'super_admin' && (
+                <button
+                  onClick={() => setIsCreateTaskModalOpen(true)}
+                  className={`p-1 rounded ${appTheme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-gray-700'}`}
+                >
+                  <Plus className={`w-4 h-4 ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`} />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Status Legend */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Status Legend</h3>
-            <div className="flex flex-wrap gap-4 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <span className="text-gray-600">Pending</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                <span className="text-gray-600">Applied</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-gray-600">Approved</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                <span className="text-gray-600">Denied</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                <span className="text-gray-600">Expired</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                <span className="text-gray-600">Award Date</span>
-              </div>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${appTheme === 'light' ? 'text-gray-400' : 'text-gray-500'}`} />
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${appTheme === 'light' ? 'border-gray-200 bg-white text-gray-900' : 'border-gray-600 bg-gray-700 text-gray-100 placeholder-gray-400'}`}
+              />
             </div>
-          </div>
-        </div>
 
-        {/* Calendar */}
-        <div className="flex-1 p-6">
-          {/* Calendar Grid */}
-          <div className="mb-6">
-            {/* Days of week header */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <div key={day} className="h-8 flex items-center justify-center text-sm font-medium text-gray-500">
-                  {day}
-                </div>
+            <div className="flex space-x-2 overflow-x-auto pb-1">
+              {[
+                { key: 'all', label: 'All' }, { key: 'todo', label: 'To Do' }, { key: 'in-progress', label: 'In Progress' },
+                { key: 'completed', label: 'Completed' }, { key: 'my_tasks', label: 'My Tasks' },
+                { key: 'assigned', label: 'Assigned (All)' }, { key: 'unassigned', label: 'Unassigned' },
+                { key: 'overdue', label: 'Overdue' }, { key: 'grant', label: 'Grant Tasks' }
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    filter === key
+                      ? (appTheme === 'light' ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/30 text-blue-300')
+                      : (appTheme === 'light' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-700 text-gray-300 hover:bg-gray-600')
+                  }`}
+                >
+                  {label}
+                </button>
               ))}
             </div>
-            
-            {/* Calendar days */}
-            <div className="grid grid-cols-7 gap-1">
-              {renderCalendar()}
-            </div>
-          </div>
-
-          {/* Select a date section */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Select a date</h3>
-            <div className="border border-gray-300 rounded-lg p-4 text-center">
-              <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Click on a date to view grant details</p>
-            </div>
           </div>
         </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {isLoadingTasks ? (
+          <div className={`flex flex-col items-center justify-center h-full ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Loader2 className={`w-10 h-10 animate-spin mb-3 ${appTheme === 'light' ? 'text-blue-500' : 'text-blue-400'}`} />
+            <p className="text-sm">Loading tasks...</p>
+          </div>
+        ) : tasksError ? (
+          <div className={`flex flex-col items-center justify-center h-full p-6 text-center ${appTheme === 'light' ? 'text-red-600' : 'text-red-400'}`}>
+            <ErrorIcon className="w-10 h-10 mb-3" />
+            <p className="text-sm font-medium">Error loading tasks</p>
+            <p className="text-xs mt-1">{tasksError}</p>
+            <button
+              onClick={fetchTasksData}
+              className={`mt-4 px-4 py-2 text-xs rounded-lg border transition-colors ${appTheme === 'light' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-red-900/30 text-red-300 border-red-700 hover:bg-red-800/50'}`}
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredTasks.length > 0 ? (
+          <div className="p-3">
+            {filteredTasks.map((task) => (
+              <TaskItem key={task.id} task={task} />
+            ))}
+          </div>
+        ) : (
+          <div className={`flex flex-col items-center justify-center h-full ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Clock className={`w-8 h-8 mb-2 ${appTheme === 'light' ? 'text-gray-300' : 'text-gray-600'}`} />
+            <p className="text-sm">No tasks found for current filter</p>
+          </div>
+        )}
       </div>
+      <div className={`p-4 border-t ${appTheme === 'light' ? 'border-gray-100 bg-gray-50' : 'border-gray-700 bg-gray-800/50'}`}>
+        <div className={`flex justify-between text-xs ${appTheme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+          <span>{filteredTasks.length} tasks</span>
+          <span>
+            {filteredTasks.filter(t => isOverdue(t.due_date, t.status)).length} overdue
+          </span>
+        </div>
+      </div>
+
+      <TaskDetailModal
+        isOpen={isTaskModalOpen}
+        onClose={handleCloseTaskModal}
+        task={selectedTaskForModal}
+        onMarkComplete={handleMarkComplete}
+        onDeleteTask={handleDeleteInitiated}
+        onEditTask={handleOpenUpdateModal}
+        onChangeStatus={handleChangeStatus}
+        appTheme={appTheme}
+      />
+
+      {user?.role === 'super_admin' && (
+        <CreateTaskModal
+          isOpen={isCreateTaskModalOpen}
+          onClose={() => setIsCreateTaskModalOpen(false)}
+          onTaskCreated={fetchTasksData} // To refresh the task list after creation
+        />
+      )}
+
+      {user?.role === 'super_admin' && taskToUpdate && (
+        <UpdateTaskModal
+          isOpen={isUpdateTaskModalOpen}
+          onClose={() => { setIsUpdateTaskModalOpen(false); setTaskToUpdate(null); }}
+          onTaskUpdated={handleTaskUpdated}
+          taskData={taskToUpdate}
+        />
+      )}
+
+      <ConfirmDeleteModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+        itemName={taskToDelete?.title}
+        itemType="task"
+        isProcessing={isDeleting}
+        customError={deleteError}
+      />
     </div>
   );
 };

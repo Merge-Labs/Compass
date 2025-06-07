@@ -3,10 +3,10 @@ import { Search, ChevronDown, LogOut, Menu as MenuIcon, Bell } from 'lucide-reac
 import api from '../../services/api'; // Import the configured Axios instance
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
 
+const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dfjet61yc/"; // As in Team.jsx and Settings.jsx
 
 
-
-const Navbar = ({ user, onLogout, onToggleSmSidebar, appTheme, appName = "Nisria's Compass" }) => {
+const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Nisria's Compass" }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -322,9 +322,13 @@ const Navbar = ({ user, onLogout, onToggleSmSidebar, appTheme, appName = "Nisria
             onClick={() => navigate('/dashboard/compass/settings')} // Navigate to settings on click
             title={user?.full_name || 'User Profile'} // Add title for hover
           >
-            {user?.profile_picture_url ? (
+            {user?.profile_picture ? (
               <img
-                src={user.profile_picture_url}
+                src={
+                  user.profile_picture.startsWith('http')
+                    ? user.profile_picture
+                    : CLOUDINARY_BASE_URL + user.profile_picture
+                }
                 alt="Profile"
                 className="w-10 h-10 rounded-full object-cover shrink-0" // Simplified size for navbar
               />

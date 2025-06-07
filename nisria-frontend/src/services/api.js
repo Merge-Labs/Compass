@@ -6,7 +6,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL; // Replace with your actual base
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    // 'Content-Type': 'application/json',
   },
 });
 
