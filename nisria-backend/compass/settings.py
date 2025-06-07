@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
+import dj_database_url
 import cloudinary
 from datetime import timedelta
 import os
@@ -28,9 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['compass.azurewebsites.net']
+# Allowed Hosts
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='compass-webapp.azurewebsites.net', cast=Csv)
+
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -115,16 +118,23 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 #     }
 # }
 
-# PSQL Database
+# # PSQL Database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': config('DATABASE_ENGINE'),
+#         'NAME': config('DATABASE_NAME'),
+#         'USER': config('DATABASE_USER'),
+#         'PASSWORD': config('DATABASE_PASSWORD'),
+#         'HOST': config('DATABASE_HOST'),
+#         'PORT': config('DATABASE_PORT'),
+#     }
+# }
+
+# deploy Database
 DATABASES = {
-    'default': {
-        'ENGINE': config('DATABASE_ENGINE'),
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')  # like postgres://user:pass@host:port/dbname
+    )
 }
 
 # Password validation
@@ -212,8 +222,16 @@ ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']
 # Celery Configuration Options
 # ------------------------------------------------------------------------------
 # Make sure Redis is running: sudo systemctl start redis-server or redis-server
-CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
-CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
+
+# local
+ 
+# CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
+# CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
+
+# deploy
+CELERY_BROKER_URL = config('REDIS_URL')
+CELERY_RESULT_BACKEND = config('REDIS_URL')
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
