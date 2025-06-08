@@ -123,24 +123,38 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 #     }
 # }
 
-# PSQL Database
-DATABASES = {
-    'default': {
-        'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT', cast=int),
-    }
-}
-
-# # deploy Database
+# # PSQL Database
 # DATABASES = {
-#     'default': dj_database_url.config(
-#         default=config('DATABASE_URL')  # like postgres://user:pass@host:port/dbname
-#     )
+#     'default': {
+#         'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.postgresql'),
+#         'NAME': config('DATABASE_NAME'),
+#         'USER': config('DATABASE_USER'),
+#         'PASSWORD': config('DATABASE_PASSWORD'),
+#         'HOST': config('DATABASE_HOST'),
+#         'PORT': config('DATABASE_PORT', cast=int),
+#     }
 # }
+
+# deploy Database
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Railway production with PostgreSQL service
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Local development using individual variables from .env
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
+            'NAME': config('DATABASE_NAME', default=BASE_DIR / 'db.sqlite3'),
+            'USER': config('DATABASE_USER', default=''),
+            'PASSWORD': config('DATABASE_PASSWORD', default=''),
+            'HOST': config('DATABASE_HOST', default=''),
+            'PORT': config('DATABASE_PORT', default=''),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -234,8 +248,9 @@ ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']
 # CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
 
 # deploy
-CELERY_BROKER_URL = config('REDIS_URL')
-CELERY_RESULT_BACKEND = config('REDIS_URL')
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
