@@ -31,9 +31,20 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Allowed Hosts
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='compass-webapp.azurewebsites.net', cast=Csv)
-ALLOWED_HOSTS =['*']
+# Detect if running on Railway
+RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=None)
+
+# Allowed Hosts - FIXED for security
+if RAILWAY_ENVIRONMENT:
+    # Production on Railway
+    ALLOWED_HOSTS = [
+        'compass-production-9ae0.up.railway.app',
+        '*.up.railway.app',  # Railway domains
+        '*.railway.app',     # Railway domains
+    ]
+else:
+    # Local development
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 
 # Static files
@@ -85,13 +96,45 @@ MIDDLEWARE = [
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite dev server
-    "http://127.0.0.1:5173",  # Vite dev server
-]
+# CORS settings - FIXED for security
+if RAILWAY_ENVIRONMENT:
+    # Production CORS settings
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://nisria-frontend.vercel.app/",  # Replace with your actual frontend domain
+        # Add other trusted domains here
+    ]
+    # If you need to allow credentials (cookies, auth headers)
+    CORS_ALLOW_CREDENTIALS = True
+else:
+    # Development CORS settings
+    CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:5173",  # Vite dev server
+        "http://localhost:3000",  # React dev server
+        "http://127.0.0.1:3000",  # React dev server
+    ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # For dev only — lock it down in prod
+# CSRF settings for Railway
+if RAILWAY_ENVIRONMENT:
+    CSRF_TRUSTED_ORIGINS = [
+        'https://compass-production-9ae0.up.railway.app',
+        # Add your frontend domain here too
+        # 'https://your-frontend-domain.com',
+    ]
+
+# HTTPS settings for Railway
+if RAILWAY_ENVIRONMENT:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'compass.urls'
 
@@ -206,9 +249,9 @@ cloudinary.config(
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'your_cloud_name',
-    'API_KEY': 'your_api_key',
-    'API_SECRET': 'your_api_secret',
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),  # Fixed: use actual config
+    'API_KEY': config('CLOUDINARY_API_KEY'),        # Fixed: use actual config
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),  # Fixed: use actual config
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
@@ -221,6 +264,12 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
 }
 
 
@@ -291,3 +340,25 @@ SWAGGER_SETTINGS = {
     }],
     'USE_SESSION_AUTH': False,  # Disable session authentication in Swagger UI if you only use JWT
 }
+
+# Logging configuration for debugging
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
