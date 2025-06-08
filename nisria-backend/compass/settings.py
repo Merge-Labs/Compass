@@ -101,7 +101,7 @@ if RAILWAY_ENVIRONMENT:
     # Production CORS settings
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = [
-        "https://nisria-frontend.vercel.app/",  # Replace with your actual frontend domain
+        "https://nisria-frontend.vercel.app",  # Replace with your actual frontend domain
         # Add other trusted domains here
     ]
     # If you need to allow credentials (cookies, auth headers)
