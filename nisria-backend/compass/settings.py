@@ -33,7 +33,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allowed Hosts
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='compass-webapp.azurewebsites.net', cast=Csv)
-ALLOWED_HOSTS =['compass-webapp.azurewebsites.net']
+ALLOWED_HOSTS =['*']
 
 
 # Static files
@@ -81,6 +81,10 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
@@ -119,24 +123,24 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 #     }
 # }
 
-# # PSQL Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': config('DATABASE_ENGINE'),
-#         'NAME': config('DATABASE_NAME'),
-#         'USER': config('DATABASE_USER'),
-#         'PASSWORD': config('DATABASE_PASSWORD'),
-#         'HOST': config('DATABASE_HOST'),
-#         'PORT': config('DATABASE_PORT'),
-#     }
-# }
-
-# deploy Database
+# PSQL Database
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL')  # like postgres://user:pass@host:port/dbname
-    )
+    'default': {
+        'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': config('DATABASE_NAME'),
+        'USER': config('DATABASE_USER'),
+        'PASSWORD': config('DATABASE_PASSWORD'),
+        'HOST': config('DATABASE_HOST'),
+        'PORT': config('DATABASE_PORT', cast=int),
+    }
 }
+
+# # deploy Database
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=config('DATABASE_URL')  # like postgres://user:pass@host:port/dbname
+#     )
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -244,11 +248,11 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If y
 CELERY_BEAT_SCHEDULE = {
     'expire_pending_grants_daily': {
         'task': 'grants.tasks.run_expire_pending_grants_command', 
-        'schedule': crontab(minute='35', hour='0'),  
+        'schedule': crontab(minute='35', hour='3'),  
     },
     'check_grant_deadlines_daily': {
         'task': 'notifications.tasks.check_grant_deadlines_and_notify_task',
-        'schedule': crontab(minute='17', hour='15'),  
+        'schedule': crontab(minute='17', hour='2'),  
     },
      'cleanup-expired-bin-items-daily': {
         'task': 'core.tasks.cleanup_expired_recycle_bin_items',
