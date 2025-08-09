@@ -126,7 +126,7 @@ const DocumentUploadForm = ({ isOpen, onClose, onUploadSuccess, isDark }) => {
   };
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 ease-in-out" onClick={handleBackdropClick}>
-      <div className={`rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel ${isDark ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'}`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Upload New Document

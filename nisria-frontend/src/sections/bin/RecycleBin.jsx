@@ -230,9 +230,7 @@ export const RecycleBin = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'dark bg-gray-900' : 'bg-gray-50'
-    }`}>
+    <div className={`min-h-screen transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -256,7 +254,7 @@ export const RecycleBin = () => {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="glass-surface bg-white/70 dark:bg-gray-800/80 rounded-xl shadow-sm border border-white/40 dark:border-gray-700">
           {/* Tabs and Controls */}
           <div className="border-b border-gray-200 dark:border-gray-700 p-6">
             <div className="flex flex-col space-y-4">

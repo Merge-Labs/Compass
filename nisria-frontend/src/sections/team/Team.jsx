@@ -136,10 +136,10 @@ const Team = () => {
   }
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen transition-all duration-300`}>
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 mb-6 transition-all duration-300`}>
+        <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg p-6 mb-6 transition-all duration-300`}>
           <div className="flex justify-between items-center mb-4">
             <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Admin Management System
@@ -243,7 +243,7 @@ const Team = () => {
         )}
 
         {!isLoading && !error && (filteredAdmins.length > 0 || !searchTerm) && (
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden transition-all duration-300`}>
+           <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg overflow-hidden transition-all duration-300`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-all duration-300`}>
@@ -337,7 +337,7 @@ const Team = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
+          <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
             <div className="flex items-center">
               <div className="p-3 rounded-lg bg-red-100 mr-4">
                 <Shield className="text-red-600" size={24} />
@@ -349,7 +349,7 @@ const Team = () => {
             </div>
           </div>
 
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
+          <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
             <div className="flex items-center">
               <div className="p-3 rounded-lg bg-blue-100 mr-4">
                 <Users className="text-blue-600" size={24} />
@@ -361,7 +361,7 @@ const Team = () => {
             </div>
           </div>
 
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
+          <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl`}>
             <div className="flex items-center">
               <div className="p-3 rounded-lg bg-green-100 mr-4">
                 <FileText className="text-green-600" size={24} />
@@ -388,7 +388,7 @@ const Team = () => {
         </div>
 
         {/* Pagination */}
-        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-4 mt-6 transition-all duration-300`}>
+          <div className={`glass-surface ${darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'} rounded-xl shadow-lg p-4 mt-6 transition-all duration-300`}>
           <div className="flex justify-between items-center">
             <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Showing {filteredAdmins.length > 0 ? 1 : 0} to {filteredAdmins.length} of {teamMembers.length} entries

@@ -97,7 +97,7 @@ export const DashboardCard = ({
   if (layout === "compact") {
     return (
       <div
-        className={`${backgroundColor} ${textColor} rounded-xl shadow-sm border border-gray-100 ${sizeClasses[size]} ${className}`}
+        className={`${backgroundColor} glass-surface ${textColor} rounded-xl shadow-sm border border-gray-100 ${sizeClasses[size]} ${className}`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -125,7 +125,7 @@ export const DashboardCard = ({
   if (layout === "detailed") {
     return (
       <div
-        className={`${backgroundColor} ${textColor} rounded-xl shadow-sm border border-black/50 ${sizeClasses[size]} ${className}`}
+        className={`${backgroundColor} glass-surface ${textColor} rounded-xl shadow-sm border border-black/50 ${sizeClasses[size]} ${className}`}
       >
         <div className="flex items-start justify-between mb-4">
           <div
@@ -153,7 +153,7 @@ export const DashboardCard = ({
   // Default layout
   return (
     <div
-      className={`${backgroundColor} ${textColor} rounded-xl shadow-sm border border-gray-100 ${sizeClasses[size]} ${className}`}
+      className={`${backgroundColor} glass-surface ${textColor} rounded-xl shadow-sm border border-gray-100 ${sizeClasses[size]} ${className}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div

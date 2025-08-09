@@ -1,5 +1,5 @@
 // src/context/ThemeProvider.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useEffect, useContext, useMemo } from 'react';
 
 const ThemeContext = createContext(undefined);
 
@@ -12,27 +12,19 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
-  });
-
+  // Force light theme only
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove(theme === 'light' ? 'dark' : 'light');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    root.classList.remove('dark');
+    root.classList.add('light');
+    try {
+      localStorage.setItem('theme', 'light');
+    } catch (_) {
+      // ignore storage errors
+    }
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  const contextValue = useMemo(() => ({ theme: 'light', toggleTheme: () => {} }), []);
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 };

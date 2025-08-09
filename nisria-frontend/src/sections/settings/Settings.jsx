@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import api from '../../services/api'; // Import your API service
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import { useAuth } from '../../context/AuthProvider'; // Import useAuth
-import { useTheme } from '../../context/ThemeProvider'; // Import useTheme
 import 'react-phone-number-input/style.css'; // Import the styles
 
 const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dfjet61yc/"; // Example from Team.jsx, adjust if needed
@@ -45,13 +44,8 @@ const ProfileSettingsPage = () =>  {
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  // Theme preference from context and local user choice
+  // Theme preference removed; app is light-only now
   const { logout } = useAuth(); // Get logout function from AuthProvider
-  const { theme: actualAppliedTheme, toggleTheme: globalToggleActualTheme } = useTheme();
-  const [userThemePreference, setUserThemePreference] = useState(() => {
-    // Initialize from localStorage or default to 'auto'
-    return localStorage.getItem('themeUserPreference') || 'auto';
-  });
 
   // Static Account Activity Data
   const accountActivity = [
@@ -104,53 +98,7 @@ const ProfileSettingsPage = () =>  {
     fetchUserData();
   }, []);
 
-  // Effect to persist user's theme preference and apply it
-  useEffect(() => {
-    localStorage.setItem('themeUserPreference', userThemePreference);
-
-    const applyPreference = () => {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-      if (userThemePreference === 'light') {
-        if (actualAppliedTheme === 'dark') {
-          globalToggleActualTheme();
-        }
-      } else if (userThemePreference === 'dark') {
-        if (actualAppliedTheme === 'light') {
-          globalToggleActualTheme();
-        }
-      } else { // 'auto'
-        if (systemPrefersDark && actualAppliedTheme === 'light') {
-          globalToggleActualTheme();
-        } else if (!systemPrefersDark && actualAppliedTheme === 'dark') {
-          globalToggleActualTheme();
-        }
-      }
-    };
-    applyPreference();
-  }, [userThemePreference, actualAppliedTheme, globalToggleActualTheme]);
-
-  // Effect to listen to OS theme changes when in 'auto' mode
-  useEffect(() => {
-    if (userThemePreference !== 'auto') {
-      return undefined; // No listener needed if not in auto mode
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e) => {
-      const systemPrefersDark = e.matches;
-      if (systemPrefersDark && actualAppliedTheme === 'light') {
-        globalToggleActualTheme();
-      } else if (!systemPrefersDark && actualAppliedTheme === 'dark') {
-        globalToggleActualTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-
-    // Cleanup listener on component unmount or when preference changes from 'auto'
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-  }, [userThemePreference, actualAppliedTheme, globalToggleActualTheme]);
+  // Theme preference logic removed; no OS or user preference listeners needed
 
 
   const handleInputChange = (e) => {
@@ -326,10 +274,10 @@ const ProfileSettingsPage = () =>  {
       />
       
       {/* Settings Modal */}
-      <div className="absolute inset-4 md:inset-8 lg:inset-16 xl:inset-20 bg-white rounded-3xl shadow-2xl overflow-hidden">
+      <div className="absolute inset-4 md:inset-8 lg:inset-16 xl:inset-20 glass-panel bg-white/60 border border-white/40 rounded-3xl shadow-2xl overflow-hidden">
         <div className="flex h-full">
           {/* Sidebar */}
-          <div className="w-80 bg-gray-50 border-r border-gray-200 p-6">
+          <div className="w-80 glass-surface bg-white/50 border-r border-white/40 p-6">
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
               <button
@@ -674,25 +622,6 @@ const ProfileSettingsPage = () =>  {
               {activeSection === 'preferences' && (
                 <div className="space-y-8">
                   <h2 className="text-3xl font-bold text-gray-900">Platform Preferences</h2>
-
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Theme Preference</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      {['light', 'dark', 'auto'].map((themeOption) => (
-                        <button
-                          key={themeOption}
-                          onClick={() => setUserThemePreference(themeOption)}
-                          className={`p-4 rounded-xl border-2 transition-all capitalize ${
-                            userThemePreference === themeOption
-                              ? 'border-blue-600 bg-blue-50 text-blue-700'
-                              : 'border-gray-300 hover:border-gray-400'
-                          }`}
-                        >
-                          {themeOption === 'auto' ? 'System Default' : themeOption}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
                   <div className="bg-gray-50 rounded-2xl p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Gamification Stats</h3>

@@ -12,7 +12,7 @@ const ConfirmPermanentDeleteModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="glass-panel bg-white/70 dark:bg-gray-800/90 border border-white/40 dark:border-gray-700 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2" />
