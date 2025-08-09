@@ -13,6 +13,7 @@ import Settings from "../../sections/settings/Settings";
 import NotificationsPage from "../../sections/notifications/NotificationsPage";
 import RecycleBin from "../../sections/bin/RecycleBin"
 import { Loader2 } from "lucide-react";
+import bgImage from "/bg.jpg";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 
 const SECTION_COMPONENTS = {
@@ -58,9 +59,11 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-black">
-        <Loader2 className="w-12 h-12 animate-spin text-p1 dark:text-p2" />
-        <span className="ml-4 text-lg font-medium text-gray-700 dark:text-gray-200">Loading dashboard...</span>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="glass-surface rounded-2xl px-6 py-4">
+          <Loader2 className="w-12 h-12 animate-spin text-p1" />
+        </div>
+        <span className="mt-4 text-lg font-medium text-gray-800">Loading dashboard...</span>
       </div>
     );
   }
@@ -74,9 +77,7 @@ const Dashboard = () => {
         activeSection={section.charAt(0).toUpperCase() + section.slice(1)}
       />
       <div
-        className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${
-          theme === "light" ? "bg-gray-50" : "bg-black/95"
-        }
+        className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out
         ${
           isSmSidebarOpen
             ? "blur-sm md:blur-none pointer-events-none md:pointer-events-auto"

@@ -115,11 +115,7 @@ const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Nisria's Compass
   // --- End Notifications Logic ---
 
   return (
-    <nav className={`w-full px-6 py-4 border-b transition-colors duration-200 ${
-      appTheme === 'dark'
-        ? 'bg-black/95 border-gray-800' 
-        : 'bg-gray-50 border-gray-200'
-    }`}>
+    <nav className={`w-full px-6 py-4 border-b transition-colors duration-200 glass-surface border-white/40`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center max-md:space-x-10">
           {/* Hamburger Menu for small screens */}

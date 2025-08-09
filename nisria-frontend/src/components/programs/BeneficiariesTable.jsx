@@ -108,7 +108,7 @@ const BeneficiariesTable = ({ beneficiaries, programType, loading, error, onView
   }
 
   return (
-    <div className={`shadow-md rounded-lg overflow-hidden ${theme === 'light' ? 'bg-white' : 'bg-gray-800'}`}>
+    <div className={`shadow-md rounded-lg overflow-hidden glass-surface ${theme === 'light' ? 'bg-white/70 border border-white/40' : 'bg-gray-800/80 border border-gray-700'}`}>
       
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">

@@ -392,7 +392,7 @@ const DashboardSection = () => {
 
                 {/* Users by Role Pie Chart Section */}
                 <div
-                  className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col border-1 border-black/50 ${ // Added explicit height and flex
+                  className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col border-1 border-black/50 glass-surface ${ // Added explicit height and flex
                     theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }`}
                 >

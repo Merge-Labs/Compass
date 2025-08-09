@@ -152,7 +152,7 @@ const TaskDetailModal = ({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className={`rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}>
+      <div className={`rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col glass-panel ${isDark ? 'bg-gray-800/90 text-gray-100 border border-gray-700' : 'bg-white/70 text-gray-900 border border-white/40'}`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Task Details</h3>

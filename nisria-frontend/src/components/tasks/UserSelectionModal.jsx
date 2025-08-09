@@ -63,7 +63,7 @@ const UserSelectionModal = ({ isOpen, onClose, onUserSelect }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-      <div className={`rounded-lg shadow-xl w-full max-w-md max-h-[70vh] flex flex-col ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`rounded-lg shadow-xl w-full max-w-md max-h-[70vh] flex flex-col glass-panel ${isDark ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'}`}>
         <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Select User</h3>
           <button onClick={onClose} className={`p-1 rounded-full ${isDark ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>

@@ -442,9 +442,7 @@ const DocumentsPage = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
+    <div className="min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto p-6">
         <Routes>
           <Route
@@ -565,7 +563,7 @@ const DocumentsPage = () => {
                         <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                           Recent
                         </h2>
-                        <div className={`rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div className={`rounded-xl border glass-surface ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                           {pageData.recentFiles.map((file, index) => (
                             <div key={file.id} className={index < pageData.recentFiles.length - 1 ? `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}` : ''}>
                               <FileItem file={file} isDark={isDark} onViewDetails={handleViewDetails} />
@@ -585,7 +583,7 @@ const DocumentsPage = () => {
                       {filteredFiles.length === 0 && searchTerm && ( <p className={`text-center py-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}> No documents found for "{searchTerm}".</p>)}
                       {filteredFiles.length === 0 && !searchTerm && pageData.allFiles.length === 0 && ( <p className={`text-center py-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}> No documents available.</p>)}
                       {filteredFiles.length > 0 && viewMode === 'grid' && ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"> {filteredFiles.map((file) => ( <FileItem key={file.id} file={file} isDark={isDark} isGrid={true} /> ))} </div>)}
-                      {filteredFiles.length > 0 && viewMode === 'list' && ( <div className={`rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}> {filteredFiles.map((file, index) => ( <div key={file.id} className={index < filteredFiles.length - 1 ? `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}` : ''}> <FileItem file={file} isDark={isDark} onViewDetails={handleViewDetails} /> </div> ))} </div>)}
+                      {filteredFiles.length > 0 && viewMode === 'list' && ( <div className={`rounded-xl border glass-surface ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}> {filteredFiles.map((file, index) => ( <div key={file.id} className={index < filteredFiles.length - 1 ? `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}` : ''}> <FileItem file={file} isDark={isDark} onViewDetails={handleViewDetails} /> </div> ))} </div>)}
                     </div>
                   </>
                 )}
