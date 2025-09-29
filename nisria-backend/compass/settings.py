@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
+import dj_database_url
 import cloudinary
 from datetime import timedelta
 import os
@@ -27,10 +28,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*', 'localhost',  '127.0.0.1']
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -77,13 +74,49 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite dev server
-    "http://127.0.0.1:5173",  # Vite dev server
-]
 
-CORS_ALLOW_ALL_ORIGINS = True  # For dev only — lock it down in prod
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# CORS settings - FIXED for security
+if RAILWAY_ENVIRONMENT:
+    # Production CORS settings
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://nisria-frontend.vercel.app",  # Replace with your actual frontend domain
+        # Add other trusted domains here
+    ]
+    # If you need to allow credentials (cookies, auth headers)
+    CORS_ALLOW_CREDENTIALS = True
+else:
+    # Development CORS settings
+    CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:5173",  # Vite dev server
+        "http://localhost:3000",  # React dev server
+        "http://127.0.0.1:3000",  # React dev server
+    ]
+
+# CSRF settings for Railway
+if RAILWAY_ENVIRONMENT:
+    CSRF_TRUSTED_ORIGINS = [
+        'https://compass-production-9ae0.up.railway.app',
+        # Add your frontend domain here too
+        # 'https://your-frontend-domain.com',
+    ]
+
+# HTTPS settings for Railway
+if RAILWAY_ENVIRONMENT:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'compass.urls'
 
@@ -115,17 +148,38 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 #     }
 # }
 
-# PSQL Database
-DATABASES = {
-    'default': {
-        'ENGINE': config('DATABASE_ENGINE'),
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
+# # PSQL Database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.postgresql'),
+#         'NAME': config('DATABASE_NAME'),
+#         'USER': config('DATABASE_USER'),
+#         'PASSWORD': config('DATABASE_PASSWORD'),
+#         'HOST': config('DATABASE_HOST'),
+#         'PORT': config('DATABASE_PORT', cast=int),
+#     }
+# }
+
+# deploy Database
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Railway production with PostgreSQL service
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
     }
-}
+else:
+    # Local development using individual variables from .env
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
+            'NAME': config('DATABASE_NAME', default=BASE_DIR / 'db.sqlite3'),
+            'USER': config('DATABASE_USER', default=''),
+            'PASSWORD': config('DATABASE_PASSWORD', default=''),
+            'HOST': config('DATABASE_HOST', default=''),
+            'PORT': config('DATABASE_PORT', default=''),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -177,9 +231,9 @@ cloudinary.config(
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'your_cloud_name',
-    'API_KEY': 'your_api_key',
-    'API_SECRET': 'your_api_secret',
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),  # Fixed: use actual config
+    'API_KEY': config('CLOUDINARY_API_KEY'),        # Fixed: use actual config
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),  # Fixed: use actual config
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
@@ -192,6 +246,12 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
 }
 
 
@@ -212,8 +272,17 @@ ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']
 # Celery Configuration Options
 # ------------------------------------------------------------------------------
 # Make sure Redis is running: sudo systemctl start redis-server or redis-server
-CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
-CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
+
+# local
+ 
+# CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
+# CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
+
+# deploy
+REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -225,11 +294,11 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If y
 CELERY_BEAT_SCHEDULE = {
     'expire_pending_grants_daily': {
         'task': 'grants.tasks.run_expire_pending_grants_command', 
-        'schedule': crontab(minute='35', hour='0'),  
+        'schedule': crontab(minute='35', hour='3'),  
     },
     'check_grant_deadlines_daily': {
         'task': 'notifications.tasks.check_grant_deadlines_and_notify_task',
-        'schedule': crontab(minute='17', hour='15'),  
+        'schedule': crontab(minute='17', hour='2'),  
     },
      'cleanup-expired-bin-items-daily': {
         'task': 'core.tasks.cleanup_expired_recycle_bin_items',
@@ -253,3 +322,25 @@ SWAGGER_SETTINGS = {
     }],
     'USE_SESSION_AUTH': False,  # Disable session authentication in Swagger UI if you only use JWT
 }
+
+# Logging configuration for debugging
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
