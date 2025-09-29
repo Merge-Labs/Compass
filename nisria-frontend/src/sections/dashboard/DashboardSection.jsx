@@ -16,8 +16,15 @@ import {
   Pie,
   Cell,
   Tooltip,
+  RadialBarChart,
+  RadialBar,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Label,
 } from "recharts"; // Removed DashboardCard as we'll use GradientCard for the top section
 import { DashboardCard, GradientCard } from "../../components/layout/card"; // Added GradientCard
 import TasksSection from "../../components/dashboard/TasksSection";
@@ -32,8 +39,30 @@ const DashboardSection = () => {
     "var(--color-p1)", // Red
     "var(--color-p2)", // Blue
     "var(--color-s3)", // Medium Blue
+    "var(--color-p4)", // Another color
+    "var(--color-p5)", // And another
+  ];
+  const BENEFICIARY_PIE_COLORS = [
+    "var(--color-p1)", "var(--color-p2)", "var(--color-s3)", 
+    "var(--color-p4)", "var(--color-p5)", "#FFBB28", "#FF8042"
   ];
   
+  const CustomTooltip = ({ active, payload, theme }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className={`p-3 rounded-lg shadow-lg transition-colors ${theme === 'light' ? 'bg-white/80 backdrop-blur-sm border border-gray-200' : 'bg-gray-800/80 backdrop-blur-sm border border-gray-700'}`}>
+          <p className={`font-semibold ${theme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>{data.name}</p>
+          <p className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
+            <span style={{ color: payload[0].fill }}>●</span> {data.value} beneficiaries
+          </p>
+        </div>
+      );
+    }
+  
+    return null;
+  };
+
   const { theme } = useTheme();
 
 
@@ -41,9 +70,9 @@ const DashboardSection = () => {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [analyticsError, setAnalyticsError] = useState(null);
 
-  const [usersByRoleData, setUsersByRoleData] = useState([]);
-  const [isLoadingUsersByRole, setIsLoadingUsersByRole] = useState(true);
-  const [usersByRoleError, setUsersByRoleError] = useState(null);
+  const [beneficiariesByProgramData, setBeneficiariesByProgramData] = useState([]);
+  const [isLoadingBeneficiaries, setIsLoadingBeneficiaries] = useState(true);
+  const [beneficiariesError, setBeneficiariesError] = useState(null);
 
   const [tasksData, setTasksData] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
@@ -68,31 +97,23 @@ const DashboardSection = () => {
       }
     };
 
-    const fetchUsersByRole = async () => {
-      setIsLoadingUsersByRole(true);
-      setUsersByRoleError(null);
+    const fetchBeneficiariesByProgram = async () => {
+      setIsLoadingBeneficiaries(true);
+      setBeneficiariesError(null);
       try {
-        const response = await api.get("/api/analytics/users/by-role/");
-        // Assuming the API returns an array like [{ role: "admin", count: 5 }, ...]
-        const users = response.data;
-        // Map roles to more readable names
-        const mappedUsers = users.map(item => ({
+        const response = await api.get("/api/analytics/beneficiaries/by-program/");
+        const data = response.data;
+        const mappedData = data.map(item => ({
           ...item,
-          name: item.role
-            .split('_') // Split by underscore
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
-            .join(' ') // Join back with space
+          name: item.program,
+          value: item.count,
         }));
-        setUsersByRoleData(mappedUsers);
+        setBeneficiariesByProgramData(mappedData);
       } catch (error) {
-        console.error("Failed to fetch users by role data:", error);
-        const errorMessage =
-          error.response?.data?.detail ||
-          error.message ||
-          "Could not load users by role data.";
-        setUsersByRoleError(errorMessage);
+        console.error("Failed to fetch beneficiaries by program data:", error);
+        setBeneficiariesError(error.response?.data?.detail || error.message || "Could not load beneficiary data.");
       } finally {
-        setIsLoadingUsersByRole(false);
+        setIsLoadingBeneficiaries(false);
       }
     };
 
@@ -118,9 +139,13 @@ const DashboardSection = () => {
     };
 
     fetchAnalytics();
-    fetchUsersByRole();
+    fetchBeneficiariesByProgram();
     fetchTasks();
   }, []);
+
+  const totalBeneficiaries = beneficiariesByProgramData.reduce(
+    (sum, item) => sum + item.value, 0
+  );
 
   return (
     <>
@@ -238,27 +263,24 @@ const DashboardSection = () => {
                   }
                   customContent={
                     analyticsData.grants?.grants_by_status?.length > 0 && (
-                      <div className="mt-2">
-                        <DashboardCard.MiniBarChart
-                          data={analyticsData.grants.grants_by_status.map(
-                            (item) => item.count
-                          )}
-                          labels={analyticsData.grants.grants_by_status.map(
-                            (item) => item.status
-                          )}
-                          barColor={
-                            theme === "light"
-                              ? "bg-[var(--color-p1)]/60"
-                              : "bg-[var(--color-p3)]/70"
-                          }
-                          tooltipTextColor={
-                            theme === "light" ? "text-gray-700" : "text-white"
-                          }
-                          tooltipBgColor={
-                            theme === "light" ? "bg-white" : "bg-gray-700"
-                          }
-                        />
-                      </div>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <LineChart data={analyticsData.grants.grants_by_status.map(item => ({ name: item.status, value: item.count }))} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                          <defs>
+                            <linearGradient id="grantsGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--color-p1)" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="var(--color-p1)" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)', backdropFilter: 'blur(5px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }}
+                            labelStyle={{ color: theme === 'light' ? '#111827' : '#F9FAFB' }}
+                            formatter={(value, name) => [`${value} grants`, 'Count']}
+                          />
+                          <Line type="monotone" dataKey="value" stroke="var(--color-p1)" strokeWidth={2} dot={{ r: 4, fill: 'var(--color-p1)' }} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     )
                   }
                 />
@@ -291,27 +313,24 @@ const DashboardSection = () => {
                   }
                   customContent={
                     analyticsData.documents?.documents_by_type?.length > 0 && (
-                      <div className="mt-2">
-                        <DashboardCard.MiniBarChart
-                          data={analyticsData.documents.documents_by_type.map(
-                            (item) => item.count
-                          )}
-                          labels={analyticsData.documents.documents_by_type.map(
-                            (item) => item.document_type
-                          )}
-                          barColor={
-                            theme === "light"
-                              ? "bg-[var(--color-p2)]/60"
-                              : "bg-[var(--color-s4)]/70"
-                          }
-                          tooltipTextColor={
-                            theme === "light" ? "text-gray-700" : "text-white"
-                          }
-                          tooltipBgColor={
-                            theme === "light" ? "bg-white" : "bg-gray-700"
-                          }
-                        />
-                      </div>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <LineChart data={analyticsData.documents.documents_by_type.map(item => ({ name: item.document_type, value: item.count }))} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                          <defs>
+                            <linearGradient id="docsGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--color-p2)" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="var(--color-p2)" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)', backdropFilter: 'blur(5px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }}
+                            labelStyle={{ color: theme === 'light' ? '#111827' : '#F9FAFB' }}
+                            formatter={(value, name) => [`${value} documents`, 'Count']}
+                          />
+                          <Line type="monotone" dataKey="value" stroke="var(--color-p2)" strokeWidth={2} dot={{ r: 4, fill: 'var(--color-p2)' }} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     )
                   }
                 />
@@ -357,53 +376,23 @@ const DashboardSection = () => {
                       ? "text-[var(--color-s4)]"
                       : "text-[var(--color-p5)]"
                   }
-                  customContent={
-                    <div className="mt-2 flex-grow flex flex-col justify-end"> {/* flex-grow to push chart to bottom */}
-                      <p
-                        className={`text-xs mb-1 ${
-                          theme === "light" ? "text-gray-500" : "text-gray-400"
-                        }`}
-                      >
-                        Dummy Allocation Breakdown:
-                      </p>
-                      <DashboardCard.MiniBarChart
-                        data={[40, 25, 15, 20]} // Dummy data
-                        labels={[
-                          "Education",
-                          "Microfund",
-                          "Rescue",
-                          "Vocational",
-                        ]} // Dummy labels
-                        barColor={
-                          theme === "light"
-                            ? "bg-[var(--color-s4)]/60"
-                            : "bg-[var(--color-p5)]/70"
-                        }
-                        tooltipTextColor={
-                          theme === "light" ? "text-gray-700" : "text-white"
-                        }
-                        tooltipBgColor={
-                          theme === "light" ? "bg-white" : "bg-gray-700"
-                        }
-                      />
-                    </div>
-                  }
+                  customContent={null}
                 />
 
-                {/* Users by Role Pie Chart Section */}
+                {/* Beneficiaries by Program Pie Chart Section */}
                 <div
                   className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col border-1 border-black/50 glass-surface ${ // Added explicit height and flex
                     theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }`}
                 >
                   <h2
-                    className={`text-lg font-semibold mb-4 ${ // Matched style of DashboardCard title
+                    className={`text-lg font-semibold mb-4 ${
                       theme === "light" ? "text-gray-900" : "text-gray-100"
                     }`}
                   >
-                    Users by Role
+                    Beneficiaries by Program
                   </h2>
-                  {isLoadingUsersByRole && (
+                  {isLoadingBeneficiaries && (
                     <div className="flex justify-center items-center h-64">
                       <Loader2
                         className={`w-10 h-10 animate-spin ${
@@ -414,7 +403,7 @@ const DashboardSection = () => {
                       />
                     </div>
                   )}
-                  {usersByRoleError && !isLoadingUsersByRole && (
+                  {beneficiariesError && !isLoadingBeneficiaries && (
                     <div
                       className={`p-4 rounded-md ${
                         theme === "light"
@@ -423,77 +412,61 @@ const DashboardSection = () => {
                       } flex items-center gap-3`}
                     >
                       <AlertTriangle size={20} />
-                      <p className="text-sm">{usersByRoleError}</p>
+                      <p className="text-sm">{beneficiariesError}</p>
                     </div>
                   )}
-                  {!isLoadingUsersByRole &&
-                    !usersByRoleError &&
-                    usersByRoleData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%"> {/* Ensure container takes full height */}
-                        <PieChart>
-                          <defs>
-                            {PIE_COLORS.map((color, index) => (
-                              <linearGradient key={`gradient-${index}`} id={`roleGradient${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor={color} stopOpacity={0.9} />
-                                <stop offset="100%" stopColor={color} stopOpacity={0.5} />
-                              </linearGradient>
-                            ))}
-                          </defs>
-                          <Pie
-                            data={usersByRoleData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={70} // Increased innerRadius for a larger chart
-                            outerRadius={110} // Increased outerRadius for a larger chart
-                            paddingAngle={5} // Matching DummyDashboard
-                            dataKey="count"
-                            nameKey="name" // Use the mapped 'name' property
+                  {!isLoadingBeneficiaries &&
+                    !beneficiariesError &&
+                    beneficiariesByProgramData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart 
+                          cx="50%" 
+                          cy="50%" 
+                          innerRadius="20%" 
+                          outerRadius="90%" 
+                          barSize={15} 
+                          data={beneficiariesByProgramData}
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          <RadialBar
+                            minAngle={15}
+                            label={{ position: 'insideStart', fill: '#fff', fontSize: '10px' }}
+                            background
+                            clockWise
+                            dataKey="value"
                           >
-                            {usersByRoleData.map((entry, index) => {
-                              return (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={`url(#roleGradient${index % PIE_COLORS.length})`}
-                                  stroke={theme === 'light' ? '#fff' : 'var(--color-s1)'} // Optional: add a stroke for better segment separation
-                                  strokeWidth={1} // Optional: stroke width
-                                />
-                              );
-                            })}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor:
-                                theme === "light" ? "#fff" : "var(--color-s1)",
-                              border:
-                                "1px solid " +
-                                (theme === "light"
-                                  ? "#ccc"
-                                  : "var(--color-s2)"),
-                            }}
-                            itemStyle={{
-                              color: theme === "light" ? "#000000" : "#E0E0E0", // Darker off-white for dark theme
-                            }}
-                            formatter={(value, name, props) => [`${value} users`, props.payload.name]} // Matching DummyDashboard tooltip format
-                          />
-                          <Legend
+                            {beneficiariesByProgramData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={BENEFICIARY_PIE_COLORS[index % BENEFICIARY_PIE_COLORS.length]} className="transition-all duration-300" />
+                            ))}
+                          </RadialBar>
+                          <Tooltip content={<CustomTooltip theme={theme} />} cursor={{ stroke: 'none', fill: 'transparent' }} />
+                          <Legend 
+                            iconSize={10} 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
                             wrapperStyle={{
-                              color: theme === "light" ? "#374151" : "#D1D5DB", // Dark gray for light, lighter gray for dark
-                              // paddingTop: "10px" // Optional: if you need more space above legend
+                              color: theme === 'light' ? '#374151' : '#D1D5DB',
+                              fontSize: '12px',
+                              lineHeight: '20px'
                             }}
+                            formatter={(value, entry) => (
+                              <span className="ml-2">{value} ({entry.payload.value})</span>
+                            )}
                           />
-                        </PieChart>
+                        </RadialBarChart>
                       </ResponsiveContainer>
-                    ) : null } {/* Render null if no data to prevent errors */}
-                  {!isLoadingUsersByRole &&
-                    !usersByRoleError &&
-                    usersByRoleData.length === 0 && (
-                      <p
-                        className={`text-center py-10 ${
-                          theme === "light" ? "text-gray-500" : "text-gray-400"
-                        }`}
-                      >
-                        No user role data available.
-                      </p>
+                    ) : (
+                      !isLoadingBeneficiaries && !beneficiariesError && (
+                        <p
+                          className={`text-center py-10 ${
+                            theme === "light" ? "text-gray-500" : "text-gray-400"
+                          }`}
+                        >
+                          No beneficiary data available.
+                        </p>
+                      )
                     )}
                 </div>
               </div>

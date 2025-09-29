@@ -318,7 +318,7 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
     onClose();
   };
   const inputClasses =
-    "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-p1 focus:border-p1 transition-colors bg-white text-gray-900 placeholder-gray-500";
+    "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-p1 focus:border-p1 transition-colors  text-gray-900 placeholder-gray-500";
   const labelClasses = "block text-sm font-semibold text-gray-700 mb-2";
   const errorClasses = "text-p1 text-sm mt-1 flex items-center gap-1";
 

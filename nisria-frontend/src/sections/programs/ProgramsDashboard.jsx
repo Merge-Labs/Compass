@@ -54,6 +54,7 @@ import VocationalTrainerDetailModal from '../../components/programs/details/Voca
 import VocationalTraineeDetailModal from '../../components/programs/details/VocationalTraineeDetailModal'; // New
 import ConfirmDeleteModal from '../../components/shared/ConfirmDeleteModal'; // Import the new modal
 
+import bgImage from '/bg.jpg'; // Import the background image
 // Loading Component
 const LoadingSpinner = ({ size = 'md' }) => {
   const sizeClasses = {
@@ -119,6 +120,8 @@ const ProgramsManagement = () => {
   // State for beneficiary detail modals
   const [selectedBeneficiaryForDetails, setSelectedBeneficiaryForDetails] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(null);
 
   // State for beneficiary edit modals
   const [editingBeneficiary, setEditingBeneficiary] = useState(null);
@@ -430,9 +433,47 @@ const ProgramsManagement = () => {
     setShowEditProgramModal(false); // Simply close the modal
   };
 
-  const handleOpenBeneficiaryDetailModal = (beneficiary) => {
-    setSelectedBeneficiaryForDetails(beneficiary);
+  const handleOpenBeneficiaryDetailModal = async (beneficiary) => {
+    if (!selectedProgram) return;
+
     setIsDetailModalOpen(true);
+    setIsDetailLoading(true);
+    setSelectedBeneficiaryForDetails(beneficiary); // Show existing data while loading
+    setDetailError(null);
+
+    try {
+      const divisionName = selectedProgram.division_name_display.toLowerCase();
+      const programName = selectedProgram.name.toLowerCase(); // Use the direct program name
+      const beneficiaryId = beneficiary.id;
+      let endpoint = '';
+
+      if (programName === 'vocational') {
+        // If currentVocationalTrainerId is set, we are viewing a trainee's details.
+        // Otherwise, we are viewing a trainer's details.
+        if (currentVocationalTrainerId) {
+          endpoint = `/api/programs/${divisionName}/vocational-trainers/${currentVocationalTrainerId}/trainees/${beneficiaryId}/`;
+        } else {
+          endpoint = `/api/programs/${divisionName}/vocational-trainers/${beneficiaryId}/`;
+        }
+      } else {
+        // For non-vocational programs (education, microfund, rescue)
+        endpoint = `/api/programs/${divisionName}/${programName}/${beneficiaryId}/`;
+      }
+
+      if (!endpoint) {
+        setDetailError(`Could not determine the correct API endpoint for ${programName}.`);
+        setIsDetailLoading(false);
+        return;
+      }
+
+      const response = await api.get(endpoint);
+      setSelectedBeneficiaryForDetails(response.data);
+    } catch (err) {
+      console.error('Error fetching beneficiary details:', err);
+      setDetailError(err.response?.data?.detail || err.message || 'Failed to fetch beneficiary details.');
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   const handleCloseBeneficiaryDetailModal = () => {
@@ -460,7 +501,7 @@ const ProgramsManagement = () => {
   // Handlers for deleting beneficiaries
   const getBeneficiaryName = (beneficiary, programType) => {
     if (!beneficiary) return 'this beneficiary';
-    switch (programType?.toLowerCase()) {
+    switch (programType?.toLowerCase().split('-')[0]) { // Use split to handle 'vocational-trainer' and 'vocational-trainee'
       case 'education': return beneficiary.student_name || 'this beneficiary';
       case 'microfund': return beneficiary.person_name || 'this beneficiary';
       case 'rescue': return beneficiary.child_name || 'this beneficiary';
@@ -669,13 +710,13 @@ const ProgramsManagement = () => {
 
   return (
     <div
-      className={`min-h-screen p-6 ${
-        theme === "light"
-          ? "bg-gray-50 text-gray-900"
-          : "bg-gray-900 text-gray-100"
-      }`}
+      className="min-h-screen bg-cover bg-center p-6 relative" // Added relative positioning
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="max-w-7xl mx-auto">
+      {/* Dark mode overlay - now a sibling to content */}
+      <div className="absolute inset-0 bg-transparent dark:bg-black/40 transition-colors duration-300 -z-10" />
+
+      <div className="max-w-7xl mx-auto relative z-10"> {/* Content wrapper with z-index */}
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
@@ -688,8 +729,8 @@ const ProgramsManagement = () => {
               </button>
             )}
             <div>
-              <h1 className={`text-3xl font-bold  ${theme === 'light' ? "text-gray-900" : "text-gray-200"}`}>Programs Management</h1>
-              <p className={`${theme === 'light' ? "text-gray-600" : "text-gray-100"} mt-1`}>
+              <h1 className="text-3xl font-bold text-black">Programs Management</h1>
+              <p className="text-black mt-1">
                 {currentViewLevel === 'divisions' && 'Overview of all program divisions'}
                 {currentViewLevel === 'programs' && selectedDivision && `Programs in ${selectedDivision.name} division`}
                 {currentViewLevel === 'beneficiaries' && selectedProgram && selectedProgram.name.toLowerCase() !== 'vocational' && `Beneficiaries in ${selectedProgram.name} program`}
@@ -736,19 +777,19 @@ const ProgramsManagement = () => {
                 placeholder={`Search ${currentViewLevel}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black placeholder-black"
               />
             </div>
             <button 
               onClick={() => setFilterOpen(!filterOpen)}
               className={`flex items-center space-x-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors ${
                 theme === "light"
-                  ? "border-gray-300"
+                  ? "border-gray-300 text-black"
                   : "border-gray-700 hover:bg-gray-700"
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>Filter</span>
+              <span className="text-black">Filter</span>
             </button>
           </div>
         </div>
@@ -944,13 +985,15 @@ const ProgramsManagement = () => {
                 divisionName={selectedProgram.division_name_display}
               />
             )}
-            {selectedProgram.name.toLowerCase() === 'rescue' && (
+            {specificItemTypeForModals === 'rescue' && (
               <RescueBeneficiaryDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseBeneficiaryDetailModal}
                 beneficiary={selectedBeneficiaryForDetails}
                 programName={selectedProgram.name}
                 divisionName={selectedProgram.division_name_display}
+                loading={isDetailLoading}
+                error={detailError}
               />
             )}
             {selectedProgram.name.toLowerCase() === 'vocational' && (

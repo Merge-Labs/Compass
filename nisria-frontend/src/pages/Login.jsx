@@ -1,10 +1,10 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, LogIn, AlertCircle, DoorOpen } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
 import { getDashboardRoute } from '../constants/roles';
-// eslint-disable-next-line no-unused-vars
+import { GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
 import bgImage from '/bg.jpg';
 import logo from '/logo/Compass.png';
@@ -108,7 +108,7 @@ const Login = () => {
           <div className="text-center mb-8">
             <motion.img
               src={logo}
-              alt="Compass Logo"
+              alt="Dira Logo"
               className="w-32 h-32 mx-auto mb-4"
               initial={{ rotate: 0, scale: 0.8 }}
               animate={{ rotate: 360, scale: 1 }}
@@ -121,7 +121,7 @@ const Login = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 1, ease: 'easeOut' }}
             >
-              <span className="text-red-500">C</span>ompass
+              <span className="text-red-500">D</span>ira
             </motion.h1>
             
             <motion.p
@@ -250,12 +250,11 @@ const Login = () => {
             <div className="text-center space-y-2">
               <span className="text-black/60 dark:text-white/60 text-sm">
                 Forgot Password?{' '}
-                <button
-                  type="button"
+                <Link
+                  to="/forgot-password"
                   className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors font-medium hover:underline"
                 >
-                  Reset Password
-                </button>
+                  Reset Password</Link>
               </span>
               
               {/* Funny message for unauthorized users */}

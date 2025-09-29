@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Bell, AlertTriangle, User, MessageCircle, Clock, FileText, Settings, Filter, MoreVertical, Check, X, Loader2 } from 'lucide-react';
+import bgImage from '/bg.jpg';
 import api from '../../services/api'; // Assuming api service is setup
 
 const formatDate = (dateString) => {
@@ -143,7 +144,10 @@ const NotificationsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex justify-center items-center">
+      <div
+        className="min-h-screen w-full bg-cover bg-center p-6 flex justify-center items-center"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
         <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
       </div>
     );
@@ -151,12 +155,17 @@ const NotificationsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 text-center text-red-500">Error: {error}</div>
+      <div
+        className="min-h-screen w-full bg-cover bg-center p-6 flex justify-center items-center"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="bg-white/50 backdrop-blur-sm p-6 rounded-lg text-center text-red-500">Error: {error}</div>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen w-full bg-cover bg-center p-6" style={{ backgroundImage: `url(${bgImage})` }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">

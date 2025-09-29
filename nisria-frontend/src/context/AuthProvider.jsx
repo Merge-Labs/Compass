@@ -38,6 +38,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Placeholder for Google-based password reset initiation
+  const initiateGooglePasswordReset = async (credentialResponse) => {
+    setIsLoading(true);
+    try {
+      // Here you would send the credentialResponse (Google ID token) to your backend
+      // Your backend would verify the token, identify the user's email,
+      // and then initiate a password reset process for that email.
+      console.log("Initiating Google password reset with credential:", credentialResponse);
+      return { success: true, message: "Google verification successful. Check your email for reset instructions." };
+    } catch (error) {
+      return { success: false, error: "Failed to initiate Google password reset." };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -55,8 +71,8 @@ export const AuthProvider = ({ children }) => {
   const hasRole = (role) => user?.role === role;
   const hasAnyRole = (roles) => roles.includes(user?.role);
 
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, hasRole, hasAnyRole }}>
+  return ( // Add initiateGooglePasswordReset to the context value
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, initiateGooglePasswordReset, hasRole, hasAnyRole }}>
       {children}
     </AuthContext.Provider>
   );

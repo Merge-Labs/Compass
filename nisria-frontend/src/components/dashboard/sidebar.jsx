@@ -56,23 +56,14 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
   const getMenuGroups = () => {
     const baseGroups = [
       {
-        title: 'Overview',
         items: [
           { icon: LayoutDashboard, label: 'Dashboard', badge: null },
           { icon: WavesLadder, label: 'Programs', badge: null },
-        ]
-      },
-      {
-        title: 'Management',
-        items: [
+      
           { icon: FileText, label: 'Grants', badge: '3' },
           { icon: FolderOpen, label: 'Documents', badge: null },
           { icon: CheckSquare, label: 'Tasks', badge: '12' },
-        ]
-      },
-      {
-        title: 'Communication',
-        items: [
+     
           { icon: Bell, label: 'Notifications', badge: '5' },
         ]
       }
@@ -163,7 +154,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
               <div className="w-12 h-12 md:w-8 md:h-8 lg:w-12 lg:h-12 shrink-0">
                 <img 
                   src="/logo/compass-logo.png" 
-                  alt="Compass logo" 
+                  alt="Dira logo" 
                   className="object-contain w-full h-full filter drop-shadow-sm" 
                 />
               </div>
@@ -172,7 +163,7 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
                 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}
                 ${showLabelClass}
               `}>
-                <span className="text-red-500">C</span>ompass
+                <span className="text-red-500">D</span>ira
               </div>
             </div>
           </div>

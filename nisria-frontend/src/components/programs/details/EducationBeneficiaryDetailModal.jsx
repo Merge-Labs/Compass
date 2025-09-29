@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   X,
   Loader2,
@@ -9,9 +9,15 @@ import {
   Phone,
   Calendar,
   Briefcase, // For school
-  Building2, // For division
+  Building2, // For division,
   Info,
-} from "lucide-react";
+  Heart, // For relationship
+  Users, // For guardian
+  FileText, // For background
+  Image as ImageIcon, // For pictures
+  Shield, // For medical status
+  Gift, // For other support
+} from 'lucide-react';
 
 const formatDate = (dateString, includeTime = false) => {
   if (!dateString) return "N/A";
@@ -23,22 +29,22 @@ const formatDate = (dateString, includeTime = false) => {
     }
     return new Date(dateString).toLocaleDateString("en-US", options);
   } catch (e) {
-    console.error("Error formatting date:", e);
+    console.error('Error formatting date:', e);
     return "Invalid Date";
   }
 };
 
-const DetailItem = ({ icon: Icon, label, value, highlight = false }) => (
+const DetailItem = ({ icon: Icon, label, value, children, highlight = false }) => (
   <div
-    className={`py-3 sm:grid sm:grid-cols-3 sm:gap-4 transition-colors hover:bg-gray-50 rounded-lg px-2 -mx-2 ${
-      highlight ? "bg-blue-50 border-l-4 border-blue-400 pl-3" : ""
+    className={`py-3 sm:grid sm:grid-cols-3 sm:gap-4 transition-colors hover:bg-gray-50/50 rounded-lg px-2 -mx-2 ${
+      highlight ? 'bg-blue-50/30 border-l-2 border-blue-400 pl-3' : ''
     }`}
   >
     <dt className="text-sm font-semibold text-gray-700 flex items-center">
       {Icon && (
         <Icon
           className={`w-5 h-5 mr-2.5 ${
-            highlight ? "text-blue-600" : "text-gray-500"
+            highlight ? 'text-blue-600' : 'text-gray-500'
           }`}
         />
       )}
@@ -47,10 +53,12 @@ const DetailItem = ({ icon: Icon, label, value, highlight = false }) => (
     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
       <span
         className={`break-words ${
-          value === "N/A" || value === undefined || value === null ? "text-gray-400 italic" : ""
+          value === 'N/A' || value === undefined || value === null
+            ? 'text-gray-400 italic'
+            : ''
         }`}
       >
-        {value === undefined || value === null ? "N/A" : String(value)}
+        {children ?? (value === undefined || value === null ? 'N/A' : String(value))}
       </span>
     </dd>
   </div>
@@ -74,10 +82,10 @@ const EducationBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
           <h3 className="text-lg font-semibold text-gray-800">
@@ -111,19 +119,53 @@ const EducationBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
 
           {!loading && !error && beneficiary && (
             <div className="space-y-6">
+              {/* Main Info Section with Picture */}
+              <section className="flex flex-col sm:flex-row items-start gap-6 p-4 bg-gray-50/70 rounded-lg">
+                {typeof beneficiary.picture_url === 'string' && beneficiary.picture_url ? (
+                  <img src={beneficiary.picture_url} alt={beneficiary.student_name} className="w-32 h-32 object-cover rounded-xl border-2 border-white shadow-md flex-shrink-0" />
+                ) : (
+                  <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <User className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-grow">
+                  <h2 className="text-2xl font-bold text-gray-800">{beneficiary.student_name}</h2>
+                  <p className="text-gray-500">Student in the {programName} Program</p>
+                  <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <DetailItem icon={User} label="Age" value={beneficiary.age} />
+                    <DetailItem icon={BookOpen} label="Grade" value={beneficiary.grade} />
+                    <DetailItem icon={Briefcase} label="School" value={beneficiary.school} />
+                    <DetailItem icon={MapPin} label="Address" value={beneficiary.address} />
+                  </div>
+                </div>
+              </section>
+
               <section>
-                <SectionHeader icon={User} title="Student Information" />
-                <DetailItem icon={User} label="Student Name" value={beneficiary.student_name} highlight />
-                <DetailItem icon={BookOpen} label="Education Level" value={beneficiary.education_level} />
-                <DetailItem icon={Briefcase} label="School Associated" value={beneficiary.school_associated} />
-                <DetailItem icon={MapPin} label="Student Location" value={beneficiary.student_location} />
-                <DetailItem icon={Phone} label="Student Contact" value={beneficiary.student_contact} />
+                <SectionHeader icon={Users} title="Guardian Information" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                  <DetailItem icon={Users} label="Guardian Name" value={beneficiary.guardian_name} />
+                  <DetailItem icon={Heart} label="Relationship" value={beneficiary.guardian_relationship} />
+                </div>
+                <DetailItem icon={Phone} label="Guardian Contact" value={beneficiary.guardian_contact} />
               </section>
 
               <section>
                 <SectionHeader icon={Calendar} title="Enrollment Timeline" />
-                <DetailItem icon={Calendar} label="Start Date" value={formatDate(beneficiary.start_date)} />
-                <DetailItem icon={Calendar} label="End Date" value={formatDate(beneficiary.end_date)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                  <DetailItem icon={Calendar} label="Start Year" value={beneficiary.start_year} />
+                  <DetailItem icon={Calendar} label="Graduation Year" value={beneficiary.graduation_year} />
+                </div>
+              </section>
+
+              <section>
+                <SectionHeader icon={Info} title="Additional Details" />
+                <DetailItem icon={Shield} label="Medical Status" value={beneficiary.medical_status} />
+                <DetailItem icon={Gift} label="Other Support" value={beneficiary.other_support_details} />
+                <DetailItem icon={FileText} label="Background Info">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-800">
+                    {beneficiary.background || 'N/A'}
+                  </p>
+                </DetailItem>
               </section>
 
               <section>

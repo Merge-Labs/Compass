@@ -22,6 +22,7 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal'; // Import 
 import { useAuth } from '../../context/AuthProvider'; // Import useAuth to check user role
 import ConfirmDeleteModal from '../../components/shared/ConfirmDeleteModal'; // Import ConfirmDeleteModal
 import UpdateTaskModal from '../../components/tasks/UpdateTaskModal'; // Import UpdateTaskModal
+import bgImage from '/bg.jpg';
 
 const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'light' }) => {
   const [filter, setFilter] = useState('all');
@@ -281,6 +282,7 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
     const StatusIcon = statusConfig.icon;
     const isTaskOverdue = isOverdue(task.due_date, task.status);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const isSelected = selectedTaskForModal?.id === task.id;
     const menuRef = React.useRef(null);
 
     useEffect(() => {
@@ -289,12 +291,27 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
           setIsMenuOpen(false);
         }
       };
+      // Scroll the selected task into view when the modal opens
+      if (isSelected) {
+        const element = menuRef.current?.closest('.task-item');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     return (
-      <div className={`flex items-start space-x-3 p-3 rounded-lg transition-colors duration-150 group ${appTheme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-gray-700/30'}`}>
+      <div
+        className={`task-item flex items-start space-x-3 p-3 rounded-lg transition-all duration-300 group ${
+          appTheme === 'light'
+            ? 'hover:bg-gray-50'
+            : 'hover:bg-gray-700/30'
+        } ${
+          isSelected ? 'bg-blue-50 ring-2 ring-blue-400 scale-105 shadow-lg' : ''
+        }`}
+      >
         <div className={`${statusConfig.bgColor} p-2 rounded-full flex-shrink-0 mt-0.5`}>
           <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
         </div>
@@ -308,7 +325,7 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
               <h4 className={`text-sm font-medium truncate ${appTheme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>
                 {task.title}
               </h4>
-              <p className={`text-xs mt-1 line-clamp-2 ${appTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+              <p className={`text-xs mt-1 line-clamp-2 ${appTheme === 'light' ? 'text-gray-800' : 'text-gray-400'}`}>
                 {task.description}
               </p>
             </div>
@@ -408,8 +425,67 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
   };
 
   return (
-    <div className={`rounded-xl shadow-sm border h-full flex flex-col ${appTheme === 'light' ? 'bg-white border-gray-100' : 'bg-[var(--color-s1)] border-gray-700'}`}>
-      {showHeader && (
+    <div className="min-h-screen w-full bg-cover bg-center p-6" style={{ backgroundImage: `url(${bgImage})` }}>
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold text-gray-900`}>{title}</h3>
+            <div className="flex items-center space-x-2">
+              <button className={`p-1 rounded hover:bg-gray-100`}>
+                <Filter className={`w-4 h-4 text-gray-500`} />
+              </button>
+              {user?.role === 'super_admin' && (
+                <button
+                  onClick={() => setIsCreateTaskModalOpen(true)}
+                  className={`p-1 rounded hover:bg-gray-100`}
+                >
+                  <Plus className={`w-4 h-4 text-gray-500`} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400`} />
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-200 bg-white text-gray-900`}
+              />
+            </div>
+
+            <div className="flex space-x-2 overflow-x-auto pb-1">
+              {[
+                { key: 'all', label: 'All' }, { key: 'todo', label: 'To Do' }, { key: 'in-progress', label: 'In Progress' },
+                { key: 'completed', label: 'Completed' }, { key: 'my_tasks', label: 'My Tasks' },
+                { key: 'assigned', label: 'Assigned (All)' }, { key: 'unassigned', label: 'Unassigned' },
+                { key: 'overdue', label: 'Overdue' }, { key: 'grant', label: 'Grant Tasks' }
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    filter === key
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Original component content wrapped for styling */}
+      <div className={`rounded-xl shadow-sm border h-full flex flex-col bg-white/80 backdrop-blur-sm border-gray-200`}>
+        {/* The header was moved out, so we can remove the showHeader check here */}
+        {/* {showHeader && (
         <div className={`p-6 border-b ${appTheme === 'light' ? 'border-gray-100' : 'border-gray-700'}`}>
           <div className="flex items-center justify-between mb-4">
             <h3 className={`text-lg font-semibold ${appTheme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>{title}</h3>
@@ -462,7 +538,7 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       <div className="flex-1 overflow-y-auto">
         {isLoadingTasks ? (
@@ -542,7 +618,8 @@ const TasksSection = ({ title = "All Tasks", showHeader = true, appTheme = 'ligh
         customError={deleteError}
       />
     </div>
+    </div>
   );
-};
+}
 
 export default TasksSection;

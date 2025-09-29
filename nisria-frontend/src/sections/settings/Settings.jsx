@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import api from '../../services/api'; // Import your API service
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import { useAuth } from '../../context/AuthProvider'; // Import useAuth
+import GamificationSettings from '../grants/GamificationSettings'; // Import the new component
 import 'react-phone-number-input/style.css'; // Import the styles
 
 const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dfjet61yc/"; // Example from Team.jsx, adjust if needed
@@ -269,12 +270,12 @@ const ProfileSettingsPage = () =>  {
     <div className="fixed inset-0 z-50">
       {/* Blurred Background Overlay */}
       <div 
-        className="absolute inset-0 bg-black/30 backdrop-blur-md transition-all duration-300"
+        className="absolute inset-0 bg-white/30 backdrop-blur-md transition-all duration-300"
         onClick={() => setIsOpen(false)}
       />
       
       {/* Settings Modal */}
-      <div className="absolute inset-4 md:inset-8 lg:inset-16 xl:inset-20 glass-panel bg-white/60 border border-white/40 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="absolute inset-4 md:inset-8 lg:inset-16 xl:inset-20 glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden">
         <div className="flex h-full">
           {/* Sidebar */}
           <div className="w-80 glass-surface bg-white/50 border-r border-white/40 p-6">
@@ -622,28 +623,7 @@ const ProfileSettingsPage = () =>  {
               {activeSection === 'preferences' && (
                 <div className="space-y-8">
                   <h2 className="text-3xl font-bold text-gray-900">Platform Preferences</h2>
-
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Gamification Stats</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">127</div>
-                        <div className="text-sm text-gray-600">Tasks Completed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">89%</div>
-                        <div className="text-sm text-gray-600">Success Rate</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">15</div>
-                        <div className="text-sm text-gray-600">Badges Earned</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">#3</div>
-                        <div className="text-sm text-gray-600">Leaderboard</div>
-                      </div>
-                    </div>
-                  </div>
+                  <GamificationSettings />
                 </div>
               )}
 
