@@ -28,9 +28,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['compass.azurewebsites.net']
+ALLOWED_HOSTS = ['*', 'localhost',  '127.0.0.1']
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

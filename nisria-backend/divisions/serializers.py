@@ -89,17 +89,33 @@ class EducationProgramDetailSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+    # Explicitly define fields to ensure correct serialization, especially for nullable/special fields
+    picture_url = serializers.SerializerMethodField()
+    school = serializers.CharField(allow_null=True, required=False)
+    background = serializers.CharField(allow_null=True, required=False)
     created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
 
     class Meta:
         model = EducationProgramDetail
         fields = [
-            'id', 'program', 'program_id', 'student_name', 'gender', 
-            'education_level', 'student_location', 'student_contact',
-            'start_date', 'end_date', 'school_associated', 
-            'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
+            'id', 'program', 'program_id', 'student_name', 'school', 'age', 
+            'grade', 'start_year', 'graduation_year', 'guardian_name', 
+            'guardian_relationship', 'guardian_contact', 'address', 'medical_status',
+            'other_support_details', 'pictures', 'picture_url', 'background',
+            'gender', 'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
         ]
+        extra_kwargs = {
+            'pictures': {'write_only': True, 'required': False}
+        }
+    
+    def get_picture_url(self, obj):
+        """
+        Returns the URL of the picture if it exists.
+        """
+        if obj.pictures and hasattr(obj.pictures, 'url'):
+            return obj.pictures.url
+        return None
 
 class MicroFundProgramDetailSerializer(serializers.ModelSerializer):
     program = serializers.SlugRelatedField(read_only=True, slug_field='name')
@@ -107,16 +123,28 @@ class MicroFundProgramDetailSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+    picture_url = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
 
     class Meta:
         model = MicroFundProgramDetail
         fields = [
-            'id', 'program', 'program_id', 'person_name', 'gender', 'chama_group', 
-            'is_active', 'start_date', 'location', 'telephone',
+            'id', 'program', 'program_id', 'person_name', 'age', 'gender', 'story',
+            'chama_group', 'role_in_group', 'money_received', 'project_done',
+            'progress_notes', 'address', 'location', 'telephone', 'background',
+            'pictures', 'picture_url', 'site_visit_notes', 'testimonials',
+            'additional_support', 'is_active',
             'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
         ]
+        extra_kwargs = {
+            'pictures': {'write_only': True, 'required': False}
+        }
+
+    def get_picture_url(self, obj):
+        if obj.pictures and hasattr(obj.pictures, 'url'):
+            return obj.pictures.url
+        return None
 
 class RescueProgramDetailSerializer(serializers.ModelSerializer):
     program = serializers.SlugRelatedField(read_only=True, slug_field='name')
@@ -124,17 +152,30 @@ class RescueProgramDetailSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+    picture_url = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
 
     class Meta:
         model = RescueProgramDetail
         fields = [
-            'id', 'program', 'program_id', 'child_name', 'gender', 'is_reunited', 
-            'under_care', 'date_joined', 'date_reunited', 'age', 'place_found', 
-            'rescuer_contact', 'notes',
+            'id', 'program', 'program_id', 'child_name', 'age', 'date_of_birth', 'gender', 'pictures', 'picture_url',
+            'date_of_rescue', 'location_of_rescue', 'background',
+            'case_referral_description', 'case_referred_from', 'case_type', 'case_type_other', 
+            'ob_number', 'children_office_case_number',
+            'guardian_name', 'guardian_phone_number', 'guardian_residence',
+            'post_rescue_description', 'urgent_needs', 'educational_background', 'health_status',
+            'medical_support_details', 'family_reunification_efforts', 'date_of_exit',
             'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
         ]
+        extra_kwargs = {
+            'pictures': {'write_only': True, 'required': False}
+        }
+
+    def get_picture_url(self, obj):
+        if obj.pictures and hasattr(obj.pictures, 'url'):
+            return obj.pictures.url
+        return None
 
 
 class VocationalTrainingProgramTrainerDetailSerializer(serializers.ModelSerializer):
@@ -161,14 +202,25 @@ class VocationalTrainingProgramTraineeDetailSerializer(serializers.ModelSerializ
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+    picture_url = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
 
     class Meta:
         model = VocationalTrainingProgramTraineeDetail
         fields = [
-            'id', 'trainer', 'trainer_name', 'trainee_name', 'gender', 
-            'trainee_phone', 'trainee_email', 'trainee_association',
-            'date_enrolled', 'under_training',
+            'id', 'trainer', 'trainer_name', 'trainee_name', 'age', 'gender',
+            'trainee_phone', 'trainee_email', 'address', 'training_received',
+            'start_date', 'end_date', 'background', 'additional_support',
+            'post_training_status', 'quarterly_follow_up', 'testimonial',
+            'emergency_contact_name', 'emergency_contact_number', 'pictures', 'picture_url',
             'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
         ]
+        extra_kwargs = {
+            'pictures': {'write_only': True, 'required': False}
+        }
+
+    def get_picture_url(self, obj):
+        if obj.pictures and hasattr(obj.pictures, 'url'):
+            return obj.pictures.url
+        return None

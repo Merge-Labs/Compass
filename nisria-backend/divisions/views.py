@@ -44,8 +44,8 @@ PROGRAM_DETAIL_METADATA = {
         "serializer": EducationProgramDetailSerializer,
         "filterset_class": EducationProgramDetailFilter,
         "allowed_division_urls": ["nisria"], 
-        "db_division_map": {"nisria": "nisria"}, 
-        "search_fields": ['student_name', 'education_level', 'student_location', 'school_associated'],
+        "db_division_map": {"nisria": "nisria"},
+        "search_fields": ['student_name', 'school', 'grade', 'address', 'guardian_name', 'background'],
         "program_name": "education", 
     },
     "microfund": {
@@ -54,8 +54,8 @@ PROGRAM_DETAIL_METADATA = {
         "filterset_class": MicroFundProgramDetailFilter,
         "allowed_division_urls": ["nisria"],
         "db_division_map": {"nisria": "nisria"},
-        "program_name": "microfund", 
-        "search_fields": ['person_name', 'chama_group', 'location'],
+        "program_name": "microfund",
+        "search_fields": ['person_name', 'chama_group', 'location', 'story', 'background', 'project_done'],
     },
     "rescue": {
         "model": RescueProgramDetail,
@@ -64,7 +64,7 @@ PROGRAM_DETAIL_METADATA = {
         "allowed_division_urls": ["nisria"],
         "db_division_map": {"nisria": "nisria"},
         "program_name": "rescue",
-        "search_fields": ['child_name', 'place_found', 'notes'],
+        "search_fields": ['child_name', 'location_of_rescue', 'background', 'case_referred_from', 'ob_number'],
     },
     "vocational": {
         # This metadata entry can be for the "vocational" Program itself,
@@ -77,7 +77,7 @@ PROGRAM_DETAIL_METADATA = {
         "allowed_division_urls": ["maisha"],
         "db_division_map": {"maisha": "maisha"},
         "program_name": "vocational", 
-        "search_fields": ['trainee_name', 'trainee_association', 'trainee_email'],
+        "search_fields": ['trainee_name', 'training_received', 'trainee_email', 'background', 'testimonial'],
     },
     "vocational-trainer": { 
         "model": VocationalTrainingProgramTrainerDetail,

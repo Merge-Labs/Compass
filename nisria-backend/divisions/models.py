@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from accounts.models import User
+from cloudinary.models import CloudinaryField
 from core.models import SoftDeleteModel
 import uuid
 
@@ -104,13 +105,20 @@ class Program(SoftDeleteModel):
 class EducationProgramDetail(AuditableModel):
     program = models.ForeignKey(Program, on_delete=models.CASCADE)
     student_name = models.CharField(max_length=255, unique=True)
+    school = models.CharField(max_length=255, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)
+    grade = models.CharField(max_length=100, blank=True, null=True) # e.g., "Grade 5", "Form 2"
+    start_year = models.IntegerField(blank=True, null=True)
+    graduation_year = models.IntegerField(blank=True, null=True)
+    guardian_name = models.CharField(max_length=255, blank=True, null=True)
+    guardian_relationship = models.CharField(max_length=100, blank=True, null=True) # e.g., "Mother", "Uncle"
+    guardian_contact = models.CharField(max_length=20, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    medical_status = models.TextField(blank=True, null=True)
+    other_support_details = models.TextField(blank=True, null=True, help_text="Support from sources other than this program.")
+    pictures = CloudinaryField('education_pictures', folder='education_program_pictures', null=True, blank=True)
+    background = models.TextField(blank=True, null=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
-    education_level = models.CharField(max_length=255)
-    student_location = models.CharField(max_length=255)
-    student_contact = models.CharField(max_length=255, blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
-    school_associated = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Education: {self.student_name} (Program: {self.program.id})"
@@ -120,8 +128,19 @@ class MicroFundProgramDetail(AuditableModel):
     person_name = models.CharField(max_length=255, unique=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     chama_group = models.CharField(max_length=255)
+    age = models.IntegerField(blank=True, null=True)
+    story = models.TextField(blank=True, null=True)
+    role_in_group = models.CharField(max_length=255, blank=True, null=True)
+    money_received = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    project_done = models.TextField(blank=True, null=True)
+    progress_notes = models.TextField(blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    background = models.TextField(blank=True, null=True)
+    pictures = CloudinaryField('microfund_pictures', folder='microfund_program_pictures', null=True, blank=True)
+    site_visit_notes = models.TextField(blank=True, null=True, help_text="Record of dates and notes from site visits.")
+    testimonials = models.TextField(blank=True, null=True)
+    additional_support = models.TextField(blank=True, null=True, help_text="Details of any additional support received apart from this program.")
     is_active = models.BooleanField(default=True)
-    start_date = models.DateField()
     location = models.CharField(max_length=255)
     telephone = models.CharField(max_length=20)
 
@@ -130,16 +149,44 @@ class MicroFundProgramDetail(AuditableModel):
 
 class RescueProgramDetail(AuditableModel):
     program = models.ForeignKey(Program, on_delete=models.CASCADE)
+    CASE_TYPE_CHOICES = [
+        ('lost_and_found', 'Lost and Found'),
+        ('other', 'Other'),
+    ]
+
+    # Child's Details
     child_name = models.CharField(max_length=255, unique=True)
+    age = models.IntegerField(help_text="Age or predicted age")
+    date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
-    is_reunited = models.BooleanField(default=False)
-    under_care = models.BooleanField(default=True)
-    date_joined = models.DateField()
-    date_reunited = models.DateField(null=True, blank=True)
-    age = models.IntegerField()
-    place_found = models.CharField(max_length=255)
-    rescuer_contact = models.CharField(max_length=20, null=True, blank=True)
-    notes = models.TextField(null=True, blank=True)
+    pictures = CloudinaryField('rescue_child_pictures', folder='rescue_child_pictures', null=True, blank=True)
+    
+    # Rescue Details
+    date_of_rescue = models.DateField(null=True, blank=True)
+    location_of_rescue = models.CharField(max_length=255, default='')
+    background = models.TextField(help_text="A short background of the child’s situation before rescue", default='')
+
+    # Case Referral
+    case_referral_description = models.TextField(null=True, blank=True)
+    case_referred_from = models.CharField(max_length=255, default='')
+    case_type = models.CharField(max_length=50, choices=CASE_TYPE_CHOICES, default='other')
+    case_type_other = models.CharField(max_length=255, null=True, blank=True, help_text="Specify if case type is 'Other'")
+    ob_number = models.CharField(max_length=100, null=True, blank=True)
+    children_office_case_number = models.CharField(max_length=100, null=True, blank=True)
+
+    # Guardian / Parent Details
+    guardian_name = models.CharField(max_length=255, null=True, blank=True)
+    guardian_phone_number = models.CharField(max_length=20, null=True, blank=True)
+    guardian_residence = models.CharField(max_length=255, null=True, blank=True, help_text="Original residence or location of parents/guardian")
+
+    # Post-Rescue Details
+    post_rescue_description = models.TextField(null=True, blank=True)
+    urgent_needs = models.TextField(default='')
+    educational_background = models.TextField(default='')
+    health_status = models.TextField(default='')
+    medical_support_details = models.TextField(null=True, blank=True, help_text="Details of medical support received since rescue", default='')
+    family_reunification_efforts = models.TextField(default='')
+    date_of_exit = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"Rescue: {self.child_name} (Program: {self.program.id})"
@@ -159,13 +206,30 @@ class VocationalTrainingProgramTrainerDetail(AuditableModel):
 
 class VocationalTrainingProgramTraineeDetail(AuditableModel):
     trainer = models.ForeignKey(VocationalTrainingProgramTrainerDetail, on_delete=models.CASCADE)
+    POST_TRAINING_CHOICES = [
+        ('self_employed', 'Self-Employed'),
+        ('employed', 'Employed'),
+        ('further_education', 'Further Education'),
+        ('unemployed', 'Unemployed'),
+        ('unknown', 'Unknown'),
+    ]
     trainee_name = models.CharField(max_length=255, unique=True)
+    age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     trainee_phone = models.CharField(max_length=20)
     trainee_email = models.EmailField()
-    trainee_association = models.CharField(max_length=255)
-    date_enrolled = models.DateField()
-    under_training = models.BooleanField(default=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    training_received = models.CharField(max_length=255, blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+    background = models.TextField(blank=True, null=True)
+    additional_support = models.TextField(blank=True, null=True, help_text="Support from sources other than this program.")
+    post_training_status = models.CharField(max_length=50, choices=POST_TRAINING_CHOICES, blank=True, null=True)
+    quarterly_follow_up = models.TextField(blank=True, null=True, help_text="Notes from quarterly follow-ups.")
+    testimonial = models.TextField(blank=True, null=True)
+    emergency_contact_name = models.CharField(max_length=255, blank=True, null=True)
+    emergency_contact_number = models.CharField(max_length=20, blank=True, null=True)
+    pictures = CloudinaryField('vocational_trainee_pictures', folder='vocational_trainee_pictures', null=True, blank=True)
 
     def __str__(self):
         return f"Vocational Trainee: {self.trainee_name} (Trainer: {self.trainer.trainer_name})"

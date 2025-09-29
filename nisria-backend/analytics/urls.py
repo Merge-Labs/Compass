@@ -8,4 +8,5 @@ urlpatterns = [
     path('types/documents-by-type/', views.document_types_analytics, name='document_types_analytics'),
     path('users/by-role/', views.user_roles_analytics, name='user_roles_analytics'),
     path('users/by-location/', views.user_location_analytics, name='user_location_analytics'),
+    path('beneficiaries/by-program/', views.beneficiaries_by_program_analytics, name='beneficiaries_by_program_analytics'),
 ]
