@@ -9,10 +9,18 @@ import {
   Phone,
   Calendar,
   CheckCircle,
-  XCircle,
   Briefcase,
   Building2,
   Info,
+  FileText,
+  Image as ImageIcon,
+  MessageSquare,
+  BarChart,
+  Home,
+  Star,
+  Gift,
+  Shield,
+  DollarSign,
 } from "lucide-react";
 
 const formatDate = (dateString, includeTime = false) => {
@@ -30,10 +38,10 @@ const formatDate = (dateString, includeTime = false) => {
   }
 };
 
-const DetailItem = ({ icon: Icon, label, value, highlight = false }) => (
+const DetailItem = ({ icon: Icon, label, value, children, highlight = false }) => (
   <div
-    className={`py-3 sm:grid sm:grid-cols-3 sm:gap-4 transition-colors hover:bg-gray-50 rounded-lg px-2 -mx-2 ${
-      highlight ? "bg-blue-50 border-l-4 border-blue-400 pl-3" : ""
+    className={`py-3 sm:grid sm:grid-cols-3 sm:gap-4 transition-colors hover:bg-gray-50/50 rounded-lg px-2 -mx-2 ${
+      highlight ? "bg-blue-50/30 border-l-2 border-blue-400 pl-3" : ""
     }`}
   >
     <dt className="text-sm font-semibold text-gray-700 flex items-center">
@@ -49,10 +57,13 @@ const DetailItem = ({ icon: Icon, label, value, highlight = false }) => (
     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
       <span
         className={`break-words ${
-          value === "N/A" || value === undefined || value === null ? "text-gray-400 italic" : ""
+          value === "N/A" || value === undefined || value === null
+            ? "text-gray-400 italic"
+            : ""
         }`}
       >
-        {value === undefined || value === null ? "N/A" : String(value)}
+        {children ??
+          (value === undefined || value === null ? "N/A" : String(value))}
       </span>
     </dd>
   </div>
@@ -76,10 +87,10 @@ const MicrofundBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
           <h3 className="text-lg font-semibold text-gray-800">
@@ -113,24 +124,72 @@ const MicrofundBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
 
           {!loading && !error && beneficiary && (
             <div className="space-y-6">
+              {/* Main Info Section with Picture */}
+              <section className="flex flex-col sm:flex-row items-start gap-6 p-4 bg-gray-50/70 rounded-lg">
+                {typeof beneficiary.picture_url === "string" &&
+                beneficiary.picture_url ? (
+                  <img
+                    src={beneficiary.picture_url}
+                    alt={beneficiary.person_name}
+                    className="w-32 h-32 object-cover rounded-xl border-2 border-white shadow-md flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <User className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-grow">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {beneficiary.person_name}
+                  </h2>
+                  <p className="text-gray-500">
+                    Member of {beneficiary.chama_group}
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <DetailItem icon={User} label="Age" value={beneficiary.age} />
+                    <DetailItem icon={User} label="Gender" value={beneficiary.gender} />
+                    <DetailItem icon={Phone} label="Telephone" value={beneficiary.telephone} />
+                    <DetailItem icon={MapPin} label="Location" value={beneficiary.location} />
+                  </div>
+                </div>
+              </section>
+
               <section>
-                <SectionHeader icon={User} title="Beneficiary Information" />
-                <DetailItem icon={User} label="Person Name" value={beneficiary.person_name} highlight />
-                <DetailItem icon={Users} label="Chama Group" value={beneficiary.chama_group} />
-                <DetailItem icon={MapPin} label="Location" value={beneficiary.location} />
-                <DetailItem icon={Phone} label="Telephone" value={beneficiary.telephone} />
-                <DetailItem
-                  icon={beneficiary.is_active ? CheckCircle : XCircle}
-                  label="Status"
-                  value={beneficiary.is_active ? "Active" : "Inactive"}
-                />
-                <DetailItem icon={Calendar} label="Start Date" value={formatDate(beneficiary.start_date)} />
+                <SectionHeader icon={FileText} title="Personal Story & Background" />
+                <DetailItem icon={MessageSquare} label="Story">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-800">{beneficiary.story || "N/A"}</p>
+                </DetailItem>
+                <DetailItem icon={Info} label="Background">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-800">{beneficiary.background || "N/A"}</p>
+                </DetailItem>
+              </section>
+
+              <section>
+                <SectionHeader icon={Users} title="Group & Project Details" />
+                <DetailItem icon={Briefcase} label="Role in Group" value={beneficiary.role_in_group} />
+                <DetailItem icon={DollarSign} label="Money Received" value={beneficiary.money_received ? `$${Number(beneficiary.money_received).toLocaleString()}` : 'N/A'} />
+                <DetailItem icon={BarChart} label="Project Done">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-800">{beneficiary.project_done || "N/A"}</p>
+                </DetailItem>
+              </section>
+
+              <section>
+                <SectionHeader icon={Info} title="Notes & Support" />
+                <DetailItem icon={BarChart} label="Progress Notes" value={beneficiary.progress_notes} />
+                <DetailItem icon={Home} label="Site Visit Notes" value={beneficiary.site_visit_notes} />
+                <DetailItem icon={Star} label="Testimonials" value={beneficiary.testimonials} />
+                <DetailItem icon={Gift} label="Additional Support" value={beneficiary.additional_support} />
               </section>
 
               <section>
                 <SectionHeader icon={Briefcase} title="Program Association" />
                 <DetailItem icon={Briefcase} label="Program" value={programName || "N/A"} />
                 <DetailItem icon={Building2} label="Division" value={divisionName || "N/A"} />
+                <DetailItem icon={CheckCircle} label="Status">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${beneficiary.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {beneficiary.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </DetailItem>
               </section>
 
               <section>

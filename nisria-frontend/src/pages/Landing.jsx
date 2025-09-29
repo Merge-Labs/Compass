@@ -1,20 +1,24 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthProvider';
-import { useNavigate } from 'react-router-dom';
+import { getDashboardRoute } from '../constants/roles';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; // Use <a href="/login"> if not using React Router
 import bgImage from '/bg.jpg';
 import logo from '/logo/Compass.png';
 
-const CompassLanding = () => {
+const DiraLanding = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/dashboard/compass/dashboard', { replace: true });
+      const user = JSON.parse(localStorage.getItem('user'));
+      const from = location.state?.from?.pathname || getDashboardRoute(user?.role);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, location.state]);
 
   return (
     <div
@@ -24,7 +28,7 @@ const CompassLanding = () => {
       {/* Big Compass logo behind the card */}
       <motion.img
         src={logo}
-        alt="Compass Logo Background"
+        alt="Dira Logo Background"
         className="w-72 h-72 absolute top-14 left-1/2 -translate-x-1/2 z-0 opacity-80"
       />
 
@@ -37,7 +41,7 @@ const CompassLanding = () => {
       >
         <motion.img
           src={logo}
-          alt="Compass Logo"
+          alt="Dira Logo"
           className="w-32 h-32 translate-x-2"
           initial={{ rotate: 0 }}
           animate={{ rotate: 360 }}
@@ -45,13 +49,13 @@ const CompassLanding = () => {
         />
 
         <motion.h2
-          className="mx-50 text-2xl md:text-2xl lg:text-3xl font-normal text-black text-center"
+          className="mx-50 text-xl md:text-2xl lg:text-l font-normal text-black text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2, duration: 1.2, ease: 'easeOut' }}
         >
-        <span className="text-red-500">C</span>ompass.<br />
-        What do you Seek<span className="text-red-500">?</span>
+        <span className="text-red-500">D</span>ira.<br />Nisria's Comprehensive Administration and Oversight System
+        
       </motion.h2>
       </motion.div>
 
@@ -77,4 +81,4 @@ const CompassLanding = () => {
   );
 };
 
-export default CompassLanding;
+export default DiraLanding;

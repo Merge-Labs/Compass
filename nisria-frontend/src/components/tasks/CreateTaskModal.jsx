@@ -123,7 +123,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-5 bg-white/50 backdrop-blur-sm rouded-lg">
         <div className={`rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col glass-panel ${isDark ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/70 border border-white/40'}`}>
           <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Create New Task</h3>

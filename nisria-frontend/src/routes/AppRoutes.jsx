@@ -3,6 +3,8 @@ import Dashboard from "../pages/dashboards/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import Login from "../pages/Login";
 import Landing from "../pages/Landing";
+import ForgotPassword from '../context/ForgotPassword';
+
 // import Unauthorized from "../pages/Unauthorized"; // create this if you want
 
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -12,6 +14,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} /> {/* New route */}
+
       {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}
 
       <Route

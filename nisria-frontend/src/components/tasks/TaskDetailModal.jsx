@@ -55,7 +55,7 @@ const DetailItem = ({
       {label}
     </dt>
     <dd className="mt-1 text-sm text-gray-800 sm:mt-0 sm:col-span-2">
-      {children || (
+      {children ?? (
         <span
           className={`break-words ${
             value === "N/A" || !value ? "text-gray-400 italic" : ""
@@ -70,7 +70,7 @@ const DetailItem = ({
 
 const SectionHeader = ({ icon: Icon, title }) => (
   <div className="flex items-center mb-3 mt-2 pb-2 border-b border-gray-200">
-    {Icon && <Icon className="w-5 h-5 text-blue-600 mr-2" />}
+    {Icon && <Icon className="w-5 h-5 text-blue-600 mr-2" />} 
     <h4 className="text-md font-semibold text-gray-700">{title}</h4>
   </div>
 );
@@ -149,10 +149,10 @@ const TaskDetailModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-0"
       onClick={handleBackdropClick}
     >
-      <div className={`rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col glass-panel ${isDark ? 'bg-gray-800/90 text-gray-100 border border-gray-700' : 'bg-white/70 text-gray-900 border border-white/40'}`}>
+      <div className={`rounded-xl shadow-2xl w-full max-w-2xl max-h-[calc(100vh-3rem)] flex flex-col self-start ${isDark ? 'bg-gray-200 text-gray-100 border border-gray-700' : 'bg-white text-gray-900'}`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Task Details</h3>
@@ -188,7 +188,7 @@ const TaskDetailModal = ({
                 <SectionHeader icon={Info} title="Overview" /> {/* SectionHeader needs to adapt to isDark if its colors are static */}
                 <DetailItem icon={FileText} label="Title" value={task.title} highlight />
                 <DetailItem icon={FileText} label="Description">
-                  <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isDark ? 'text-gray-200' : 'text-black'}`}>
                     {task.description || "N/A"}
                   </p>
                 </DetailItem>
@@ -213,7 +213,7 @@ const TaskDetailModal = ({
                 <DetailItem icon={User} label="Assigned To" value={task.assignedTo} />
                 <DetailItem icon={Calendar} label="Due Date">
                   <span className={`${task.isOverdue ? (isDark ? 'text-red-400 font-medium' : 'text-red-600 font-medium') : (isDark ? 'text-gray-200' : 'text-gray-800')}`}>
-                    {task.dueDate} {task.isOverdue && '(Overdue)'}
+                    {task.dueDate || 'N/A'} {task.isOverdue && '(Overdue)'}
                   </span>
                 </DetailItem>
                 <DetailItem icon={Clock} label="Date Created" value={formatDate(task.date_created, true)} />

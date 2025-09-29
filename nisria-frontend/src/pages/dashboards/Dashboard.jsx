@@ -55,6 +55,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await logout();
+    navigate('/login');
   };
 
   if (isLoading) {

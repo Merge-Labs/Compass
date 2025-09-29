@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Briefcase, Phone, Calendar, CheckSquare, Users as TrainerIcon } from 'lucide-react';
+import { X, User, Briefcase, Phone, Mail, Calendar, CheckSquare, Users as TrainerIcon, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
 
 const DetailItem = ({ icon: Icon, label, value }) => (
   <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -8,7 +8,7 @@ const DetailItem = ({ icon: Icon, label, value }) => (
       {label}
     </dt>
     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 break-words">
-      {value || 'N/A'}
+      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value || 'N/A')}
     </dd>
   </div>
 );
@@ -33,7 +33,7 @@ const VocationalTraineeDetailModal = ({ isOpen, onClose, beneficiary, programNam
   const trainee = beneficiary; // Alias for clarity
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h3 className="text-xl font-bold text-gray-800">Vocational Trainee Details</h3>
@@ -51,25 +51,44 @@ const VocationalTraineeDetailModal = ({ isOpen, onClose, beneficiary, programNam
 
           <section>
             <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Trainee Profile</h4>
-            <dl className="divide-y divide-gray-200">
-              <DetailItem icon={User} label="Trainee Name" value={trainee.trainee_name} />
-              <DetailItem icon={Briefcase} label="Course Enrolled" value={trainee.course_enrolled} />
-              <DetailItem icon={Briefcase} label="Training Center" value={trainee.training_center} />
-              <DetailItem icon={Phone} label="Trainee Phone" value={trainee.trainee_phone} />
-            </dl>
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              {trainee.picture_url && <img src={trainee.picture_url} alt={trainee.trainee_name} className="w-24 h-24 object-cover rounded-lg border" />}
+              <dl className="divide-y divide-gray-200 flex-grow">
+                <DetailItem icon={User} label="Trainee Name" value={trainee.trainee_name} />
+                <DetailItem icon={User} label="Age" value={trainee.age} />
+                <DetailItem icon={User} label="Gender" value={trainee.gender} />
+                <DetailItem icon={Phone} label="Phone" value={trainee.trainee_phone} />
+                <DetailItem icon={Mail} label="Email" value={trainee.trainee_email} />
+                <DetailItem icon={Home} label="Address" value={trainee.address} />
+              </dl>
+            </div>
           </section>
 
           <section>
             <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Training Details</h4>
             <dl className="divide-y divide-gray-200">
+              <DetailItem icon={Briefcase} label="Training Received" value={trainee.training_received} />
               <DetailItem icon={Calendar} label="Start Date" value={formatDate(trainee.start_date)} />
-              <DetailItem icon={Calendar} label="Expected End Date" value={formatDate(trainee.expected_end_date)} />
-              <DetailItem 
-                icon={CheckSquare} 
-                label="Training Status" 
-                value={trainee.under_training ? 'Currently Under Training' : 'Training Completed'} 
-              />
-              {/* Add other trainee-specific fields if any, e.g., performance_notes, attendance_rate */}
+              <DetailItem icon={Calendar} label="End Date" value={formatDate(trainee.end_date)} />
+              <DetailItem icon={CheckSquare} label="Post-Training Status" value={trainee.post_training_status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} />
+            </dl>
+          </section>
+
+          <section>
+            <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Additional Information</h4>
+            <dl className="divide-y divide-gray-200">
+              <DetailItem icon={FileText} label="Background" value={trainee.background} />
+              <DetailItem icon={Gift} label="Additional Support" value={trainee.additional_support} />
+              <DetailItem icon={BarChart} label="Quarterly Follow-up" value={trainee.quarterly_follow_up} />
+              <DetailItem icon={Star} label="Testimonial" value={trainee.testimonial} />
+            </dl>
+          </section>
+
+          <section>
+            <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Emergency Contact</h4>
+            <dl className="divide-y divide-gray-200">
+              <DetailItem icon={User} label="Contact Name" value={trainee.emergency_contact_name} />
+              <DetailItem icon={Phone} label="Contact Number" value={trainee.emergency_contact_number} />
             </dl>
           </section>
 

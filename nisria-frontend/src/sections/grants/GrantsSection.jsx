@@ -21,6 +21,7 @@ import GrantExpendituresTable from "../../components/grants/GrantExpendituresTab
 import GrantExpenditureForm from "../../components/grants/GrantExpenditureForm"; // Import Expenditure Form
 import ConfirmDeleteModal from "../../components/shared/ConfirmDeleteModal"; // Import the modal
 
+import bgImage from '/bg.jpg';
 const formatCurrency = (amount, currency = "USD") => {
   if (amount == null || isNaN(parseFloat(amount))) return "N/A";
   return new Intl.NumberFormat("en-US", {
@@ -441,16 +442,16 @@ const GrantsDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-cover bg-center p-6" style={{ backgroundImage: `url(${bgImage})` }}>
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-black mb-2">
                 Grants Management
               </h1>
-              <p className="text-gray-600">
+              <p className="text-black">
                 Manage and track grant applications and funding opportunities
               </p>
             </div>

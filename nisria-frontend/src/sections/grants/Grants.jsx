@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
@@ -299,9 +298,11 @@ const GrantsDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading grants...</p>
+        <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading grants...</p>
+          </div>
         </div>
       </div>
     );
@@ -312,69 +313,70 @@ const GrantsDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Grants Management</h1>
-              <p className="text-gray-600">Manage and track grant applications and funding opportunities</p>
+          <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Grants Management</h1>
+                <p className="text-gray-600">Manage and track grant applications and funding opportunities</p>
+              </div>
+              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105">
+                <Plus className="w-5 h-5" />
+                <span>New Grant</span>
+              </button>
             </div>
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105">
-              <Plus className="w-5 h-5" />
-              <span>New Grant</span>
-            </button>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-white/70">
+            <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Grants</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Building className="w-6 h-6 text-white" />
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-white/70">
+            <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Value</p>
                   <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <DollarSign className="w-6 h-6 text-white" />
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-white/70">
+            <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <CheckCircle className="w-6 h-6 text-white" />
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-white/70">
+            <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">In Progress</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.inProgress}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Clock className="w-6 h-6 text-white" />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-
         {/* Filters and Search */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-sm mb-6">
+        <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -384,12 +386,12 @@ const GrantsDashboard = () => {
                   placeholder="Search grants..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 w-64 transition-all duration-200"
+                  className="pl-10 pr-4 py-2 border border-white/40 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm w-64 transition-all duration-200"
                 />
               </div>
               <button 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 border border-white/40 rounded-xl hover:bg-white/50 backdrop-blur-sm transition-all duration-200"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filter</span>
@@ -399,7 +401,7 @@ const GrantsDashboard = () => {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 transition-all duration-200"
+                className="px-4 py-2 border border-white/40 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200"
               >
                 <option value="all">All Status</option>
                 <option value="todo">To Do</option>
@@ -412,14 +414,14 @@ const GrantsDashboard = () => {
               <select
                 value={selectedPriority}
                 onChange={(e) => setSelectedPriority(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 transition-all duration-200"
+                className="px-4 py-2 border border-white/40 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200"
               >
                 <option value="all">All Priority</option>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors">
+              <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-white/50 rounded-xl transition-all duration-200 backdrop-blur-sm">
                 <Download className="w-4 h-4" />
                 <span>Export</span>
               </button>
@@ -429,7 +431,7 @@ const GrantsDashboard = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+          <div className="glass-panel bg-red-50 border border-red-200/40 rounded-3xl shadow-2xl overflow-hidden p-4 mb-6">
             <div className="flex items-center">
               <XCircle className="w-5 h-5 text-red-500 mr-2" />
               <span className="text-red-700">{error}</span>
@@ -438,7 +440,7 @@ const GrantsDashboard = () => {
         )}
 
         {/* Grants Table */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm overflow-hidden">
+        <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -460,7 +462,7 @@ const GrantsDashboard = () => {
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200/50">
-              <thead className="bg-gray-50/50">
+              <thead className="bg-gray-50/50 backdrop-blur-sm">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
@@ -472,7 +474,7 @@ const GrantsDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white/30 divide-y divide-gray-200/50">
+              <tbody className="bg-white/30 divide-y divide-gray-200/50 backdrop-blur-sm">
                 {paginatedGrants.map((grant) => (
                   <tr key={grant.id} className="hover:bg-white/40 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -484,7 +486,7 @@ const GrantsDashboard = () => {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-4"
                         />
                         <div className="flex items-center">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${grant.priority === 'high' ? 'bg-red-100' : grant.priority === 'medium' ? 'bg-yellow-100' : 'bg-green-100'}`}>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 shadow-sm ${grant.priority === 'high' ? 'bg-red-100' : grant.priority === 'medium' ? 'bg-yellow-100' : 'bg-green-100'}`}>
                             <Star className={`w-4 h-4 ${getPriorityColor(grant.priority)}`} />
                           </div>
                           <div>
@@ -496,7 +498,7 @@ const GrantsDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3 shadow-sm">
                           <Building className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-sm font-medium text-gray-900">{grant.grant?.organization || 'N/A'}</div>
@@ -509,7 +511,7 @@ const GrantsDashboard = () => {
                       <select
                         value={grant.status}
                         onChange={(e) => handleStatusChange(grant.id, e.target.value)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border cursor-pointer ${getStatusColor(grant.status)}`}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border cursor-pointer shadow-sm ${getStatusColor(grant.status)}`}
                       >
                         <option value="todo">To Do</option>
                         <option value="in_progress">In Progress</option>
@@ -528,7 +530,7 @@ const GrantsDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mr-2">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mr-2 shadow-sm">
                           <User className="w-3 h-3 text-white" />
                         </div>
                         <div className="text-sm text-gray-900">
@@ -537,32 +539,32 @@ const GrantsDashboard = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 shadow-sm">
                         {grant.grant?.category || 'General'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <button 
-                          className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50"
+                          className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50 shadow-sm"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button 
-                          className="text-gray-400 hover:text-green-600 transition-colors p-1 rounded-md hover:bg-green-50"
+                          className="text-gray-400 hover:text-green-600 transition-colors p-1 rounded-md hover:bg-green-50 shadow-sm"
                           title="Edit Grant"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button 
-                          className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 shadow-sm"
                           title="Delete Grant"
                           onClick={() => handleDeleteGrant(grant.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-50">
+                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-50 shadow-sm">
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </div>
@@ -573,8 +575,8 @@ const GrantsDashboard = () => {
             </table>
           </div>
 
-        {/* Pagination */}
-        {filteredGrants.length > 0 && (
+          {/* Pagination */}
+          {filteredGrants.length > 0 && (
           <div className="mt-6 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Showing 1 to {filteredGrants.length} of {filteredGrants.length} results

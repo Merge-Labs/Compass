@@ -23,25 +23,27 @@ const BeneficiariesTable = ({ beneficiaries, programType, loading, error, onView
     switch (programType) {
       case 'education':
         return [
-          { header: 'Student Name', accessor: 'student_name' },
-          { header: 'Level', accessor: 'education_level' },
-          { header: 'School', accessor: 'school_associated' },
-          { header: 'Start Date', accessor: 'start_date', render: (data) => formatDate(data) },
+          { header: 'Name', accessor: 'student_name' },
+          { header: 'School', accessor: 'school' },
+          { header: 'Age', accessor: 'age' },
+          { header: 'Grade', accessor: 'grade' },
+          { header: 'Guardian', accessor: 'guardian_name' },
         ];
       case 'microfund':
         return [
           { header: 'Person Name', accessor: 'person_name' },
           { header: 'Chama Group', accessor: 'chama_group' },
-          { header: 'Telephone', accessor: 'telephone' },
+          { header: 'Location', accessor: 'location' },
+          { header: 'Money Received', accessor: 'money_received', render: (data) => data ? `$${Number(data).toLocaleString()}`: 'N/A' },
           { header: 'Status', accessor: 'is_active', render: (data) => data ? 'Active' : 'Inactive' },
         ];
       case 'rescue':
         return [
           { header: 'Child Name', accessor: 'child_name' },
           { header: 'Age', accessor: 'age' },
-          { header: 'Gender', accessor: 'gender' },
-          { header: 'Date Joined', accessor: 'date_joined', render: (data) => formatDate(data) },
-          { header: 'Reunited', accessor: 'is_reunited', render: (data) => data ? 'Yes' : 'No' },
+          { header: 'Date of Rescue', accessor: 'date_of_rescue', render: (data) => formatDate(data) },
+          { header: 'Location of Rescue', accessor: 'location_of_rescue' },
+          { header: 'Case Type', accessor: 'case_type' },
         ];
       case 'vocational-trainer':
         return [
@@ -53,14 +55,14 @@ const BeneficiariesTable = ({ beneficiaries, programType, loading, error, onView
         ];
       case 'vocational-trainee':
         return [
-          { header: 'Trainee Name', accessor: 'trainee_name' }, // Example field
-          { header: 'Course', accessor: 'course_enrolled' }, // Example field
-          { header: 'Training Center', accessor: 'training_center' },
+          { header: 'Trainee Name', accessor: 'trainee_name' },
+          { header: 'Training Received', accessor: 'training_received' },
+          { header: 'Phone', accessor: 'trainee_phone' },
           { header: 'Start Date', accessor: 'start_date', render: (data) => formatDate(data) },
           { 
             header: 'Status', 
-            accessor: 'under_training', 
-            render: (data) => data ? 'Under Training' : 'Training Completed' 
+            accessor: 'post_training_status', 
+            render: (data) => data ? data.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A'
           },
         ];
       default:

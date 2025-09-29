@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate for naviga
 const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dfjet61yc/"; // As in Team.jsx and Settings.jsx
 
 
-const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Nisria's Compass" }) => {
+const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Dira" }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
