@@ -148,6 +148,23 @@ def user_location_analytics(request):
     data = [{'location': item['location'], 'count': item['count']} for item in user_location_counts]
     return Response(data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def beneficiaries_by_program_analytics(request):
+    """
+    Provides a count of beneficiaries for each main program.
+    """
+    # This approach correctly sums up all beneficiaries for a program type.
+    data = [
+        {"program": "Education", "count": EducationProgramDetail.objects.count()},
+        {"program": "Micro-Fund", "count": MicroFundProgramDetail.objects.count()},
+        {"program": "Rescue", "count": RescueProgramDetail.objects.count()},
+        # For vocational, we count the trainees directly.
+        {"program": "Vocational Training", "count": VocationalTrainingProgramTraineeDetail.objects.count()},
+    ]
+
+    return Response(data)
+
 # Helper function to get counts by a specific field
 def get_counts_by_field(queryset, field_name):
     """ Helper to get counts grouped by a specific field. """
@@ -209,7 +226,7 @@ def dashboard_analytics(request):
     education_stats = {
         'total_students': EducationProgramDetail.objects.count(),
         'students_by_gender': list(get_counts_by_field(EducationProgramDetail.objects.all(), 'gender')),
-        'students_by_level': list(get_counts_by_field(EducationProgramDetail.objects.all(), 'education_level')),
+        'students_by_grade': list(get_counts_by_field(EducationProgramDetail.objects.all(), 'grade')), # Corrected from education_level
     }
     microfund_stats = {
         'total_beneficiaries': MicroFundProgramDetail.objects.count(),
@@ -219,15 +236,15 @@ def dashboard_analytics(request):
     rescue_stats = {
         'total_children': RescueProgramDetail.objects.count(),
         'children_by_gender': list(get_counts_by_field(RescueProgramDetail.objects.all(), 'gender')),
-        'reunited_children': RescueProgramDetail.objects.filter(is_reunited=True).count(),
-        'children_under_care': RescueProgramDetail.objects.filter(under_care=True).count(),
+        'children_exited': RescueProgramDetail.objects.filter(date_of_exit__isnull=False).count(), # Corrected from is_reunited
+        'children_under_care': RescueProgramDetail.objects.filter(date_of_exit__isnull=True).count(), # Corrected from under_care
     }
     vocational_stats = {
         'total_trainers': VocationalTrainingProgramTrainerDetail.objects.count(),
         'trainers_by_gender': list(get_counts_by_field(VocationalTrainingProgramTrainerDetail.objects.all(), 'gender')),
         'total_trainees': VocationalTrainingProgramTraineeDetail.objects.count(),
         'trainees_by_gender': list(get_counts_by_field(VocationalTrainingProgramTraineeDetail.objects.all(), 'gender')),
-        'trainees_under_training': VocationalTrainingProgramTraineeDetail.objects.filter(under_training=True).count(),
+        'trainees_by_status': list(get_counts_by_field(VocationalTrainingProgramTraineeDetail.objects.all(), 'post_training_status')), # Corrected from under_training
     }
 
     analytics_data['divisions_programs'] = {

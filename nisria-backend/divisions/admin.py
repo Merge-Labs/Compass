@@ -80,18 +80,18 @@ class BaseProgramDetailAdmin(admin.ModelAdmin):
 
 @admin.register(EducationProgramDetail)
 class EducationProgramDetailAdmin(BaseProgramDetailAdmin):
-    list_display = ('student_name', 'education_level', 'school_associated') + BaseProgramDetailAdmin.list_display
-    search_fields = BaseProgramDetailAdmin.search_fields + ('student_name', 'education_level', 'student_location')
+    list_display = ('student_name', 'school', 'grade', 'start_year', 'graduation_year') + BaseProgramDetailAdmin.list_display
+    search_fields = BaseProgramDetailAdmin.search_fields + ('student_name', 'school', 'grade', 'address', 'guardian_name')
 
 @admin.register(MicroFundProgramDetail)
 class MicroFundProgramDetailAdmin(BaseProgramDetailAdmin):
-    list_display = ('person_name', 'chama_group', 'is_active', 'location') + BaseProgramDetailAdmin.list_display
-    search_fields = BaseProgramDetailAdmin.search_fields + ('person_name', 'chama_group', 'location')
+    list_display = ('person_name', 'chama_group', 'is_active', 'location', 'money_received') + BaseProgramDetailAdmin.list_display
+    search_fields = BaseProgramDetailAdmin.search_fields + ('person_name', 'chama_group', 'location', 'story', 'background')
 
 @admin.register(RescueProgramDetail)
 class RescueProgramDetailAdmin(BaseProgramDetailAdmin):
-    list_display = ('child_name', 'age', 'is_reunited', 'under_care') + BaseProgramDetailAdmin.list_display
-    search_fields = BaseProgramDetailAdmin.search_fields + ('child_name', 'place_found')
+    list_display = ('child_name', 'age', 'date_of_rescue', 'case_type', 'location_of_rescue') + BaseProgramDetailAdmin.list_display
+    search_fields = BaseProgramDetailAdmin.search_fields + ('child_name', 'location_of_rescue', 'background', 'ob_number')
 
 @admin.register(VocationalTrainingProgramTrainerDetail)
 class VocationalTrainingProgramTrainerDetailAdmin(BaseProgramDetailAdmin):
@@ -100,9 +100,9 @@ class VocationalTrainingProgramTrainerDetailAdmin(BaseProgramDetailAdmin):
 
 @admin.register(VocationalTrainingProgramTraineeDetail)
 class VocationalTrainingProgramTraineeDetailAdmin(admin.ModelAdmin): 
-    list_display = ('trainee_name', 'trainer_name_display', 'gender_display', 'date_enrolled', 'under_training', 'created_at_display', 'created_by_display', 'updated_at_display', 'updated_by_display')
-    list_filter = ('trainer__program__name', 'trainer__program__division__name', 'under_training', 'gender', 'created_at', 'updated_at', 'created_by', 'updated_by')
-    search_fields = ('trainee_name', 'trainee_email', 'trainer__trainer_name', 'gender')
+    list_display = ('trainee_name', 'trainer_name_display', 'gender_display', 'start_date', 'post_training_status', 'created_at_display', 'created_by_display', 'updated_at_display', 'updated_by_display')
+    list_filter = ('trainer__program__name', 'trainer__program__division__name', 'post_training_status', 'gender', 'created_at', 'updated_at', 'created_by', 'updated_by')
+    search_fields = ('trainee_name', 'trainee_email', 'trainer__trainer_name', 'gender', 'training_received', 'background')
     readonly_fields = ('created_at', 'updated_at', 'created_by', 'updated_by')
     list_select_related = ('trainer', 'trainer__program', 'created_by', 'updated_by')
 

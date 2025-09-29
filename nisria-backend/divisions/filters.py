@@ -38,9 +38,9 @@ class EducationProgramDetailFilter(django_filters.FilterSet):
     program = django_filters.ModelChoiceFilter(queryset=Program.objects.filter(name="education"))
     program__division = django_filters.ModelChoiceFilter(field_name='program__division', queryset=Division.objects.all())
     student_name = django_filters.CharFilter(lookup_expr='icontains')
-    start_date = django_filters.DateFromToRangeFilter()
     gender = django_filters.ChoiceFilter(choices=GENDER_CHOICES)
-    end_date = django_filters.DateFromToRangeFilter()
+    start_year = django_filters.NumberFilter()
+    graduation_year = django_filters.NumberFilter()
 
     class Meta:
         model = EducationProgramDetail
@@ -49,11 +49,11 @@ class EducationProgramDetailFilter(django_filters.FilterSet):
             'program__division': ['exact'],
             'student_name': ['icontains'],
             'gender': ['exact'],
-            'education_level': ['exact', 'icontains'],
-            'student_location': ['exact', 'icontains'],
-            'school_associated': ['exact', 'icontains'],
-            'start_date': ['exact', 'gte', 'lte'],
-            'end_date': ['exact', 'gte', 'lte'],
+            'school': ['exact', 'icontains'],
+            'grade': ['exact', 'icontains'],
+            'address': ['exact', 'icontains'],
+            'start_year': ['exact', 'gte', 'lte'],
+            'graduation_year': ['exact', 'gte', 'lte'],
         }
 
 
@@ -62,7 +62,6 @@ class MicroFundProgramDetailFilter(django_filters.FilterSet):
     program__division = django_filters.ModelChoiceFilter(field_name='program__division', queryset=Division.objects.all())
     person_name = django_filters.CharFilter(lookup_expr='icontains')
     gender = django_filters.ChoiceFilter(choices=GENDER_CHOICES)
-    start_date = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = MicroFundProgramDetail
@@ -74,7 +73,7 @@ class MicroFundProgramDetailFilter(django_filters.FilterSet):
             'is_active': ['exact'],
             'location': ['exact', 'icontains'],
             'chama_group': ['exact', 'icontains'],
-            'start_date': ['exact', 'gte', 'lte'],
+            'role_in_group': ['exact', 'icontains'],
         }
 
 
@@ -83,8 +82,8 @@ class RescueProgramDetailFilter(django_filters.FilterSet):
     program__division = django_filters.ModelChoiceFilter(field_name='program__division', queryset=Division.objects.all())
     child_name = django_filters.CharFilter(lookup_expr='icontains')
     gender = django_filters.ChoiceFilter(choices=GENDER_CHOICES)
-    date_joined = django_filters.DateFromToRangeFilter()
-    date_reunited = django_filters.DateFromToRangeFilter()
+    date_of_rescue = django_filters.DateFromToRangeFilter()
+    date_of_exit = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = RescueProgramDetail
@@ -93,12 +92,11 @@ class RescueProgramDetailFilter(django_filters.FilterSet):
             'program__division': ['exact'],
             'child_name': ['icontains'],
             'gender': ['exact'],
-            'is_reunited': ['exact'],
-            'under_care': ['exact'],
-            'place_found': ['exact', 'icontains'],
+            'case_type': ['exact'],
+            'location_of_rescue': ['exact', 'icontains'],
             'age': ['exact', 'gte', 'lte'],
-            'date_joined': ['exact', 'gte', 'lte'],
-            'date_reunited': ['exact', 'gte', 'lte'],
+            'date_of_rescue': ['exact', 'gte', 'lte'],
+            'date_of_exit': ['exact', 'gte', 'lte'],
         }
 
 class VocationalTrainingProgramTrainerDetailFilter(django_filters.FilterSet):
@@ -124,7 +122,8 @@ class VocationalTrainingProgramTraineeDetailFilter(django_filters.FilterSet):
     trainer__program__division = django_filters.ModelChoiceFilter(field_name='trainer__program__division', queryset=Division.objects.all())
     trainee_name = django_filters.CharFilter(lookup_expr='icontains')
     gender = django_filters.ChoiceFilter(choices=GENDER_CHOICES)
-    date_enrolled = django_filters.DateFromToRangeFilter()
+    start_date = django_filters.DateFromToRangeFilter()
+    end_date = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = VocationalTrainingProgramTraineeDetail
@@ -134,7 +133,8 @@ class VocationalTrainingProgramTraineeDetailFilter(django_filters.FilterSet):
             'trainer__program__division': ['exact'], 
             'trainee_name': ['icontains'],
             'gender': ['exact'],
-            'trainee_association': ['exact', 'icontains'],
-            'under_training': ['exact'],
-            'date_enrolled': ['exact', 'gte', 'lte'],
+            'training_received': ['exact', 'icontains'],
+            'post_training_status': ['exact'],
+            'start_date': ['exact', 'gte', 'lte'],
+            'end_date': ['exact', 'gte', 'lte'],
         }

@@ -28,24 +28,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-# Detect if running on Railway
-RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=None)
-
-# Allowed Hosts - FIXED for security
-if RAILWAY_ENVIRONMENT:
-    # Production on Railway
-    ALLOWED_HOSTS = [
-        'compass-production-9ae0.up.railway.app',
-        '*.up.railway.app',  # Railway domains
-        '*.railway.app',     # Railway domains
-    ]
-else:
-    # Local development
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
-
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
