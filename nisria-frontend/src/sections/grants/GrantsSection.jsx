@@ -275,6 +275,7 @@ const GrantsDashboard = () => {
       // If search is empty AND status is "all", baseEndpoint remains "/api/grants/"
 
       const response = await api.get(`${baseEndpoint}?${params.toString()}`);
+      console.log('Grants API Response:', response.data); // Debug: Log the API response
       setApiGrants(response.data.results || []);
       setPaginationInfo({
         count: response.data.count || 0,

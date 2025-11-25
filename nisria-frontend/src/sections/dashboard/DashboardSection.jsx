@@ -24,9 +24,13 @@ import {
   Line,
   XAxis,
   YAxis,
+  CartesianGrid,
+  Area,
   Label,
 } from "recharts"; // Removed DashboardCard as we'll use GradientCard for the top section
 import { DashboardCard, GradientCard } from "../../components/layout/card"; // Added GradientCard
+import StatsCard from "../../components/programs/StatsCard";
+import { TrendingUp } from "lucide-react";
 import TasksSection from "../../components/dashboard/TasksSection";
 import GrantsCalendar from "../../components/dashboard/GrantsCalendar";
 import api from "../../services/api";
@@ -77,6 +81,25 @@ const DashboardSection = () => {
   const [tasksData, setTasksData] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [tasksError, setTasksError] = useState(null);
+
+  // Budget data state
+  const [budgetData, setBudgetData] = useState({
+    monthly: [],
+    byProgram: {}
+  });
+  const [isLoadingBudget, setIsLoadingBudget] = useState(true);
+  const [budgetError, setBudgetError] = useState(null);
+  const [annualBudget, setAnnualBudget] = useState(0);
+  const [budgetChange, setBudgetChange] = useState(0);
+
+  // Helper function to generate sample chart data
+  const generateSampleData = (maxValue) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    return months.map((month, index) => ({
+      name: month,
+      value: Math.floor(Math.random() * maxValue * 0.8) + (maxValue * 0.2)
+    }));
+  };
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -179,48 +202,50 @@ const DashboardSection = () => {
 
           {!isLoadingAnalytics && !analyticsError && analyticsData && (
             <>
-              {/* Main Stats - First 3 cards with gradient backgrounds */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <GradientCard
+              {/* Main Stats Cards with Visualizations */}
+              <div className="grid grid-cols- md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" >
+                {/* Total Users Card */}
+                <StatsCard
                   title="Total Users"
-                  value={
-                    analyticsData.accounts?.total_users?.toString() || "N/A"
-                  }
+                  value={analyticsData.accounts?.total_users || 0}
+                  change={3} // Dummy trend percentage
+                  chartType="line"
+                  data={generateSampleData(analyticsData.accounts?.total_users || 0)}
                   icon={Users}
-                  gradient="bg-gradient-to-br from-cyan-400 to-blue-500"
-                  changeType="up"
-                  change="+3" // Dummy trend, represents the text next to the trend icon
+                  color="#06b6d4" // Cyan-500
+                  loading={isLoadingAnalytics}
+                  subtitle="Active users"
+                  tooltipText="User growth over time"
+                  formatAsCurrency={false}
                 />
-                <GradientCard
+                
+                {/* Total Programs Card */}<StatsCard
                   title="Total Programs"
-                  value={
-                    analyticsData.divisions_programs?.total_programs?.toString() ||
-                    "N/A"
-                  }
+                  value={analyticsData.divisions_programs?.total_programs || 0}
+                  change={1} // Dummy trend percentage
+                  chartType="bar"
+                  data={generateSampleData(analyticsData.divisions_programs?.total_programs || 0)}
                   icon={Briefcase}
-                  gradient="bg-gradient-to-br from-purple-400 to-purple-600"
-                  changeType="up"
-                  change="+1" // Dummy trend
+                  color="#8b5cf6" // Violet-500
+                  loading={isLoadingAnalytics}
+                  subtitle="Active programs"
+                  tooltipText="Program growth over time"
+                  formatAsCurrency={false}
                 />
-                <GradientCard
-                  title="Email Templates"
-                  value={
-                    analyticsData.email_templates?.total_templates?.toString() ||
-                    "N/A"
-                  }
-                  icon={Mail}
-                  gradient="bg-gradient-to-br from-emerald-400 to-green-500"
-                  // No change or changeType props if trend is not applicable
-                />
-                <GradientCard
+                
+                {/* Total Divisions Card */}
+                <StatsCard
                   title="Total Divisions"
-                  value={
-                    analyticsData.divisions_programs?.total_divisions?.toString() ||
-                    "N/A"
-                  }
-                  icon={LayoutGrid} // Using LayoutGrid as an example, Briefcase is also an option
-                  gradient="bg-gradient-to-br from-pink-400 to-rose-500" // Using the fourth gradient style
-                  // No change or changeType props if trend is not applicable
+                  value={analyticsData.divisions_programs?.total_divisions || 0}
+                  change={2} // Dummy trend percentage
+                  chartType="line"
+                  data={generateSampleData(analyticsData.divisions_programs?.total_divisions || 0)}
+                  icon={LayoutGrid}
+                  color="#ec4899" // Pink-500
+                  loading={isLoadingAnalytics}
+                  subtitle="Active divisions"
+                  tooltipText="Division growth over time"
+                  formatAsCurrency={false}
                 />
               </div>
 
@@ -293,8 +318,8 @@ const DashboardSection = () => {
                   subtitle="Categorized documents"
                   icon={FileText}
                   layout="detailed"
-                  trend="up" // Dummy trend
-                  trendValue="+2 types"
+                  trend="up"
+                  trendValue="+2 types" // This is the value the user wants to make more visible.
                   backgroundColor={
                     theme === "light" ? "bg-white" : "bg-[var(--color-black/50)] border-gray-200"
                   }
@@ -313,24 +338,103 @@ const DashboardSection = () => {
                   }
                   customContent={
                     analyticsData.documents?.documents_by_type?.length > 0 && (
-                      <ResponsiveContainer width="100%" height={120}>
-                        <LineChart data={analyticsData.documents.documents_by_type.map(item => ({ name: item.document_type, value: item.count }))} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                          <defs>
-                            <linearGradient id="docsGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="var(--color-p2)" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="var(--color-p2)" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 10, fill: theme === 'light' ? '#6B7280' : '#9CA3AF' }} axisLine={false} tickLine={false} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)', backdropFilter: 'blur(5px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem' }}
-                            labelStyle={{ color: theme === 'light' ? '#111827' : '#F9FAFB' }}
-                            formatter={(value, name) => [`${value} documents`, 'Count']}
-                          />
-                          <Line type="monotone" dataKey="value" stroke="var(--color-p2)" strokeWidth={2} dot={{ r: 4, fill: 'var(--color-p2)' }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div className="w-full h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart 
+                            data={analyticsData.documents.documents_by_type.map(item => ({ 
+                              name: item.document_type, 
+                              value: item.count,
+                              // Format document type for better display
+                              displayName: item.document_type.split('_').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')
+                            }))} 
+                            margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
+                          >
+                            <defs>
+                              <linearGradient id="docsGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-p2)" stopOpacity={0.6}/>
+                                <stop offset="95%" stopColor="var(--color-p2)" stopOpacity={0.05}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid 
+                              strokeDasharray="3 3" 
+                              vertical={false}
+                              stroke={theme === 'light' ? '#E5E7EB' : '#374151'}
+                            />
+                            <XAxis 
+                              dataKey="displayName" 
+                              tick={{ 
+                                fontSize: 11, 
+                                fill: theme === 'light' ? '#4B5563' : '#9CA3AF',
+                                fontWeight: 500
+                              }} 
+                              axisLine={false} 
+                              tickLine={false}
+                              interval={0}
+                              height={30}
+                              tickMargin={10}
+                            />
+                            <YAxis 
+                              tick={{ 
+                                fontSize: 11, 
+                                fill: theme === 'light' ? '#4B5563' : '#9CA3AF',
+                                fontWeight: 500
+                              }} 
+                              axisLine={false} 
+                              tickLine={false}
+                              width={30}
+                              tickMargin={10}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(31, 41, 55, 0.95)', 
+                                backdropFilter: 'blur(4px)', 
+                                border: `1px solid ${theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'}`, 
+                                borderRadius: '0.5rem',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                              }}
+                              labelStyle={{ 
+                                color: theme === 'light' ? '#111827' : '#F9FAFB',
+                                fontWeight: 600,
+                                marginBottom: 4
+                              }}
+                              itemStyle={{
+                                color: theme === 'light' ? '#4B5563' : '#D1D5DB',
+                                fontSize: '0.875rem',
+                                padding: '2px 0'
+                              }}
+                              formatter={(value, name, props) => {
+                                return [value, 'Documents'];
+                              }}
+                              labelFormatter={(label) => `Type: ${label}`}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="value" 
+                              fill="url(#docsGradient)" 
+                              strokeWidth={0}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="value" 
+                              stroke="var(--color-p2)" 
+                              strokeWidth={3} 
+                              dot={{ 
+                                r: 4, 
+                                fill: 'var(--color-p2)',
+                                stroke: theme === 'light' ? '#FFFFFF' : '#1F2937',
+                                strokeWidth: 2
+                              }} 
+                              activeDot={{ 
+                                r: 6,
+                                stroke: theme === 'light' ? '#FFFFFF' : '#1F2937',
+                                strokeWidth: 2
+                              }} 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     )
                   }
                 />

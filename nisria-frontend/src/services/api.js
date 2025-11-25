@@ -6,17 +6,27 @@ const BASE_URL = import.meta.env.VITE_BASE_URL; // Replace with your actual base
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    // 'Content-Type': 'application/json',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and handle content type
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Don't set Content-Type for FormData, let the browser handle it with the correct boundary
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    } else {
+      // Remove any default Content-Type header for FormData
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -61,5 +71,56 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+// Helper function to handle API errors consistently
+const handleApiError = (error) => {
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    console.error('API Error - Response:', {
+      status: error.response.status,
+      statusText: error.response.statusText,
+      data: error.response.data,
+    });
+    
+    // Return a consistent error object
+    return {
+      error: true,
+      status: error.response.status,
+      message: error.response.data?.detail || error.response.statusText || 'An error occurred',
+      data: error.response.data,
+    };
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.error('API Error - No Response:', error.request);
+    return {
+      error: true,
+      message: 'No response from server. Please check your connection.',
+    };
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    console.error('API Error - Request Setup:', error.message);
+    return {
+      error: true,
+      message: error.message || 'Error setting up request',
+    };
+  }
+};
+
+// Helper function to make API requests with consistent error handling
+const apiRequest = async (method, url, data = null, config = {}) => {
+  try {
+    const response = await api({
+      method,
+      url,
+      data,
+      ...config,
+    });
+    return { data: response.data, error: null };
+  } catch (error) {
+    return { data: null, error: handleApiError(error) };
+  }
+};
+
+// Export both the raw axios instance and our helper function
+export { api as default, apiRequest };
 

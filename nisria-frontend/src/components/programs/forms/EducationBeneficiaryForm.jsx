@@ -64,18 +64,19 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
     setIsSubmitting(true);
 
     const submissionData = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== '') {
-        submissionData.append(key, formData[key]);
+    
+    // Only append fields that have values
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== '') {
+        submissionData.append(key, value);
       }
     });
+    
     submissionData.append('program_id', programId);
 
     try {
       const endpoint = `/api/programs/${divisionName.toLowerCase()}/education/`;
-      const response = await api.post(endpoint, submissionData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await api.post(endpoint, submissionData);
 
       onBeneficiaryAdded(response.data);
       onClose();
@@ -83,7 +84,11 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
       console.error("Error adding education beneficiary:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
       if (typeof backendErrors === 'object' && backendErrors !== null) {
-        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Submission failed. Please check fields."}));
+        setErrors(prev => ({ 
+          ...prev, 
+          ...backendErrors, 
+          form: backendErrors.detail || "Submission failed. Please check fields."
+        }));
       } else {
         setErrors({ form: "An unexpected error occurred." });
       }

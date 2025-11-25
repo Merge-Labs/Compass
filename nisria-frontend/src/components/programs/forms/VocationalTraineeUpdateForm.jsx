@@ -77,24 +77,35 @@ const VocationalTraineeUpdateForm = ({ isOpen, onClose, existingBeneficiary, onB
     setIsSubmitting(true);
 
     const submissionData = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== '') {
-        submissionData.append(key, formData[key]);
+    
+    // Only include fields that have changed
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== '' && value !== existingBeneficiary[key]) {
+        submissionData.append(key, value);
       }
     });
+    
+    // Always include these required fields
     submissionData.append('program_id', programId);
     submissionData.append('trainer', trainerId);
 
     try {
       const endpoint = `/api/programs/${divisionName.toLowerCase()}/vocational-trainers/${trainerId}/trainees/${existingBeneficiary.id}/`;
-      const response = await api.patch(endpoint, submissionData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      
+      // The API interceptor will handle the Content-Type header automatically
+      const response = await api.patch(endpoint, submissionData);
+      
       onBeneficiaryUpdated(response.data);
       onClose();
     } catch (error) {
       console.error("Error updating vocational trainee:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
       if (typeof backendErrors === 'object' && backendErrors !== null) {
-        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Update failed. Please check fields." }));
+        setErrors(prev => ({ 
+          ...prev, 
+          ...backendErrors, 
+          form: backendErrors.detail || "Update failed. Please check fields." 
+        }));
       } else {
         setErrors({ form: "An unexpected error occurred during update." });
       }

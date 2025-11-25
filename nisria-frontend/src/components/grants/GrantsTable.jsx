@@ -209,7 +209,14 @@ const GrantsTable = ({
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                    {grant.program_name && !grant.program_name.includes('<method-wrapper') ? grant.program_name : 'N/A'}
+                    {(() => {
+                      const programName = grant.program?.name || grant.program_name || '';
+                      // Check if the program name looks like a method wrapper
+                      if (typeof programName === 'string' && programName.includes('<method-wrapper')) {
+                        return 'N/A';
+                      }
+                      return programName || 'N/A';
+                    })()}
                   </span>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">

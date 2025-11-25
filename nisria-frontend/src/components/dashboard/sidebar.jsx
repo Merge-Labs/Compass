@@ -172,29 +172,31 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
           <nav className={`flex-1 overflow-y-auto scroll-hide pr-1 space-y-6
             ${isHoveredForMd && isMdScreen ? 'md:space-y-6' : 'md:space-y-4'} lg:space-y-6
           `}>
-            {menuGroups.map((group) => (
-              <div key={group.title} className="space-y-2">
+            {menuGroups.map((group, groupIndex) => (
+              <div key={`group-${groupIndex}`} className="space-y-2">
                 {/* Group Title */}
-                <h4 className={`
-                  font-semibold text-sm uppercase tracking-wider px-3 py-2 rounded-lg backdrop-blur-sm border
-                  ${theme === 'dark'
-                    ? 'text-slate-300 bg-gradient-to-r from-slate-800/80 to-slate-700/80 border-slate-600/50'
-                    : 'text-slate-600 bg-gradient-to-r from-slate-100/80 to-blue-50/80 border-slate-200/50'
-                  }
-                  ${showLabelClass}
-                `}>
-                  {group.title}
-                </h4>
+                {group.title && (
+                  <h4 className={`
+                    font-semibold text-sm uppercase tracking-wider px-3 py-2 rounded-lg backdrop-blur-sm border
+                    ${theme === 'dark'
+                      ? 'text-slate-300 bg-gradient-to-r from-slate-800/80 to-slate-700/80 border-slate-600/50'
+                      : 'text-slate-600 bg-gradient-to-r from-slate-100/80 to-blue-50/80 border-slate-200/50'
+                    }
+                    ${showLabelClass}
+                  `}>
+                    {group.title}
+                  </h4>
+                )}
                 
                 {/* Group Items */}
                 <ul className="space-y-1">
-                  {group.items.map((item) => {
+                  {group.items.map((item, itemIndex) => {
                     const IconComponent = item.icon;
                     const isActive = (activeSection || activeItem) === item.label;
                     const isHovered = hoveredItem === item.label;
                     
                     return (
-                      <li key={item.label}>
+                      <li key={`${groupIndex}-${itemIndex}-${item.label}`}>
                         <button
                           onClick={() => handleItemClick(item.label)}
                           onMouseEnter={() => setHoveredItem(item.label)}

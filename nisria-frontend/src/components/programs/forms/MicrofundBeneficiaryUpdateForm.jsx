@@ -90,7 +90,7 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
   const validateForm = () => {
     const newErrors = {};
     if (!formData.person_name.trim()) newErrors.person_name = "Person's name is required.";
-    if (!formData.chama_group.trim()) newErrors.chama_group = "Chama group is required.";
+    // Chama group is optional during updates
     if (!formData.location.trim()) newErrors.location = "Location is required.";
     if (!formData.telephone.trim()) newErrors.telephone = "Telephone is required.";
     setErrors(newErrors);

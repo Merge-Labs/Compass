@@ -1,28 +1,30 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useParams, Routes, Route, Outlet } from 'react-router-dom';
+import { useNavigate, useParams, Link, Routes, Route, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import {
-  Users,
-  BookOpen,
-  Heart,
-  Briefcase,
   Building2,
-  ChevronRight,
+  DollarSign,
+  Users,
+  UserCheck,
+  Plus,
   Search,
   Filter,
-  Plus,
+  X,
+  ArrowLeft,
   Edit,
-  Trash2,
+  Briefcase,
+  TrendingUp,
+  UserPlus,
+  Activity,
   Eye,
   Calendar,
+  ChevronRight,
   MapPin,
   Phone,
   Mail,
   CheckCircle,
   XCircle,
   Loader2,
-  ArrowLeft,
-  DollarSign,
-  UserCheck,
   Clock
 } from 'lucide-react';
 
@@ -46,6 +48,7 @@ import VocationalTrainerUpdateForm from '../../components/programs/forms/Vocatio
 import VocationalTraineeUpdateForm from '../../components/programs/forms/VocationalTraineeUpdateForm'; // New
 
 import ProgramEditForm from '../../components/programs/ProgramEditForm'; // Import the new form
+
 // Import Beneficiary Detail Modals
 import MicrofundBeneficiaryDetailModal from '../../components/programs/details/MicrofundBeneficiaryDetailModal';
 import EducationBeneficiaryDetailModal from '../../components/programs/details/EducationBeneficiaryDetailModal';
@@ -102,6 +105,16 @@ const ProgramsManagement = () => {
   const [selectedDivision, setSelectedDivision] = useState(null);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedVocationalTrainer, setSelectedVocationalTrainer] = useState(null); // For context when viewing trainees
+  
+  // Stats data state
+  const [statsData, setStatsData] = useState({
+    divisions: [],
+    programs: [],
+    beneficiaries: [],
+    monthlyTrends: [],
+    loading: true,
+    error: null
+  });
 
   const [divisions, setDivisions] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -635,13 +648,30 @@ const ProgramsManagement = () => {
   const stats = useMemo(() => {
     if (currentViewLevel === 'divisions') {
       return [
-        { icon: Building2, title: 'Total Divisions', value: divisions.length, color: 'blue' },
         { 
-          icon: DollarSign, title: 'Total Budget (Divisions)', 
-          value: `$${divisions.reduce((sum, d) => sum + (parseFloat(d.total_budget) || 0), 0).toLocaleString()}`, color: 'green' 
+          icon: Building2, 
+          title: 'Total Divisions', 
+          value: divisions.length, 
+          color: 'blue' 
         },
-        { icon: Users, title: 'Total Programs', value: programs.length, color: 'purple' },
-        { icon: UserCheck, title: 'Active Programs', value: programs.length, color: 'orange' }
+        { 
+          icon: DollarSign, 
+          title: 'Total Budget (Divisions)', 
+          value: `$${divisions.reduce((sum, d) => sum + (parseFloat(d.total_budget) || 0), 0).toLocaleString()}`,
+          color: 'green' 
+        },
+        { 
+          icon: Users, 
+          title: 'Total Programs', 
+          value: programs.length, 
+          color: 'purple' 
+        },
+        { 
+          icon: UserCheck, 
+          title: 'Active Programs', 
+          value: programs.length, 
+          color: 'orange' 
+        }
       ];
     } else if (currentViewLevel === 'programs') {
       const divisionPrograms = selectedDivision 
@@ -763,7 +793,13 @@ const ProgramsManagement = () => {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <ProgramStatsCard key={index} {...stat} />
+            stat.component ? (
+              <div key={index} className="col-span-1">
+                {stat.component}
+              </div>
+            ) : (
+              <ProgramStatsCard key={index} {...stat} />
+            )
           ))}
         </div>
 

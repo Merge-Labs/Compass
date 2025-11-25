@@ -24,17 +24,19 @@ import {
 
 const initialFormData = {
   organization_name: "",
-  application_link: "",
   amount_currency: "USD",
   amount_value: "",
-  notes: "",
-  status: "pending", // Default status, ensure API accepts this or similar
-  contact_tel: "",
   contact_email: "",
   location: "",
-  organization_type: "normal", // Default organization type
+  organization_type: "normal",
+  application_link: "",
+  program: "",
+  notes: "",
+  status: "pending",
+  contact_tel: "",
   application_deadline: "",
   award_date: "",
+  required_documents: [],
 };
 
 const organizationTypeOptions = [
@@ -66,10 +68,14 @@ const countryOptions = getCountryData().map((country) => ({
 
 const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
   // console.log(`GrantForm rendered. isOpen: ${isOpen}`);
-  const [formData, setFormData] = useState(initialFormData)
+  const [formData, setFormData] = useState(initialFormData);
+  const [availableDocuments, setAvailableDocuments] = useState([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   const [currentCountry, setCurrentCountry] = useState("");
   const [currentRegion, setCurrentRegion] = useState("");
-
+  const [programs, setPrograms] = useState([]);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+  const [programsError, setProgramsError] = useState(null);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,6 +107,36 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
       document.head.appendChild(styleSheet);
     }
   }, []); // Empty dependency array ensures this runs once on mount
+
+  // Fetch programs and documents when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingPrograms(true);
+      setIsLoadingDocuments(true);
+      setProgramsError(null);
+      
+      try {
+        // Fetch programs
+        const [programsResponse, documentsResponse] = await Promise.all([
+          api.get('/api/programs/programs/'),
+          api.get('/api/documents/') // Adjust this endpoint as per your API
+        ]);
+        
+        setPrograms(programsResponse.data.results || []);
+        setAvailableDocuments(documentsResponse.data.results || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setProgramsError('Failed to load required data. Please refresh the page.');
+      } finally {
+        setIsLoadingPrograms(false);
+        setIsLoadingDocuments(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null; // Don't render if not open
 
@@ -194,15 +230,14 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
     )
       newErrors.amount_value = "Must be a valid positive number";
 
-    if (!formData.contact_tel) {
-      // Check if it's empty (it could be undefined from PhoneInput)
-      newErrors.contact_tel = "Contact phone is required";
-    } else if (!isValidPhoneNumber(formData.contact_tel)) {
-      newErrors.contact_tel = "Invalid phone number format";
-    } else if (formData.contact_tel.length > 20) {
-      // E.164 format can be up to 15 digits + '+'
-      newErrors.contact_tel =
-        "Phone number seems too long (max 20 chars with code)";
+    if (formData.contact_tel && formData.contact_tel.trim() !== '') {
+      if (!isValidPhoneNumber(formData.contact_tel)) {
+        newErrors.contact_tel = "Invalid phone number format";
+      } else if (formData.contact_tel.length > 20) {
+        // E.164 format can be up to 15 digits + '+'
+        newErrors.contact_tel =
+          "Phone number seems too long (max 20 chars with code)";
+      }
     }
 
     if (!formData.contact_email.trim())
@@ -248,13 +283,22 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
     if (!validateForm()) return;
     setIsSubmitting(true);
 
+    // Prepare the payload according to backend requirements
     const payload = {
-      ...formData,
+      organization_name: formData.organization_name,
+      amount_currency: formData.amount_currency,
+      amount_value: String(formData.amount_value),
+      contact_email: formData.contact_email,
+      location: formData.location,
+      organization_type: formData.organization_type,
       application_link: formData.application_link || null,
+      program: formData.program || null,
       notes: formData.notes || null,
+      contact_tel: formData.contact_tel || null,
       application_deadline: formData.application_deadline || null,
       award_date: formData.award_date || null,
-      amount_value: String(formData.amount_value), // Ensure string for decimal
+      required_documents: formData.required_documents,
+      status: formData.status,
     };
 
     try {
@@ -399,6 +443,109 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
                 <Building className="w-6 h-6 text-p1" />
                 Organization & Grant Details
               </h3>
+            </div>
+
+            {/* Program Selection */}
+            <div className="lg:col-span-2">
+              <label htmlFor="program" className={labelClasses}>
+                Associated Program
+              </label>
+              <Select
+                id="program"
+                name="program"
+                options={programs.map(program => ({
+                  value: program.id,
+                  label: program.name,
+                  division: program.division_name_display
+                }))}
+                value={programs
+                  .map(program => ({
+                    value: program.id,
+                    label: program.name,
+                    division: program.division_name_display
+                  }))
+                  .find(option => String(option.value) === String(formData.program))}
+                onChange={(selectedOption) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    program: selectedOption ? selectedOption.value : ""
+                  }));
+                  if (errors.program) {
+                    setErrors(prev => ({
+                      ...prev,
+                      program: ""
+                    }));
+                  }
+                }}
+                isClearable
+                isSearchable
+                placeholder="Select a program (optional)"
+                isLoading={isLoadingPrograms}
+                loadingMessage={() => "Loading programs..."}
+                noOptionsMessage={() => programsError || "No programs found"}
+                className="text-sm"
+                styles={{
+                  control: (provided, state) => ({
+                    ...provided,
+                    minHeight: 'calc(1.5em + 1.5rem + 2px)',
+                    paddingLeft: '0.25rem',
+                    paddingRight: '0.25rem',
+                    borderColor: state.isFocused ? '#3b82f6' : (errors.program ? '#3b82f6' : '#D1D5DB'),
+                    borderRadius: '0.5rem',
+                    boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : (errors.program ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : null),
+                    '&:hover': {
+                      borderColor: state.isFocused ? '#3b82f6' : (errors.program ? '#3b82f6' : '#A9A9A9'),
+                    },
+                    backgroundColor: 'white',
+                    transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  }),
+                  singleValue: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                    margin: 0,
+                    padding: 0,
+                  }),
+                  valueContainer: (provided) => ({
+                    ...provided,
+                    padding: '2px 8px',
+                  }),
+                  input: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                    margin: '0px',
+                    paddingTop: '0px',
+                    paddingBottom: '0px',
+                  }),
+                  placeholder: (provided) => ({
+                    ...provided,
+                    color: '#6B7280',
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected 
+                      ? '#3b82f6' 
+                      : state.isFocused ? '#dbeafe' : 'white',
+                    color: state.isSelected ? 'white' : '#111827',
+                    '&:active': {
+                      backgroundColor: !state.isDisabled 
+                        ? (state.isSelected ? '#3b82f6' : '#93c5fd') 
+                        : undefined,
+                    },
+                  }),
+                }}
+              />
+              {errors.program && (
+                <p className={errorClasses}>
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.program}
+                </p>
+              )}
+              {programsError && (
+                <p className="text-yellow-600 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4 inline mr-1" />
+                  {programsError}
+                </p>
+              )}
             </div>
 
             {/* Organization Name */}
@@ -684,6 +831,69 @@ const GrantForm = ({ isOpen, onClose, onGrantAdded }) => {
                   {errors.contact_tel}
                 </p>
               )}
+            </div>
+
+            {/* Required Documents */}
+            <div className="lg:col-span-2">
+              <label htmlFor="required_documents" className={labelClasses}>
+                Required Documents
+              </label>
+              <Select
+                id="required_documents"
+                name="required_documents"
+                isMulti
+                options={availableDocuments.map(doc => ({
+                  value: doc.id,
+                  label: doc.name || `Document ${doc.id}`
+                }))}
+                value={formData.required_documents?.map(docId => ({
+                  value: docId,
+                  label: availableDocuments.find(d => d.id === docId)?.name || `Document ${docId}`
+                }))}
+                onChange={(selectedOptions) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    required_documents: selectedOptions ? selectedOptions.map(opt => opt.value) : []
+                  }));
+                }}
+                isClearable
+                isSearchable
+                placeholder="Select required documents..."
+                isLoading={isLoadingDocuments}
+                loadingMessage={() => "Loading documents..."}
+                noOptionsMessage={() => "No documents found"}
+                className="text-sm"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    minHeight: 'calc(1.5em + 1.5rem + 2px)',
+                    borderColor: '#D1D5DB',
+                    '&:hover': {
+                      borderColor: '#A9A9A9',
+                    },
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected 
+                      ? '#3b82f6' 
+                      : state.isFocused ? '#dbeafe' : 'white',
+                    color: state.isSelected ? 'white' : '#111827',
+                    '&:active': {
+                      backgroundColor: !state.isDisabled 
+                        ? (state.isSelected ? '#3b82f6' : '#93c5fd') 
+                        : undefined,
+                    },
+                  }),
+                  multiValue: (provided) => ({
+                    ...provided,
+                    backgroundColor: '#F3F4F6',
+                  }),
+                  multiValueLabel: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                  }),
+                }}
+              />
             </div>
 
             {/* Additional Information */}

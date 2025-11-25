@@ -25,30 +25,32 @@ import {
 // Constants (can be moved to a shared file later)
 const initialFormData = {
   organization_name: "",
-  application_link: "",
   amount_currency: "USD",
   amount_value: "",
-  notes: "",
-  status: "PENDING",
-  contact_tel: "",
   contact_email: "",
   location: "",
-  organization_type: "NORMAL",
+  organization_type: "normal",
+  application_link: "",
+  program: "",
+  notes: "",
+  status: "pending",
+  contact_tel: "",
   application_deadline: "",
   award_date: "",
+  required_documents: [],
 };
 
 const organizationTypeOptions = [
-  { value: "NORMAL", label: "Normal Organization" },
-  { value: "GRANT_AWARDER", label: "Grant Awarder" },
+  { value: "normal", label: "Normal Organization" },
+  { value: "grant_awarder", label: "Grant Awarder" },
 ];
 
 const statusOptions = [
-  { value: "PENDING", label: "Pending" },
-  { value: "APPLIED", label: "Applied" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "DENIED", label: "Denied" },
-  { value: "EXPIRED", label: "Expired" },
+  { value: "pending", label: "Pending" },
+  { value: "applied", label: "Applied" },
+  { value: "approved", label: "Approved" },
+  { value: "denied", label: "Denied" },
+  { value: "expired", label: "Expired" },
 ];
 
 const currencyOptions = [
@@ -69,8 +71,43 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
   const [formData, setFormData] = useState(initialFormData);
   const [currentCountry, setCurrentCountry] = useState("");
   const [currentRegion, setCurrentRegion] = useState("");
+  const [programs, setPrograms] = useState([]);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+  const [programsError, setProgramsError] = useState(null);
+  const [availableDocuments, setAvailableDocuments] = useState([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch programs and documents when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingPrograms(true);
+      setIsLoadingDocuments(true);
+      setProgramsError(null);
+      
+      try {
+        // Fetch programs and documents in parallel
+        const [programsResponse, documentsResponse] = await Promise.all([
+          api.get('/api/programs/programs/'),
+          api.get('/api/documents/') // Adjust this endpoint as per your API
+        ]);
+        
+        setPrograms(programsResponse.data.results || []);
+        setAvailableDocuments(documentsResponse.data.results || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setProgramsError('Failed to load required data. Please refresh the page.');
+      } finally {
+        setIsLoadingPrograms(false);
+        setIsLoadingDocuments(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (existingGrant) {
@@ -86,17 +123,19 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
 
       setFormData({
         organization_name: existingGrant.organization_name || "",
-        application_link: existingGrant.application_link || "",
         amount_currency: existingGrant.amount_currency || "USD",
         amount_value: existingGrant.amount_value || "",
-        notes: existingGrant.notes || "",
-        status: existingGrant.status || "PENDING",
-        contact_tel: existingGrant.contact_tel || "",
         contact_email: existingGrant.contact_email || "",
-        location: existingGrant.location || "", // This will be updated by setCurrentCountry/Region effects
-        organization_type: existingGrant.organization_type || "NORMAL",
+        location: existingGrant.location || "",
+        organization_type: (existingGrant.organization_type || "normal").toLowerCase(),
+        application_link: existingGrant.application_link || "",
+        program: existingGrant.program || "",
+        notes: existingGrant.notes || "",
+        status: (existingGrant.status || "pending").toLowerCase(),
+        contact_tel: existingGrant.contact_tel || "",
         application_deadline: existingGrant.application_deadline ? existingGrant.application_deadline.split('T')[0] : "",
         award_date: existingGrant.award_date ? existingGrant.award_date.split('T')[0] : "",
+        required_documents: existingGrant.required_documents || [],
       });
     } else {
       setFormData(initialFormData);
@@ -149,8 +188,13 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
     if (!formData.amount_currency.trim()) newErrors.amount_currency = "Amount currency is required";
     if (String(formData.amount_value).trim() === "") newErrors.amount_value = "Amount value is required";
     else if (isNaN(parseFloat(formData.amount_value)) || parseFloat(formData.amount_value) < 0) newErrors.amount_value = "Must be a valid positive number";
-    if (!formData.contact_tel) newErrors.contact_tel = "Contact phone is required";
-    else if (!isValidPhoneNumber(formData.contact_tel)) newErrors.contact_tel = "Invalid phone number format";
+    if (formData.contact_tel && formData.contact_tel.trim() !== '') {
+      if (!isValidPhoneNumber(formData.contact_tel)) {
+        newErrors.contact_tel = "Invalid phone number format";
+      } else if (formData.contact_tel.length > 20) {
+        newErrors.contact_tel = "Phone number seems too long (max 20 chars with code)";
+      }
+    }
     if (!formData.contact_email.trim()) newErrors.contact_email = "Contact email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.contact_email)) newErrors.contact_email = "Invalid email format";
     if (!currentCountry) newErrors.location = "Country is required.";
@@ -290,7 +334,8 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300 ease-in-out"
       onClick={handleBackdropClick}
     >
-      <div className=" rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out">
+        {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
           <div>
             <h3 className="text-2xl font-bold text-gray-800">Update Grant Details</h3>
@@ -307,6 +352,7 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
           </button>
         </div>
 
+        {/* Form Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-8">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="lg:col-span-2">
@@ -328,6 +374,109 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
                 {organizationTypeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               {errors.organization_type && <p className={errorClasses}><AlertCircle className="w-4 h-4" />{errors.organization_type}</p>}
+            </div>
+
+            {/* Program Selection */}
+            <div className="lg:col-span-2">
+              <label htmlFor="program" className={labelClasses}>
+                Associated Program
+              </label>
+              <Select
+                id="program"
+                name="program"
+                options={programs.map(program => ({
+                  value: program.id,
+                  label: program.name,
+                  division: program.division_name_display
+                }))}
+                value={programs
+                  .map(program => ({
+                    value: program.id,
+                    label: program.name,
+                    division: program.division_name_display
+                  }))
+                  .find(option => String(option.value) === String(formData.program))}
+                onChange={(selectedOption) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    program: selectedOption ? selectedOption.value : ""
+                  }));
+                  if (errors.program) {
+                    setErrors(prev => ({
+                      ...prev,
+                      program: ""
+                    }));
+                  }
+                }}
+                isClearable
+                isSearchable
+                placeholder="Select a program (optional)"
+                isLoading={isLoadingPrograms}
+                loadingMessage={() => "Loading programs..."}
+                noOptionsMessage={() => programsError || "No programs found"}
+                className="text-sm"
+                styles={{
+                  control: (provided, state) => ({
+                    ...provided,
+                    minHeight: 'calc(1.5em + 1.5rem + 2px)',
+                    paddingLeft: '0.25rem',
+                    paddingRight: '0.25rem',
+                    borderColor: state.isFocused ? '#3b82f6' : (errors.program ? '#3b82f6' : '#D1D5DB'),
+                    borderRadius: '0.5rem',
+                    boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : (errors.program ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : null),
+                    '&:hover': {
+                      borderColor: state.isFocused ? '#3b82f6' : (errors.program ? '#3b82f6' : '#A9A9A9'),
+                    },
+                    backgroundColor: 'white',
+                    transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  }),
+                  valueContainer: (provided) => ({
+                    ...provided,
+                    padding: '2px 8px',
+                  }),
+                  input: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                    margin: '0px',
+                    paddingTop: '0px',
+                    paddingBottom: '0px',
+                  }),
+                  placeholder: (provided) => ({
+                    ...provided,
+                    color: '#6B7280',
+                  }),
+                  singleValue: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                    margin: 0,
+                    padding: 0,
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected 
+                      ? '#3b82f6' 
+                      : state.isFocused ? '#dbeafe' : 'white',
+                    color: state.isSelected ? 'white' : '#111827',
+                    '&:active': {
+                      backgroundColor: !state.isDisabled 
+                        ? (state.isSelected ? '#3b82f6' : '#93c5fd') 
+                        : undefined,
+                    },
+                  }),
+                }}
+              />
+              {errors.program && (
+                <p className={errorClasses}>
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.program}
+                </p>
+              )}
+              {programsError && (
+                <p className="text-yellow-600 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4 inline mr-1" />
+                  {programsError}
+                </p>
+              )}
             </div>
 
             <div>
@@ -396,6 +545,69 @@ const GrantFormUpdate = ({ isOpen, onClose, onGrantUpdated, existingGrant }) => 
               <label htmlFor="contact_tel" className={labelClasses}>Contact Phone *</label>
               <PhoneInput international defaultCountry="US" placeholder="Enter phone number" id="contact_tel" name="contact_tel" value={formData.contact_tel} onChange={handlePhoneInputChange} className="custom-phone-input" />
               {errors.contact_tel && <p className={errorClasses}><AlertCircle className="w-4 h-4" />{errors.contact_tel}</p>}
+            </div>
+
+            {/* Required Documents */}
+            <div className="lg:col-span-2">
+              <label htmlFor="required_documents" className={labelClasses}>
+                Required Documents
+              </label>
+              <Select
+                id="required_documents"
+                name="required_documents"
+                isMulti
+                options={availableDocuments.map(doc => ({
+                  value: doc.id,
+                  label: doc.name || `Document ${doc.id}`
+                }))}
+                value={formData.required_documents?.map(docId => ({
+                  value: docId,
+                  label: availableDocuments.find(d => d.id === docId)?.name || `Document ${docId}`
+                }))}
+                onChange={(selectedOptions) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    required_documents: selectedOptions ? selectedOptions.map(opt => opt.value) : []
+                  }));
+                }}
+                isClearable
+                isSearchable
+                placeholder="Select required documents..."
+                isLoading={isLoadingDocuments}
+                loadingMessage={() => "Loading documents..."}
+                noOptionsMessage={() => "No documents found"}
+                className="text-sm"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    minHeight: 'calc(1.5em + 1.5rem + 2px)',
+                    borderColor: '#D1D5DB',
+                    '&:hover': {
+                      borderColor: '#A9A9A9',
+                    },
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected 
+                      ? '#3b82f6' 
+                      : state.isFocused ? '#dbeafe' : 'white',
+                    color: state.isSelected ? 'white' : '#111827',
+                    '&:active': {
+                      backgroundColor: !state.disabled 
+                        ? (state.isSelected ? '#3b82f6' : '#93c5fd') 
+                        : undefined,
+                    },
+                  }),
+                  multiValue: (provided) => ({
+                    ...provided,
+                    backgroundColor: '#F3F4F6',
+                  }),
+                  multiValueLabel: (provided) => ({
+                    ...provided,
+                    color: '#111827',
+                  }),
+                }}
+              />
             </div>
 
             <div className="lg:col-span-2 pt-8 border-t border-gray-200">
