@@ -23,6 +23,14 @@ class Grant(SoftDeleteModel):
         ('grant_awarder', 'Grant Awarding Company'),
     ]
 
+    associated_program = models.ForeignKey(
+        Program,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='associated_grants',
+        help_text="The specific program this grant is associated with, if any."
+    )
     organization_name = models.CharField(max_length=255)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application_link = models.URLField(blank=True, null=True)
@@ -44,7 +52,7 @@ class Grant(SoftDeleteModel):
     required_documents = models.ManyToManyField(Document, related_name='grants_requiring')
     submitted_documents = models.ManyToManyField(Document, related_name='grants_submitted', blank=True)
 
-    contact_tel = models.CharField(max_length=20)
+    contact_tel = models.CharField(max_length=20, blank=True, null=True)
     contact_email = models.EmailField()
     location = models.CharField(max_length=255)
 

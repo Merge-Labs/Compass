@@ -43,7 +43,13 @@ class Division(SoftDeleteModel):
     ]
     name = models.CharField(max_length=100, choices=NAME_FIELD_CHOICES, unique=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    description=models.TextField()
+    description = models.TextField()
+    annual_budget = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Annual budget for this division"
+    )
     leads = models.ManyToManyField(
         User, 
         limit_choices_to={'role__in': ['management_lead', "super_admin"]}, 
@@ -124,13 +130,23 @@ class EducationProgramDetail(AuditableModel):
         return f"Education: {self.student_name} (Program: {self.program.id})"
 
 class MicroFundProgramDetail(AuditableModel):
+    ROLE_CHOICES = [
+        ('chairperson', 'Chairperson'),
+        ('member', 'Member'),
+    ]
+    
     program = models.ForeignKey(Program, on_delete=models.CASCADE)
     person_name = models.CharField(max_length=255, unique=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     chama_group = models.CharField(max_length=255)
     age = models.IntegerField(blank=True, null=True)
     story = models.TextField(blank=True, null=True)
-    role_in_group = models.CharField(max_length=255, blank=True, null=True)
+    role_in_group = models.CharField(
+        max_length=20, 
+        choices=ROLE_CHOICES, 
+        default='member',
+        help_text="Member's role in the chama group"
+    )
     money_received = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     project_done = models.TextField(blank=True, null=True)
     progress_notes = models.TextField(blank=True, null=True)
@@ -213,6 +229,10 @@ class VocationalTrainingProgramTraineeDetail(AuditableModel):
         ('unemployed', 'Unemployed'),
         ('unknown', 'Unknown'),
     ]
+    
+    class Meta:
+        ordering = ['-created_at']
+        
     trainee_name = models.CharField(max_length=255, unique=True)
     age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)

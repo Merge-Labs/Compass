@@ -121,11 +121,24 @@ class MicroFundProgramDetailSerializer(serializers.ModelSerializer):
     program = serializers.SlugRelatedField(read_only=True, slug_field='name')
     program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.filter(name="microfund"), source='program', write_only=True, label="Program ID")
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, allow_blank=True, allow_null=True, required=False)
+    role_in_group = serializers.ChoiceField(
+        choices=MicroFundProgramDetail.ROLE_CHOICES,
+        default='member',
+        help_text="Member's role in the chama group"
+    )
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     picture_url = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     updated_by_username = serializers.CharField(source='updated_by.full_name', read_only=True, allow_null=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make chama_group required only for new instances
+        if self.instance is None and 'chama_group' in self.fields:
+            self.fields['chama_group'].required = True
+        elif 'chama_group' in self.fields:
+            self.fields['chama_group'].required = False
 
     class Meta:
         model = MicroFundProgramDetail
@@ -138,7 +151,8 @@ class MicroFundProgramDetailSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'created_by_username', 'updated_by_username'
         ]
         extra_kwargs = {
-            'pictures': {'write_only': True, 'required': False}
+            'pictures': {'write_only': True, 'required': False},
+            'chama_group': {'required': False}  # Make optional by default, we'll handle in __init__
         }
 
     def get_picture_url(self, obj):

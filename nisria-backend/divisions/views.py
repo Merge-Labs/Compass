@@ -2,7 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.db.models import Q
-from rest_framework.decorators import api_view, permission_classes 
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -161,7 +162,8 @@ def _get_program_detail_meta_and_program(division_name_url, program_type_url):
     }
 )
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def division_list_create(request):
     if request.method == 'GET':
         divisions = Division.objects.all()
@@ -266,6 +268,7 @@ def division_detail_view(request, pk):
 )
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def program_list_create(request):
     if request.method == 'GET':
         programs = Program.objects.all()
@@ -359,6 +362,7 @@ def _base_program_detail_list_logic(request, division_name_url, program_type_url
 # --- Generic Program Detail Instance Logic Handlers ---
 # --- Specific Program Endpoint Views ---
 
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def _program_list_create_view(request, division_name_url, program_type_url):
     # This function now correctly gets the detail_meta and the parent program instance
     meta, program_instance = _get_program_detail_meta_and_program(division_name_url, program_type_url)
@@ -377,6 +381,7 @@ def _program_list_create_view(request, division_name_url, program_type_url):
             return Response(serializer_instance.data, status=status.HTTP_201_CREATED)
         return Response(serializer_instance.errors, status=status.HTTP_400_BAD_REQUEST)        
 
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def _program_detail_view(request, division_name_url, program_type_url, pk):
     meta, program_instance = _get_program_detail_meta_and_program(division_name_url, program_type_url)
     # Fetch the specific detail instance belonging to the program_instance
@@ -436,7 +441,8 @@ def _program_detail_view(request, division_name_url, program_type_url, pk):
     }
 )
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def education_program_list_create(request, division_name):
     return _program_list_create_view(request, division_name, "education")
 
@@ -445,7 +451,8 @@ def education_program_list_create(request, division_name):
 @swagger_auto_schema(method='patch', operation_description="Partially update an Education Program Detail.", request_body=EducationProgramDetailSerializer, responses={200: EducationProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
 @swagger_auto_schema(method='delete', operation_description="Delete an Education Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def education_program_detail(request, division_name, pk):
     return _program_detail_view(request, division_name, "education", pk)
 
@@ -500,7 +507,8 @@ def education_program_filter(request, division_name):
     }
 )
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def microfund_program_list_create(request, division_name): 
     return _program_list_create_view(request, division_name, "microfund")    
 
@@ -509,7 +517,8 @@ def microfund_program_list_create(request, division_name):
 @swagger_auto_schema(method='patch', operation_description="Partially update a MicroFund Program Detail.", request_body=MicroFundProgramDetailSerializer, responses={200: MicroFundProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
 @swagger_auto_schema(method='delete', operation_description="Delete a MicroFund Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def microfund_program_detail(request, division_name, pk): 
     return _program_detail_view(request, division_name, "microfund", pk)
 
@@ -564,7 +573,8 @@ def microfund_program_search(request, division_name):
     }
 )
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def rescue_program_list_create(request, division_name): 
     return _program_list_create_view(request, division_name, "rescue")
 
@@ -573,7 +583,8 @@ def rescue_program_list_create(request, division_name):
 @swagger_auto_schema(method='patch', operation_description="Partially update a Rescue Program Detail.", request_body=RescueProgramDetailSerializer, responses={200: RescueProgramDetailSerializer, 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found'})
 @swagger_auto_schema(method='delete', operation_description="Delete a Rescue Program Detail.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def rescue_program_detail(request, division_name, pk): 
     return _program_detail_view(request, division_name, "rescue", pk)
 
@@ -669,6 +680,7 @@ def _base_trainee_list_logic(request, division_name_url, program_type_url, filte
 )
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def vocational_trainer_list_create(request, division_name):
     # Uses "vocational-trainer" key from PROGRAM_DETAIL_METADATA
     # This view uses the generic _program_list_create_view because TrainerDetail links directly to Program
@@ -699,12 +711,13 @@ def vocational_trainer_detail(request, division_name, pk):
 )
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def vocational_trainee_list_create(request, division_name, trainer_pk):
     try:
         division = Division.objects.get(name=division_name.lower())
     except Division.DoesNotExist:
         raise Http404(f"Division '{division_name}' not found.")
-    if division.name != "maisha": # Or check against allowed_division_urls
+    if division.name != "maisha":
         raise Http404("Vocational trainees are only under Maisha division.")
 
     try:
@@ -715,21 +728,40 @@ def vocational_trainee_list_create(request, division_name, trainer_pk):
     trainer_instance = get_object_or_404(VocationalTrainingProgramTrainerDetail, pk=trainer_pk, program=vocational_program)
 
     if request.method == 'GET':
-        trainees = VocationalTrainingProgramTraineeDetail.objects.filter(trainer=trainer_instance)
+        trainees = VocationalTrainingProgramTraineeDetail.objects.filter(
+            trainer=trainer_instance
+        ).order_by('-created_at')
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(trainees, request)
-        serializer = VocationalTrainingProgramTraineeDetailSerializer(page, many=True, context={'request': request})
+        serializer = VocationalTrainingProgramTraineeDetailSerializer(
+            page, 
+            many=True, 
+            context={'request': request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = VocationalTrainingProgramTraineeDetailSerializer(data=request.data, context={'request': request})
+        # Create a mutable copy of the request data
+        data = request.data.copy()
+        
+        # Add the trainer to the data if not already present
+        if 'trainer' not in data:
+            data['trainer'] = trainer_instance.id
+            
+        # Create the serializer with the data
+        serializer = VocationalTrainingProgramTraineeDetailSerializer(
+            data=data,
+            context={'request': request}
+        )
+        
         if serializer.is_valid():
-            serializer.save(
-                trainer=trainer_instance, 
-                created_by=request.user,  
-                updated_by=request.user   
-            ) 
+            # Save the instance with the created_by and updated_by fields
+            instance = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(method='get', operation_description="Retrieve a specific Vocational Program Trainee.", responses={200: VocationalTrainingProgramTraineeDetailSerializer, 401: 'Unauthorized', 404: 'Not Found'})
@@ -738,6 +770,7 @@ def vocational_trainee_list_create(request, division_name, trainer_pk):
 @swagger_auto_schema(method='delete', operation_description="Delete a Vocational Program Trainee.", responses={204: 'No Content', 401: 'Unauthorized', 404: 'Not Found'})
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def vocational_trainee_detail(request, division_name, trainer_pk, pk):
     try:
         division = Division.objects.get(name=division_name.lower())
