@@ -17,10 +17,6 @@ import cloudinary
 from datetime import timedelta
 import os
 from celery.schedules import crontab # For Celery Beat
-import redis
-
-# Environment configuration
-RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=False, cast=bool)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,35 +31,41 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
+# ============================================================================
+# ENVIRONMENT DETECTION - Detect Railway or Render
+# ============================================================================
+RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=None)
+RENDER_ENVIRONMENT = config('RENDER', default=None)  # Render automatically sets this
+
+# ============================================================================
+# ALLOWED_HOSTS - Support both Railway and Render
+# ============================================================================
+if RENDER_ENVIRONMENT or RAILWAY_ENVIRONMENT:
+    # Production environment
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        # Render deployment
+        ALLOWED_HOSTS = [
+            RENDER_EXTERNAL_HOSTNAME,
+            '*.onrender.com',
+            'https://compass-x645.onrender.com', 'localhost', '127.0.0.1', '[::1]'
+        ]
+    else:
+        # Railway deployment
+        ALLOWED_HOSTS = [
+            'compass-production-9ae0.up.railway.app',
+            '*.up.railway.app',
+            '*.railway.app',
+            'https://compass-x645.onrender.com', 'localhost', '127.0.0.1', '[::1]'
+        ]
+else:
+    # Local development
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Redis Configuration
-REDIS_HOST = config('REDIS_HOST', default='localhost')
-REDIS_PORT = config('REDIS_PORT', default=6379)
-REDIS_DB = config('REDIS_DB', default=0)
-REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
-
-# Cache Configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
-
-# Celery Configuration
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
 
 # Application definition
 
@@ -97,25 +99,37 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must be after SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# CORS settings - FIXED for security
-if RAILWAY_ENVIRONMENT:
+# ============================================================================
+# CORS SETTINGS - Support both Railway and Render
+# ============================================================================
+if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
     # Production CORS settings
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = [
-        "https://nisria-frontend.vercel.app",  # Replace with your actual frontend domain
+        "https://nisria-frontend.vercel.app",  # Your frontend
+
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:5173",  # Vite dev server
+        "http://localhost:3000",  # React dev server
+        "http://127.0.0.1:3000",  # React dev server
+
+
+        "http://localhost:5174",  # Vite dev server
+        "http://127.0.0.1:5174",  # Vite dev server
+        
         # Add other trusted domains here
     ]
     # If you need to allow credentials (cookies, auth headers)
@@ -130,16 +144,33 @@ else:
         "http://127.0.0.1:3000",  # React dev server
     ]
 
-# CSRF settings for Railway
-if RAILWAY_ENVIRONMENT:
-    CSRF_TRUSTED_ORIGINS = [
-        'https://compass-production-9ae0.up.railway.app',
-        # Add your frontend domain here too
-        # 'https://your-frontend-domain.com',
-    ]
+# ============================================================================
+# CSRF SETTINGS - Support both Railway and Render
+# ============================================================================
+if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        # Render deployment
+        CSRF_TRUSTED_ORIGINS = [
+            f'https://{RENDER_EXTERNAL_HOSTNAME}',
+            'https://*.onrender.com',
+            'https://compass-x645.onrender.com',
+            'https://nisria-frontend.vercel.app',
+        ]
+    else:
+        # Railway deployment
+        CSRF_TRUSTED_ORIGINS = [
+            'https://compass-production-9ae0.up.railway.app',
+            'https://compass-x645.onrender.com',
+            'https://nisria-frontend.vercel.app',
+            # Add your frontend domain here too
+            # 'https://your-frontend-domain.com',
+        ]
 
-# HTTPS settings for Railway
-if RAILWAY_ENVIRONMENT:
+# ============================================================================
+# HTTPS SETTINGS - Production security
+# ============================================================================
+if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_BROWSER_XSS_FILTER = True
@@ -170,6 +201,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'compass.wsgi.application'
 
 
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
 # Database uncomment the lines below to use sqlite
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -192,13 +226,17 @@ WSGI_APPLICATION = 'compass.wsgi.application'
 #     }
 # }
 
-# deploy Database
+# Production Database (Railway or Render)
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Railway production with PostgreSQL service
+    # Railway or Render production with PostgreSQL service
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
     # Local development using individual variables from .env
@@ -255,7 +293,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# cloudinary credentials
+# ============================================================================
+# CLOUDINARY CONFIGURATION
+# ============================================================================
 cloudinary.config(
     cloud_name = config('CLOUDINARY_CLOUD_NAME'),
     api_key = config('CLOUDINARY_API_KEY'),
@@ -263,13 +303,15 @@ cloudinary.config(
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),  # Fixed: use actual config
-    'API_KEY': config('CLOUDINARY_API_KEY'),        # Fixed: use actual config
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),  # Fixed: use actual config
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# rest framework
+# ============================================================================
+# REST FRAMEWORK CONFIGURATION
+# ============================================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -287,6 +329,9 @@ REST_FRAMEWORK = {
 }
 
 
+# ============================================================================
+# JWT CONFIGURATION
+# ============================================================================
 # rest framework jwt
 # TODO: reset the access token to 5 minutes
 SIMPLE_JWT = {
@@ -301,16 +346,13 @@ AUTH_USER_MODEL = 'accounts.User'
 # for http redirect
 ALLOWED_REDIRECT_SCHEMES = ['http', 'https', 'ftp', 'ftps', 'mailto']
 
+# ============================================================================
+# CELERY CONFIGURATION
+# ============================================================================
 # Celery Configuration Options
-# ------------------------------------------------------------------------------
 # Make sure Redis is running: sudo systemctl start redis-server or redis-server
 
-# local
- 
-# CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')  # Using Redis as the message broker
-# CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0') # Using Redis for storing task results
-
-# deploy
+# Get Redis URL from environment (works for both local and production)
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
@@ -321,7 +363,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Nairobi' 
 
 # Celery Beat Settings
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If you want to manage schedules via Django admin
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 CELERY_BEAT_SCHEDULE = {
     'expire_pending_grants_daily': {
@@ -338,7 +380,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Swagger Settings for drf-yasg
+# ============================================================================
+# SWAGGER SETTINGS
+# ============================================================================
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
@@ -355,7 +399,9 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,  # Disable session authentication in Swagger UI if you only use JWT
 }
 
-# Logging configuration for debugging
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
 if DEBUG:
     LOGGING = {
         'version': 1,

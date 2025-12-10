@@ -1,0 +1,41 @@
+services:
+  # Web Service
+  - type: web
+    name: compass-webapp
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn compass.wsgi:application --workers 2 --threads 4 --timeout 120"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: RAILWAY_ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: compass-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: compass-redis
+          property: connectionString
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+
+databases:
+  - name: compass-db
+    databaseName: compass
+    user: compass_user
+    plan: free
+    region: oregon
