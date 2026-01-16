@@ -239,7 +239,7 @@ const DashboardSection = () => {
         {!isLoadingAnalytics && !analyticsError && analyticsData && (
           <>
             {/* Main Stats Cards with Visualizations */}
-            <div className="grid grid-cols- md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
               {/* Total Users Card */}
               <StatsCard
                 title="Total Users"

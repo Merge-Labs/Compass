@@ -32,40 +32,36 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # ============================================================================
-# ENVIRONMENT DETECTION - Detect Railway or Render
+# ENVIRONMENT DETECTION - Use simple DJANGO_ENV (development or production)
 # ============================================================================
-RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=None)
-RENDER_ENVIRONMENT = config('RENDER', default=None)  # Render automatically sets this
+DJANGO_ENV = config('DJANGO_ENV', default='development')
 
 # ============================================================================
-# ALLOWED_HOSTS - Support both Railway and Render
+# ALLOWED_HOSTS - prefer explicit env var, fallback to provider detection
 # ============================================================================
-if RENDER_ENVIRONMENT or RAILWAY_ENVIRONMENT:
-    # Production environment
-    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if RENDER_EXTERNAL_HOSTNAME:
-        # Render deployment
-        ALLOWED_HOSTS = [
-            RENDER_EXTERNAL_HOSTNAME,
-            '*.onrender.com',
-            'https://compass-x645.onrender.com', 'localhost', '127.0.0.1', '[::1]'
-        ]
-    else:
-        # Railway deployment
-        ALLOWED_HOSTS = [
-            'compass-production-9ae0.up.railway.app',
-            '*.up.railway.app',
-            '*.railway.app',
-            'https://compass-x645.onrender.com', 'localhost', '127.0.0.1', '[::1]'
-        ]
+# First try explicit ALLOWED_HOSTS env var (comma-separated)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
+# Normalize empty values (decouple can return [''] for empty default)
+ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h and h.strip()]
+if ALLOWED_HOSTS:
+    # explicit hosts provided via env
+    pass
 else:
-    # Local development
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    # If not provided, fall back to sensible defaults depending on environment
+    if DJANGO_ENV == 'production':
+        # In production (Contabo) require explicit ALLOWED_HOSTS in env; otherwise use localhost
+        ALLOWED_HOSTS = ['localhost']
+    else:
+        ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# During development, include local `static` dir if it exists so `runserver` serves it
+if DJANGO_ENV != 'production':
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Application definition
 
@@ -115,24 +111,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================================================
 # CORS SETTINGS - Support both Railway and Render
 # ============================================================================
-if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
-    # Production CORS settings
+if DJANGO_ENV == 'production':
+    # Production CORS settings — limit origins in production and set via env if needed
     CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        "https://nisria-frontend.vercel.app",  # Your frontend
-
-        "http://localhost:5173",  # Vite dev server
-        "http://127.0.0.1:5173",  # Vite dev server
-        "http://localhost:3000",  # React dev server
-        "http://127.0.0.1:3000",  # React dev server
-
-
-        "http://localhost:5174",  # Vite dev server
-        "http://127.0.0.1:5174",  # Vite dev server
-        
-        # Add other trusted domains here
-    ]
-    # If you need to allow credentials (cookies, auth headers)
+    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv())
+    CORS_ALLOWED_ORIGINS = [o for o in CORS_ALLOWED_ORIGINS if o and o.strip()]
+    # If no origins provided, keep an empty list (tight by default)
     CORS_ALLOW_CREDENTIALS = True
 else:
     # Development CORS settings
@@ -145,32 +129,26 @@ else:
     ]
 
 # ============================================================================
-# CSRF SETTINGS - Support both Railway and Render
+# CSRF SETTINGS - Support both Railway and Render or DJANGO_ENV=production
 # ============================================================================
-if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
-    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if RENDER_EXTERNAL_HOSTNAME:
-        # Render deployment
-        CSRF_TRUSTED_ORIGINS = [
-            f'https://{RENDER_EXTERNAL_HOSTNAME}',
-            'https://*.onrender.com',
-            'https://compass-x645.onrender.com',
-            'https://nisria-frontend.vercel.app',
-        ]
-    else:
-        # Railway deployment
-        CSRF_TRUSTED_ORIGINS = [
-            'https://compass-production-9ae0.up.railway.app',
-            'https://compass-x645.onrender.com',
-            'https://nisria-frontend.vercel.app',
-            # Add your frontend domain here too
-            # 'https://your-frontend-domain.com',
-        ]
+if DJANGO_ENV == 'production':
+    # Build CSRF trusted origins from ALLOWED_HOSTS when in production
+    CSRF_TRUSTED_ORIGINS = []
+    for host in ALLOWED_HOSTS:
+        # Skip empty values
+        if not host:
+            continue
+        # If host already includes scheme, use as-is; otherwise assume https
+        if host.startswith('http://') or host.startswith('https://'):
+            CSRF_TRUSTED_ORIGINS.append(host)
+        else:
+            scheme = 'https' if not host.startswith('localhost') else 'http'
+            CSRF_TRUSTED_ORIGINS.append(f'{scheme}://{host}')
 
 # ============================================================================
 # HTTPS SETTINGS - Production security
 # ============================================================================
-if RAILWAY_ENVIRONMENT or RENDER_ENVIRONMENT:
+if DJANGO_ENV == 'production':
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_BROWSER_XSS_FILTER = True
