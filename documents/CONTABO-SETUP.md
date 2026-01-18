@@ -120,14 +120,20 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 ## Backup Database
 
-Create a database backup (using the actual database configuration from docker-compose.prod.yml):
+Create a database backup:
 
 ```bash
-# Using the default configuration from docker-compose.prod.yml
+# Using variables from your docker-compose.prod.yml configuration
+# Replace DB_USER and DB_NAME with values from your .env.prod file
+docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U <DB_USER> <DB_NAME> > backup_$(date +%Y%m%d).sql
+```
+
+Example with default values:
+```bash
 docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U manassehgitau main > backup_$(date +%Y%m%d).sql
 ```
 
-Note: The database user (`manassehgitau`) and database name (`main`) should match your configuration in `docker-compose.prod.yml`. The `-T` flag disables pseudo-TTY allocation for proper output redirection.
+Note: The `-T` flag disables pseudo-TTY allocation for proper output redirection. Replace `<DB_USER>` and `<DB_NAME>` with your actual database credentials from `docker-compose.prod.yml`.
 
 ## Troubleshooting
 
