@@ -41,6 +41,13 @@ cp env.prod.example .env.prod
 nano .env.prod  # Edit with your production settings
 ```
 
+Key variables to configure in `.env.prod`:
+- `SECRET_KEY`: Generate a secure Django secret key
+- `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`: Your PostgreSQL credentials
+- `ALLOWED_HOSTS`: Your domain names (e.g., example.com,api.example.com)
+- `DEBUG`: Should be `False` in production
+- `GUNICORN_WORKERS`: Number of Gunicorn workers (typically 2-4)
+
 3. Build and run the containers:
 ```bash
 docker-compose -f docker-compose.prod.yml up --build -d
@@ -78,12 +85,14 @@ docker-compose -f docker-compose.prod.yml exec web python manage.py collectstati
 
 ## SSL/TLS Configuration
 
-Set up SSL certificates using Certbot:
+Set up SSL certificates using Certbot (replace with your actual domain):
 
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d your-domain.com -d api.your-domain.com
+sudo certbot --nginx -d example.com -d api.example.com
 ```
+
+Replace `example.com` with your actual domain name.
 
 ## Monitoring Logs
 
@@ -111,10 +120,14 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 ## Backup Database
 
-Create a database backup:
+Create a database backup (using the actual database configuration from docker-compose.prod.yml):
+
 ```bash
-docker-compose -f docker-compose.prod.yml exec db pg_dump -U postgres compass_db > backup_$(date +%Y%m%d).sql
+# Using the default configuration from docker-compose.prod.yml
+docker-compose -f docker-compose.prod.yml exec db pg_dump -U manassehgitau main > backup_$(date +%Y%m%d).sql
 ```
+
+Note: The database user (`manassehgitau`) and database name (`main`) should match your configuration in `docker-compose.prod.yml`.
 
 ## Troubleshooting
 
