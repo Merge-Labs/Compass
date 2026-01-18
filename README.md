@@ -1,9 +1,9 @@
 # Compass NGO Management System
 
-[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/Merge-Labs/Compass?include_prereleases)](https://img.shields.io/github/v/release/Merge-Labs/Compass?include_prereleases)
-[![GitHub last commit](https://img.shields.io/github/last-commit/Merge-Labs/Compass)](https://img.shields.io/github/last-commit/Merge-Labs/Compass)
-[![GitHub issues](https://img.shields.io/github/issues-raw/Merge-Labs/Compass)](https://img.shields.io/github/issues-raw/Merge-Labs/Compass)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/Merge-Labs/Compass)](https://img.shields.io/github/issues-pr/Merge-Labs/Compass)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/Merge-Labs/Compass?include_prereleases)](https://github.com/Merge-Labs/Compass/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/commits)
+[![GitHub issues](https://img.shields.io/github/issues-raw/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/pulls)
 
 **Compass** is a comprehensive NGO Management System designed to streamline operations for non-profit organizations. Built with Django REST Framework for the backend and React with Tailwind CSS for the frontend, Compass provides role-based access control, grant management, document handling, and analytics for efficient NGO operations.
 
@@ -213,10 +213,7 @@ source venv/bin/activate
 python manage.py runserver
 ```
 
-For auto-reloading with Django:
-```shell
-python manage.py runserver --noreload
-```
+The Django development server automatically reloads on code changes by default.
 
 ### Frontend Development
 
