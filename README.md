@@ -242,12 +242,14 @@ docker-compose -f docker-compose.prod.yml up --build
 
 ### Backend Tests
 
-The backend includes test files for all major apps. Run tests with:
+The backend includes test file stubs for all major apps. To run tests:
 
 ```shell
 cd nisria-backend
 python manage.py test
 ```
+
+> **Note:** Test implementations need to be added. Current test files contain only the default Django test structure.
 
 ### Linting
 

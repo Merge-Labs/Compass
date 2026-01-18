@@ -124,10 +124,10 @@ Create a database backup (using the actual database configuration from docker-co
 
 ```bash
 # Using the default configuration from docker-compose.prod.yml
-docker-compose -f docker-compose.prod.yml exec db pg_dump -U manassehgitau main > backup_$(date +%Y%m%d).sql
+docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U manassehgitau main > backup_$(date +%Y%m%d).sql
 ```
 
-Note: The database user (`manassehgitau`) and database name (`main`) should match your configuration in `docker-compose.prod.yml`.
+Note: The database user (`manassehgitau`) and database name (`main`) should match your configuration in `docker-compose.prod.yml`. The `-T` flag disables pseudo-TTY allocation for proper output redirection.
 
 ## Troubleshooting
 
