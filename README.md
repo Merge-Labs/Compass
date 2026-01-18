@@ -4,6 +4,13 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/commits)
 [![GitHub issues](https://img.shields.io/github/issues-raw/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/pulls)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Merge-Labs/Compass)
+
+> **Note:** This project is archived. Compass v2 is currently being built by the core team in a private repository. If you are interested in contributing or learning more about Compass v2, please contact [wahome@nisria.co](mailto:wahome@nisria.co).
+
+**Live Demo:**
+- Frontend: [dira.manassehgitau.com](https://dira.manassehgitau.com)
+- Backend API: [api-compass.manassehgitau.com/swagger](https://api-compass.manassehgitau.com/swagger)
 
 **Compass** is a comprehensive NGO Management System designed to streamline operations for non-profit organizations. Built with Django REST Framework for the backend and React with Tailwind CSS for the frontend, Compass provides role-based access control, grant management, document handling, and analytics for efficient NGO operations.
 
@@ -235,6 +242,8 @@ docker-compose -f docker-compose.prod.yml up --build
 
 ### Backend Tests
 
+The backend includes test files for all major apps. Run tests with:
+
 ```shell
 cd nisria-backend
 python manage.py test
@@ -242,17 +251,13 @@ python manage.py test
 
 ### Linting
 
-Backend:
-```shell
-cd nisria-backend
-flake8 .
-```
-
 Frontend:
 ```shell
 cd nisria-frontend
 npm run lint
 ```
+
+> **Note:** Backend linting is not yet configured in this project. Consider adding a linting tool like `flake8` or `pylint` to `requirements.txt` for code quality checks.
 
 # Deployment
 [(Back to top)](#table-of-contents)
@@ -267,6 +272,16 @@ For detailed deployment instructions, please refer to [README-deploy.md](./docum
 4. Set up PostgreSQL database
 5. Configure CORS settings for frontend-backend communication
 6. Set up SSL certificates for HTTPS
+
+**Creating the first Super Admin with Docker:**
+
+When deploying with Docker for the first time, you'll need to create a super admin user. Run the following command:
+
+```shell
+docker-compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
+```
+
+Follow the prompts to create the super admin account. For detailed setup instructions on production servers, see the [Contabo deployment guide](./documents/CONTABO-SETUP.md).
 
 # Contribute
 [(Back to top)](#table-of-contents)
