@@ -6,7 +6,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/Merge-Labs/Compass)](https://github.com/Merge-Labs/Compass/pulls)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Merge-Labs/Compass)
 
-> **Note:** This project is archived. Compass v2 is currently being built by the core team in a private repository. If you are interested in contributing or learning more about Compass v2, please contact [wahome@nisria.co](mailto:wahome@nisria.co).
+> **Note:** This project is archived. Compass v2 is currently being built by the core team in a private repository. If you are interested in contributing or learning more about Compass v2, please contact [gitaumanasseh1@gmail.com](mailto:gitaumanasseh1@gmail.com) or [wahome.dev@gmail.com](mailto:wahome.dev@gmail.com).
 
 **Live Demo:**
 - Frontend: [dira.manassehgitau.com](https://dira.manassehgitau.com)
@@ -292,7 +292,7 @@ We welcome contributions to Compass! However, this is a proprietary project owne
 
 **Before contributing:**
 
-1. Contact us at [wahome@nisria.co](mailto:wahome@nisria.co) for permission and licensing information
+1. Contact us at [gitaumanasseh1@gmail.com](mailto:gitaumanasseh1@gmail.com) or [wahome.dev@gmail.com](mailto:wahome.dev@gmail.com) for permission and licensing information
 2. Review our [Security Policy](./SECURITY.md)
 3. Check existing issues and pull requests
 4. Follow the code style and conventions used in the project
@@ -316,7 +316,7 @@ This project is proprietary software owned by [Nisria.Inc](https://www.nisria.co
 
 **Important:** This repository is NOT licensed under any open source license. All rights are reserved by Nisria.Inc.
 
-For licensing inquiries or permission requests, please contact: [wahome@nisria.co](mailto:wahome@nisria.co)
+For licensing inquiries or permission requests, please contact: [gitaumanasseh1@gmail.com](mailto:gitaumanasseh1@gmail.com) or [wahome.dev@gmail.com](mailto:wahome.dev@gmail.com)
 
 See [LICENSE.md](./LICENSE.md) for full details.
 
