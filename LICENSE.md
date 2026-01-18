@@ -35,7 +35,7 @@ you agree to the following terms:
 
 6. Contact
    For licensing inquiries or permission requests, please contact:
-   [wahome@nisria.co]
+   [gitaumanasseh1@gmail.com](mailto:gitaumanasseh1@gmail.com) or [wahome.dev@gmail.com](mailto:wahome.dev@gmail.com)
 
 ---
 
