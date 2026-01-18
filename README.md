@@ -285,7 +285,7 @@ We welcome contributions to Compass! However, this is a proprietary project owne
 
 **Before contributing:**
 
-1. Contact us at [wahome@nisria.co] for permission and licensing information
+1. Contact us at [wahome@nisria.co](mailto:wahome@nisria.co) for permission and licensing information
 2. Review our [Security Policy](./SECURITY.md)
 3. Check existing issues and pull requests
 4. Follow the code style and conventions used in the project
@@ -309,7 +309,7 @@ This project is proprietary software owned by [Nisria.Inc](https://www.nisria.co
 
 **Important:** This repository is NOT licensed under any open source license. All rights are reserved by Nisria.Inc.
 
-For licensing inquiries or permission requests, please contact: [wahome@nisria.co]
+For licensing inquiries or permission requests, please contact: [wahome@nisria.co](mailto:wahome@nisria.co)
 
 See [LICENSE.md](./LICENSE.md) for full details.
 
