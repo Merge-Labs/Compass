@@ -243,13 +243,6 @@ cd nisria-backend
 python manage.py test
 ```
 
-### Frontend Tests
-
-```shell
-cd nisria-frontend
-npm run test
-```
-
 ### Linting
 
 Backend:
