@@ -152,7 +152,20 @@ const DashboardSection = () => {
       }
     };
 
-    
+    // Use dummy data instead of calling the API for beneficiaries by program
+    const fetchBeneficiariesByProgram = () => {
+      setIsLoadingBeneficiaries(true);
+      setBeneficiariesError(null);
+      try {
+        // Map the dummy data shape if needed later
+        setBeneficiariesByProgramData(DUMMY_BENEFICIARIES_BY_PROGRAM);
+      } catch (error) {
+        console.error("Failed to set dummy beneficiaries data:", error);
+        setBeneficiariesError("Could not load beneficiary data.");
+      } finally {
+        setIsLoadingBeneficiaries(false);
+      }
+    };
 
     const fetchTasks = async () => {
       setIsLoadingTasks(true);
@@ -598,7 +611,117 @@ const DashboardSection = () => {
                 customContent={null}
               />
 
-              
+              {/* Beneficiaries by Program Pie Chart Section */}
+              <div
+                className={`p-4 md:p-6 rounded-xl shadow-lg h-[400px] flex flex-col border-1 border-black/50 glass-surface ${
+                  // Added explicit height and flex
+                  theme === "light"
+                    ? "bg-white"
+                    : "bg-[var(--color-black/50)] border-gray-200"
+                }`}
+              >
+                <h2
+                  className={`text-lg font-semibold mb-4 ${
+                    theme === "light" ? "text-gray-900" : "text-gray-100"
+                  }`}
+                >
+                  Beneficiaries by Program
+                </h2>
+                {isLoadingBeneficiaries && (
+                  <div className="flex justify-center items-center h-64">
+                    <Loader2
+                      className={`w-10 h-10 animate-spin ${
+                        theme === "light"
+                          ? "text-[var(--color-p2)]"
+                          : "text-[var(--color-p5)]"
+                      }`}
+                    />
+                  </div>
+                )}
+                {beneficiariesError && !isLoadingBeneficiaries && (
+                  <div
+                    className={`p-4 rounded-md ${
+                      theme === "light"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-red-900/30 text-red-400"
+                    } flex items-center gap-3`}
+                  >
+                    <AlertTriangle size={20} />
+                    <p className="text-sm">{beneficiariesError}</p>
+                  </div>
+                )}
+                {!isLoadingBeneficiaries &&
+                !beneficiariesError &&
+                beneficiariesByProgramData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="20%"
+                      outerRadius="90%"
+                      barSize={15}
+                      data={beneficiariesByProgramData}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <RadialBar
+                        minAngle={15}
+                        label={{
+                          position: "insideStart",
+                          fill: "#fff",
+                          fontSize: "10px",
+                        }}
+                        background
+                        clockWise
+                        dataKey="value"
+                      >
+                        {beneficiariesByProgramData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              BENEFICIARY_PIE_COLORS[
+                                index % BENEFICIARY_PIE_COLORS.length
+                              ]
+                            }
+                            className="transition-all duration-300"
+                          />
+                        ))}
+                      </RadialBar>
+                      <Tooltip
+                        content={<CustomTooltip theme={theme} />}
+                        cursor={{ stroke: "none", fill: "transparent" }}
+                      />
+                      <Legend
+                        iconSize={10}
+                        layout="vertical"
+                        verticalAlign="middle"
+                        align="right"
+                        wrapperStyle={{
+                          color: theme === "light" ? "#374151" : "#D1D5DB",
+                          fontSize: "12px",
+                          lineHeight: "20px",
+                        }}
+                        formatter={(value, entry) => (
+                          <span className="ml-2">
+                            {value} ({entry.payload.value})
+                          </span>
+                        )}
+                      />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  !isLoadingBeneficiaries &&
+                  !beneficiariesError && (
+                    <p
+                      className={`text-center py-10 ${
+                        theme === "light" ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      No beneficiary data available.
+                    </p>
+                  )
+                )}
+              </div>
             </div>
           </>
         )}
