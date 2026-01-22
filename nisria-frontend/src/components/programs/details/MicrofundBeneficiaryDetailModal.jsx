@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  X,
   Loader2,
   AlertTriangle,
   User,
@@ -21,7 +22,6 @@ import {
   Shield,
   DollarSign,
 } from "lucide-react";
-import FormContainer from "../../shared/FormContainer";
 
 const formatDate = (dateString, includeTime = false) => {
   if (!dateString) return "N/A";
@@ -86,11 +86,24 @@ const MicrofundBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
   };
 
   return (
-    <FormContainer
-      title="Microfund Beneficiary Details"
-      onClose={onClose}
-      maxWidth="max-w-4xl"
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm"
+      onClick={handleBackdropClick}
     >
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+          <h3 className="text-lg font-semibold text-gray-800">
+            Microfund Beneficiary Details
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
@@ -197,7 +210,8 @@ const MicrofundBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
             Close
           </button>
         </div>
-    </FormContainer>
+      </div>
+    </div>
   );
 };
 

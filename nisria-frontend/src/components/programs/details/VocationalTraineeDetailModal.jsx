@@ -1,6 +1,5 @@
 import React from 'react';
-import { User, Briefcase, Phone, Mail, Calendar, CheckSquare, Users as TrainerIcon, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
-import FormContainer from '../../shared/FormContainer';
+import { X, User, Briefcase, Phone, Mail, Calendar, CheckSquare, Users as TrainerIcon, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
 
 const DetailItem = ({ icon: Icon, label, value }) => (
   <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -34,11 +33,12 @@ const VocationalTraineeDetailModal = ({ isOpen, onClose, beneficiary, programNam
   const trainee = beneficiary; // Alias for clarity
 
   return (
-    <FormContainer
-      title="Vocational Trainee Details"
-      onClose={onClose}
-      maxWidth="max-w-4xl"
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-800">Vocational Trainee Details</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
+        </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -119,7 +119,8 @@ const VocationalTraineeDetailModal = ({ isOpen, onClose, beneficiary, programNam
             Edit Trainee
           </button> */}
         </div>
-    </FormContainer>
+      </div>
+    </div>
   );
 };
 

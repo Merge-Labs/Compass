@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import { AlertCircle, User, Briefcase, Phone, Mail, Calendar as CalendarIcon, CheckSquare, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
-import FormContainer from '../../shared/FormContainer';
+import { X, AlertCircle, User, Briefcase, Phone, Mail, Calendar as CalendarIcon, CheckSquare, Loader2, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
 
 const VocationalTraineeUpdateForm = ({ isOpen, onClose, existingBeneficiary, onBeneficiaryUpdated, programId, divisionName, trainerId, trainerAssociationFromProps }) => {
   const [formData, setFormData] = useState({
@@ -120,11 +119,12 @@ const VocationalTraineeUpdateForm = ({ isOpen, onClose, existingBeneficiary, onB
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <FormContainer 
-      title="Update Vocational Trainee"
-      onClose={onClose}
-      maxWidth="max-w-4xl"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-800">Update Vocational Trainee</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
@@ -199,7 +199,8 @@ const VocationalTraineeUpdateForm = ({ isOpen, onClose, existingBeneficiary, onB
             </button>
           </div>
         </form>
-    </FormContainer>
+      </div>
+    </div>
   );
 };
 
