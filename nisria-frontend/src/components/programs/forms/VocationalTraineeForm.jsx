@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { X, AlertCircle, User, Briefcase, Phone, Mail, Calendar as CalendarIcon, CheckSquare, Loader2, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
-import ModalPortal from '../../common/ModalPortal';
 
 const initialFormData = {
   trainee_name: '',
@@ -166,7 +165,27 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
               {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label htmlFor="age" className={labelClasses}>Age</label>
+              <div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" id="age" name="age" value={formData.age} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>
+              {errors.age && <p className={errorClasses}><AlertCircle size={14}/>{errors.age}</p>}
+            </div>
+            <div>
+              <label htmlFor="gender" className={labelClasses}>Gender</label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={`${inputClasses}`}>
+                <option value="">Select Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+              </select>
+              {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
+            </div>
+          </div>
 
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Contact Information</h4>
+            <div><label htmlFor="trainee_phone" className={labelClasses}>Phone Number*</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="trainee_phone" name="trainee_phone" value={formData.trainee_phone} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_phone && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_phone}</p>}</div>
+            <div className="mt-5"><label htmlFor="trainee_email" className={labelClasses}>Email Address*</label><div className="relative"><Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="email" id="trainee_email" name="trainee_email" value={formData.trainee_email} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_email && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_email}</p>}</div>
+            <div className="mt-5"><label htmlFor="address" className={labelClasses}>Address</label><div className="relative"><Home className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.address && <p className={errorClasses}><AlertCircle size={14}/>{errors.address}</p>}</div>
+          </div>
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Contact Information</h4>
             <div><label htmlFor="trainee_phone" className={labelClasses}>Phone Number*</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="trainee_phone" name="trainee_phone" value={formData.trainee_phone} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_phone && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_phone}</p>}</div>
@@ -181,7 +200,24 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
               <div><label htmlFor="emergency_contact_number" className={labelClasses}>Contact Number</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="emergency_contact_number" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_number && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_number}</p>}</div>
             </div>
           </div>
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Emergency Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label htmlFor="emergency_contact_name" className={labelClasses}>Contact Name</label><div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="emergency_contact_name" name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_name && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_name}</p>}</div>
+              <div><label htmlFor="emergency_contact_number" className={labelClasses}>Contact Number</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="emergency_contact_number" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_number && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_number}</p>}</div>
+            </div>
+          </div>
 
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Training & Background</h4>
+            <div><label htmlFor="training_received" className={labelClasses}>Training Received</label><div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="training_received" name="training_received" value={formData.training_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Plumbing, Tailoring" /></div>{errors.training_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.training_received}</p>}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+              <div><label htmlFor="start_date" className={labelClasses}>Start Date</label><div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="start_date" name="start_date" value={formData.start_date} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.start_date && <p className={errorClasses}><AlertCircle size={14}/>{errors.start_date}</p>}</div>
+              <div><label htmlFor="end_date" className={labelClasses}>End Date</label><div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="end_date" name="end_date" value={formData.end_date} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.end_date && <p className={errorClasses}><AlertCircle size={14}/>{errors.end_date}</p>}</div>
+            </div>
+            <div className="mt-5"><label htmlFor="background" className={labelClasses}>Background</label><textarea id="background" name="background" value={formData.background} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Provide a brief background..."></textarea>{errors.background && <p className={errorClasses}><AlertCircle size={14}/>{errors.background}</p>}</div>
+            <div className="mt-5"><label htmlFor="additional_support" className={labelClasses}>Additional Support</label><textarea id="additional_support" name="additional_support" value={formData.additional_support} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Details of any other support received..."></textarea>{errors.additional_support && <p className={errorClasses}><AlertCircle size={14}/>{errors.additional_support}</p>}</div>
+          </div>
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Training & Background</h4>
             <div><label htmlFor="training_received" className={labelClasses}>Training Received</label><div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="training_received" name="training_received" value={formData.training_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Plumbing, Tailoring" /></div>{errors.training_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.training_received}</p>}</div>

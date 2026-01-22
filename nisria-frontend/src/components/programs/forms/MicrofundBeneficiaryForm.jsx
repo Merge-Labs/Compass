@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import {
-  X,
-  AlertCircle,
-  User,
-  Users,
-  Phone,
-  MapPin,
-  DollarSign,
-  Briefcase,
-  Home,
-  Image as ImageIcon,
-} from 'lucide-react';
-import ModalPortal from '../../common/ModalPortal';
+import { X, AlertCircle, User, Users, Phone, MapPin, DollarSign, CheckSquare, FileText, Image as ImageIcon, Info, Briefcase, MessageSquare, BarChart, Home, Star } from 'lucide-react';
 
 const initialFormData = {
   person_name: '',
@@ -35,23 +23,17 @@ const initialFormData = {
   telephone: '',
 };
 
-const MicrofundBeneficiaryForm = ({
-  isOpen,
-  onClose,
-  onBeneficiaryAdded,
-  programId,
-  divisionName,
-}) => {
+const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId, divisionName }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState('');
 
+
   useEffect(() => {
     if (isOpen) {
       setFormData(initialFormData);
       setErrors({});
-      setFileName('');
     }
   }, [isOpen]);
 
@@ -65,101 +47,74 @@ const MicrofundBeneficiaryForm = ({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? checked : value
     }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setErrors((prev) => ({
-        ...prev,
-        pictures: 'Please upload an image file',
-      }));
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((prev) => ({
-        ...prev,
-        pictures: 'File size should be less than 5MB',
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, pictures: file }));
-    setFileName(file.name);
-    setErrors((prev) => ({ ...prev, pictures: null }));
+    setFormData(prev => ({ ...prev, pictures: file }));
+    setFileName(file ? file.name : '');
+    if (errors.pictures) setErrors(prev => ({ ...prev, pictures: null }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.person_name.trim()) {
-      newErrors.person_name = "Person's name is required.";
-    }
-    if (!formData.chama_group.trim()) {
-      newErrors.chama_group = 'Chama group is required.';
-    }
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required.';
-    }
-    if (!formData.telephone.trim()) {
-      newErrors.telephone = 'Telephone is required.';
-    }
+    if (!formData.person_name.trim()) newErrors.person_name = "Person's name is required.";
+    if (!formData.chama_group?.trim()) newErrors.chama_group = "Chama group is required for new beneficiaries.";
+    if (!formData.location.trim()) newErrors.location = "Location is required.";
+    if (!formData.telephone.trim()) newErrors.telephone = "Telephone is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
+    if (!validateForm()) {
+      return;
+    }
     setIsSubmitting(true);
 
     const submissionData = new FormData();
+    
+    // Only append fields that have values
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== null && value !== '') {
         submissionData.append(key, value);
       }
     });
+    
     submissionData.append('program_id', programId);
 
     try {
       const endpoint = `/api/programs/${divisionName.toLowerCase()}/microfund/`;
-      const response = await api.post(endpoint, submissionData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await api.post(endpoint, submissionData);
+      
       onBeneficiaryAdded(response.data);
       onClose();
     } catch (error) {
+      console.error("Error adding microfund beneficiary:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
-      if (backendErrors && typeof backendErrors === 'object') {
-        setErrors((prev) => ({
-          ...prev,
-          ...backendErrors,
-          form:
-            backendErrors.detail ||
-            'Submission failed. Please check the fields.',
+      if (typeof backendErrors === 'object' && backendErrors !== null) {
+        setErrors(prev => ({ 
+          ...prev, 
+          ...backendErrors, 
+          form: backendErrors.detail || "Submission failed. Please check fields."
         }));
       } else {
-        setErrors({ form: 'An unexpected error occurred.' });
+        setErrors({ form: "An unexpected error occurred." });
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputClasses =
-    'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900';
-  const labelClasses = 'block text-sm font-semibold text-gray-700 mb-1.5';
-  const errorClasses = 'text-red-600 text-xs mt-1 flex items-center gap-1';
+  const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 placeholder-gray-500";
+  const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5";
+  const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
     <ModalPortal>
@@ -189,73 +144,88 @@ const MicrofundBeneficiaryForm = ({
 
               {/* Person Name */}
               <div>
-                <label className={labelClasses}>Person's Name*</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    name="person_name"
-                    value={formData.person_name}
-                    onChange={handleInputChange}
-                    className={`${inputClasses} pl-10`}
-                  />
-                </div>
-                {errors.person_name && (
-                  <p className={errorClasses}>
-                    <AlertCircle size={14} />
-                    {errors.person_name}
-                  </p>
-                )}
+                <label htmlFor="chama_group" className={labelClasses}>Chama Group*</label>
+                <div className="relative"><Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="chama_group" name="chama_group" value={formData.chama_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Visionary Women" /></div>
+                {errors.chama_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.chama_group}</p>}
               </div>
-
-              {/* Telephone */}
               <div>
-                <label className={labelClasses}>Telephone*</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleInputChange}
-                    className={`${inputClasses} pl-10`}
-                  />
-                </div>
+                <label htmlFor="role_in_group" className={labelClasses}>Role in Group</label>
+                <div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="role_in_group" name="role_in_group" value={formData.role_in_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Treasurer" /></div>
+                {errors.role_in_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.role_in_group}</p>}
               </div>
+            </div>
+            <div className="mt-5">
+              <label htmlFor="money_received" className={labelClasses}>Money Received</label>
+              <div className="relative"><DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" step="0.01" id="money_received" name="money_received" value={formData.money_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., 50000.00" /></div>
+              {errors.money_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.money_received}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="project_done" className={labelClasses}>Project Done</label>
+              <textarea id="project_done" name="project_done" value={formData.project_done} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Describe the project undertaken with the funds..."></textarea>
+              {errors.project_done && <p className={errorClasses}><AlertCircle size={14}/>{errors.project_done}</p>}
+            </div>
+          </div>
 
-              {/* Location */}
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Personal & Location Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className={labelClasses}>Location*</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className={`${inputClasses} pl-10`}
-                  />
-                </div>
+                <label htmlFor="address" className={labelClasses}>Address</label>
+                <div className="relative"><Home className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., 123 Main St" /></div>
+                {errors.address && <p className={errorClasses}><AlertCircle size={14}/>{errors.address}</p>}
               </div>
-
-              {/* Pictures */}
               <div>
-                <label className={labelClasses}>Pictures</label>
-                <label className="flex items-center justify-center px-4 py-3 border-2 border-dashed rounded cursor-pointer">
-                  <ImageIcon className="mr-2" />
-                  {fileName || 'Click to upload image'}
-                  <input
-                    type="file"
-                    name="pictures"
-                    className="sr-only"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
+                <label htmlFor="location" className={labelClasses}>Location*</label>
+                <div className="relative"><MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="location" name="location" value={formData.location} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Nairobi, Kenya" /></div>
+                {errors.location && <p className={errorClasses}><AlertCircle size={14}/>{errors.location}</p>}
+              </div>
+            </div>
+            <div className="mt-5">
+              <label htmlFor="story" className={labelClasses}>Story</label>
+              <textarea id="story" name="story" value={formData.story} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Share the beneficiary's story..."></textarea>
+              {errors.story && <p className={errorClasses}><AlertCircle size={14}/>{errors.story}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="background" className={labelClasses}>Background</label>
+              <textarea id="background" name="background" value={formData.background} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Provide background information..."></textarea>
+              {errors.background && <p className={errorClasses}><AlertCircle size={14}/>{errors.background}</p>}
+            </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Notes & Media</h4>
+            <div className="mt-5">
+              <label htmlFor="progress_notes" className={labelClasses}>Progress Notes</label>
+              <textarea id="progress_notes" name="progress_notes" value={formData.progress_notes} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Record progress notes..."></textarea>
+              {errors.progress_notes && <p className={errorClasses}><AlertCircle size={14}/>{errors.progress_notes}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="site_visit_notes" className={labelClasses}>Site Visit Notes</label>
+              <textarea id="site_visit_notes" name="site_visit_notes" value={formData.site_visit_notes} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Record notes from site visits..."></textarea>
+              {errors.site_visit_notes && <p className={errorClasses}><AlertCircle size={14}/>{errors.site_visit_notes}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="testimonials" className={labelClasses}>Testimonials</label>
+              <textarea id="testimonials" name="testimonials" value={formData.testimonials} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Record any testimonials..."></textarea>
+              {errors.testimonials && <p className={errorClasses}><AlertCircle size={14}/>{errors.testimonials}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="additional_support" className={labelClasses}>Additional Support</label>
+              <textarea id="additional_support" name="additional_support" value={formData.additional_support} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Details of any other support received..."></textarea>
+              {errors.additional_support && <p className={errorClasses}><AlertCircle size={14}/>{errors.additional_support}</p>}
+            </div>
+            <div className="mt-5">
+              <label htmlFor="pictures" className={labelClasses}>Pictures</label>
+              <div className="relative">
+                <label htmlFor="pictures" className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                  <ImageIcon className="w-5 h-5 text-gray-400 mr-2" />
+                  <span className="text-gray-600">{fileName || "Click to upload an image"}</span>
                 </label>
-                {errors.pictures && (
-                  <p className={errorClasses}>
-                    <AlertCircle size={14} />
-                    {errors.pictures}
-                  </p>
-                )}
+                <input type="file" id="pictures" name="pictures" onChange={handleFileChange} className="sr-only" accept="image/*" />
               </div>
+              {errors.pictures && <p className={errorClasses}><AlertCircle size={14}/>{errors.pictures}</p>}
+            </div>
+          </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
                 <button 
