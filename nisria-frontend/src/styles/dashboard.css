@@ -4,7 +4,6 @@
   min-height: 100vh;
   width: 100%;
   position: relative;
-  overflow-x: hidden;
 }
 
 .dashboard-sidebar {
@@ -12,12 +11,10 @@
   left: 0;
   top: 0;
   bottom: 0;
-  z-index: 1000; /* Increased z-index */
+  z-index: 100;
   transition: transform 0.3s ease, width 0.3s ease;
   height: 100vh;
   overflow-y: auto;
-  background-color: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-content {
@@ -27,34 +24,14 @@
   transition: margin-left 0.3s ease;
   width: calc(100% - 250px);
   position: relative;
-  z-index: 900;
-  background-color: #f8f9fa;
-  padding-top: 64px; /* Space for fixed navbar */
+  z-index: 1;
+  background-color: #fff;
 }
 
 /* Collapsed sidebar */
 .dashboard-sidebar.collapsed + .dashboard-content {
   margin-left: 80px; /* Collapsed sidebar width */
   width: calc(100% - 80px);
-}
-
-/* Ensure navbar stays on top */
-.dashboard-content > .navbar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 250px;
-  z-index: 1000;
-  transition: left 0.3s ease;
-}
-
-.dashboard-sidebar.collapsed + .dashboard-content > .navbar {
-  left: 80px;
-}
-
-/* Ensure content doesn't go under navbar */
-.main-content {
-  padding-top: 64px; /* Match navbar height */
 }
 
 /* Tablet landscape specific styles */
@@ -66,17 +43,11 @@
   .dashboard-sidebar.open {
     transform: translateX(0);
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    z-index: 1100; /* Ensure sidebar is above navbar when open */
   }
   
   .dashboard-content {
     margin-left: 0 !important;
     width: 100% !important;
-  }
-  
-  .dashboard-content > .navbar {
-    left: 0;
-  }
   }
   
   .dashboard-sidebar.open + .dashboard-content {
