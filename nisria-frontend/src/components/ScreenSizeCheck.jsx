@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import bgImage from '/bg.jpg';
+import logo from '/logo/Compass.png';
 
-// Device detection helper
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-};
-
-// Check if screen is smaller than iPad Mini (768px width)
+// Device detection helpers
+const isMobileDevice = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isScreenTooSmall = () => {
-  // 768px is the width of iPad Mini in portrait mode
-  // 1024px is the width of iPad Mini in landscape mode
   const isPortrait = window.innerHeight > window.innerWidth;
   const minWidth = isPortrait ? 768 : 1024;
   return window.innerWidth < minWidth;
 };
-
-// Check if device is a tablet
 const isTablet = () => {
   const userAgent = navigator.userAgent.toLowerCase();
   const isIPad = /ipad|macintosh/i.test(userAgent) && 'ontouchend' in document;
@@ -29,29 +24,21 @@ const ScreenSizeCheck = ({ children }) => {
   useEffect(() => {
     const checkDeviceAndScreen = () => {
       const tooSmall = isScreenTooSmall();
-      const isTabletDevice = isTablet();
-      
-      // Show unsupported screen if:
-      // 1. It's a mobile device (phones), or
-      // 2. Screen is too small (smaller than iPad Mini)
-      setShowUnsupportedScreen(isMobileDevice() && !isTabletDevice || tooSmall);
-      setIsTabletDevice(isTabletDevice);
+      const tablet = isTablet();
 
-      // Add a class to the HTML element for responsive adjustments
-      if (isTabletDevice) {
+      setShowUnsupportedScreen((isMobileDevice() && !tablet) || tooSmall);
+      setIsTabletDevice(tablet);
+
+      if (tablet) {
         document.documentElement.classList.add('is-tablet');
       } else {
         document.documentElement.classList.remove('is-tablet');
       }
     };
 
-    // Initial check
     checkDeviceAndScreen();
-
-    // Add resize event listener
     window.addEventListener('resize', checkDeviceAndScreen);
 
-    // Clean up
     return () => {
       window.removeEventListener('resize', checkDeviceAndScreen);
       document.documentElement.classList.remove('is-tablet');
@@ -60,38 +47,55 @@ const ScreenSizeCheck = ({ children }) => {
 
   if (showUnsupportedScreen) {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center p-6 text-center z-[9999] select-none">
-        <div className="max-w-md mx-auto p-8 rounded-xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700">
-          <div className="w-20 h-20 mx-auto mb-6 text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+      <div
+        className="fixed inset-0 flex items-center justify-center overflow-hidden"
+        style={{ backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      >
+        <motion.div
+          className="relative z-10 backdrop-blur-sm bg-white/10 border border-white/30 rounded-3xl p-10 flex flex-col items-center shadow-xl max-w-md mx-4 text-center"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, ease: 'easeOut' }}
+        >
+          {/* Logo */}
+          <motion.img
+            src={logo}
+            alt="Dira Logo"
+            className="w-28 h-28 mb-6"
+            initial={{ rotate: 0 }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, ease: 'easeInOut' }}
+          />
+
+          {/* Heading */}
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
             Device Not Supported
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            {isTabletDevice 
+
+          {/* Description */}
+          <p className="text-white/80 mb-4">
+            {isTabletDevice
               ? 'Please rotate your device to landscape mode for the best experience.'
-              : 'This platform requires a tablet (iPad Mini or larger) or desktop computer.'
-            }
+              : 'This platform requires a tablet (iPad Mini or larger) or desktop computer.'}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {isTabletDevice 
+          <p className="text-white/60 text-sm">
+            {isTabletDevice
               ? 'For the best experience, we recommend using landscape orientation.'
-             : 'Please switch to a supported device to continue.'
-            }
+              : 'Please switch to a supported device to continue.'}
           </p>
-          
+
+          {/* Button for rotated tablets */}
           {isTabletDevice && (
-            <button 
+            <motion.button
               onClick={() => window.location.reload()}
-              className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="mt-6 px-6 py-3 rounded-xl text-black bg-white/20 backdrop-blur-lg border border-white/30 hover:bg-white/30 transition-all duration-300 shadow-md hover:shadow-lg"
             >
               I've Rotated My Device
-            </button>
+            </motion.button>
           )}
-        </div>
+        </motion.div>
       </div>
     );
   }
