@@ -39,6 +39,12 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({

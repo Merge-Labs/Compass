@@ -1,96 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import { X, AlertCircle, User, Users, MapPin, Phone, DollarSign, CheckSquare, FileText, Image as ImageIcon, Info, Briefcase, MessageSquare, BarChart, Home, Star, Loader2 } from 'lucide-react';
-import { useTheme } from '../../../context/ThemeProvider';
+import { X, AlertCircle, User, Users, Phone, MapPin, DollarSign, CheckSquare, FileText, Image as ImageIcon, Info, Briefcase, MessageSquare, BarChart, Home, Star } from 'lucide-react';
 
-const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated, existingBeneficiary, programId, divisionName }) => {
-  const initialFormData = {
-    person_name: '',
-    gender: '',
-    chama_group: '',
-    age: '',
-    story: '',
-    role_in_group: '',
-    money_received: '',
-    project_done: '',
-    progress_notes: '',
-    address: '',
-    background: '',
-    pictures: null,
-    site_visit_notes: '',
-    testimonials: '',
-    additional_support: '',
-    is_active: true,
-    location: '',
-    telephone: '',
-  };
+const initialFormData = {
+  person_name: '',
+  gender: '',
+  chama_group: '',
+  age: '',
+  story: '',
+  role_in_group: '',
+  money_received: '',
+  project_done: '',
+  progress_notes: '',
+  address: '',
+  background: '',
+  pictures: null,
+  site_visit_notes: '',
+  testimonials: '',
+  additional_support: '',
+  is_active: true,
+  location: '',
+  telephone: '',
+};
 
+const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId, divisionName }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState('');
-  const [imagePreview, setImagePreview] = useState(null);
-  const { theme } = useTheme();
 
-  const resetForm = (beneficiary) => {
-    if (beneficiary) {
-      setFormData({
-        person_name: beneficiary.person_name || '',
-        gender: beneficiary.gender || '',
-        chama_group: beneficiary.chama_group || '',
-        age: beneficiary.age || '',
-        story: beneficiary.story || '',
-        role_in_group: beneficiary.role_in_group || '',
-        money_received: beneficiary.money_received || '',
-        project_done: beneficiary.project_done || '',
-        progress_notes: beneficiary.progress_notes || '',
-        address: beneficiary.address || '',
-        background: beneficiary.background || '',
-        site_visit_notes: beneficiary.site_visit_notes || '',
-        testimonials: beneficiary.testimonials || '',
-        additional_support: beneficiary.additional_support || '',
-        is_active: beneficiary.is_active !== undefined ? beneficiary.is_active : true,
-        location: beneficiary.location || '',
-        telephone: beneficiary.telephone || '',
-        pictures: null, // File inputs are not pre-filled
-      });
-      setImagePreview(beneficiary.picture_url || null);
-    } else {
-      setFormData(initialFormData);
-      setImagePreview(null);
-      setFileName('');
-    }
-    setErrors({});
-  };
 
   useEffect(() => {
-    if (isOpen && existingBeneficiary) {
-      resetForm(existingBeneficiary);
+    if (isOpen) {
+      setFormData(initialFormData);
+      setErrors({});
     }
-  }, [isOpen, existingBeneficiary]);
+  }, [isOpen]);
 
-  if (!isOpen || !existingBeneficiary) return null;
+  if (!isOpen) return null;
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, pictures: file }));
-      setFileName(file.name);
-      setImagePreview(URL.createObjectURL(file));
-      if (errors.pictures) setErrors(prev => ({ ...prev, pictures: null }));
-    }
+    setFormData(prev => ({ ...prev, pictures: file }));
+    setFileName(file ? file.name : '');
+    if (errors.pictures) setErrors(prev => ({ ...prev, pictures: null }));
   };
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.person_name.trim()) newErrors.person_name = "Person's name is required.";
-    // Chama group is optional during updates
+    if (!formData.chama_group?.trim()) newErrors.chama_group = "Chama group is required for new beneficiaries.";
     if (!formData.location.trim()) newErrors.location = "Location is required.";
     if (!formData.telephone.trim()) newErrors.telephone = "Telephone is required.";
     setErrors(newErrors);
@@ -99,32 +67,37 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm() || !existingBeneficiary?.id || !programId || !divisionName) {
-      setErrors(prev => ({ ...prev, form: "Beneficiary ID, Program or Division information is missing." }));
+    if (!validateForm()) {
       return;
     }
     setIsSubmitting(true);
 
     const submissionData = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== '') {
-        submissionData.append(key, formData[key]);
+    
+    // Only append fields that have values
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== '') {
+        submissionData.append(key, value);
       }
     });
+    
     submissionData.append('program_id', programId);
 
     try {
-      const endpoint = `/api/programs/${divisionName.toLowerCase()}/microfund/${existingBeneficiary.id}/`;
-      const response = await api.patch(endpoint, submissionData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      if (onBeneficiaryUpdated) onBeneficiaryUpdated(response.data);
+      const endpoint = `/api/programs/${divisionName.toLowerCase()}/microfund/`;
+      const response = await api.post(endpoint, submissionData);
+      
+      onBeneficiaryAdded(response.data);
       onClose();
     } catch (error) {
-      console.error("Error updating microfund beneficiary:", error.response?.data || error.message);
+      console.error("Error adding microfund beneficiary:", error.response?.data || error.message);
       const backendErrors = error.response?.data;
       if (typeof backendErrors === 'object' && backendErrors !== null) {
-        setErrors(prev => ({ ...prev, ...backendErrors, form: backendErrors.detail || "Update failed. Please check fields."}));
+        setErrors(prev => ({ 
+          ...prev, 
+          ...backendErrors, 
+          form: backendErrors.detail || "Submission failed. Please check fields."
+        }));
       } else {
         setErrors({ form: "An unexpected error occurred." });
       }
@@ -133,20 +106,16 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
     }
   };
 
-  const handleCancelAndClose = () => {
-    onClose();
-  };
-
-  const inputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${theme === 'light' ? 'bg-white border-gray-300 text-gray-900 placeholder-gray-500' : 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-300'}`;
+  const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900 placeholder-gray-500";
   const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5";
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && handleCancelAndClose()}>
-      <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Update Microfund Beneficiary</h3>
-          <button onClick={handleCancelAndClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
+          <h3 className="text-xl font-bold text-gray-800">Add Microfund Beneficiary</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -256,12 +225,11 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
               {errors.additional_support && <p className={errorClasses}><AlertCircle size={14}/>{errors.additional_support}</p>}
             </div>
             <div className="mt-5">
-              <label htmlFor="pictures" className={labelClasses}>Update Picture</label>
-              <div className="flex items-center gap-4">
-                {imagePreview && <img src={imagePreview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border" />}
-                <label htmlFor="pictures" className="cursor-pointer flex-1 flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+              <label htmlFor="pictures" className={labelClasses}>Pictures</label>
+              <div className="relative">
+                <label htmlFor="pictures" className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
                   <ImageIcon className="w-5 h-5 text-gray-400 mr-2" />
-                  <span className="text-gray-600">{fileName || "Click to upload a new image"}</span>
+                  <span className="text-gray-600">{fileName || "Click to upload an image"}</span>
                 </label>
                 <input type="file" id="pictures" name="pictures" onChange={handleFileChange} className="sr-only" accept="image/*" />
               </div>
@@ -270,17 +238,17 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
           </div>
 
           <div className="flex justify-end gap-4 pt-5 mt-6 border-t border-gray-200">
-            <button type="button" onClick={handleCancelAndClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
+            <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium flex items-center justify-center min-w-[150px]">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Updating...
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Adding...
                 </>
               ) : (
-                "Update Beneficiary"
+                "Add Beneficiary"
               )}
             </button>
           </div>
@@ -290,4 +258,4 @@ const MicrofundBeneficiaryUpdateForm = ({ isOpen, onClose, onBeneficiaryUpdated,
   );
 };
 
-export default MicrofundBeneficiaryUpdateForm;
+export default MicrofundBeneficiaryForm;

@@ -51,6 +51,12 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
