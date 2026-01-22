@@ -48,52 +48,79 @@ const ScreenSizeCheck = ({ children }) => {
   if (showUnsupportedScreen) {
     return (
       <div
-        className="fixed inset-0 flex items-center justify-center overflow-hidden"
-        style={{ backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        className="overflow-hidden min-h-screen w-full bg-cover bg-center flex flex-col items-center justify-center relative"
+        style={{ backgroundImage: `url(${bgImage})` }}
       >
+        {/* Big Compass logo behind the card */}
+        <motion.img
+          src={logo}
+          alt="Dira Logo Background"
+          className="w-72 h-72 absolute top-14 left-1/2 -translate-x-1/2 z-0 opacity-80"
+        />
+
+        {/* Card in front */}
         <motion.div
           className="relative z-10 backdrop-blur-sm bg-white/10 border border-white/30 rounded-3xl p-10 flex flex-col items-center shadow-xl max-w-md mx-4 text-center"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, ease: 'easeOut' }}
         >
-          {/* Logo */}
           <motion.img
             src={logo}
             alt="Dira Logo"
-            className="w-28 h-28 mb-6"
+            className="w-32 h-32 translate-x-2"
             initial={{ rotate: 0 }}
             animate={{ rotate: 360 }}
             transition={{ duration: 2, ease: 'easeInOut' }}
           />
 
-          {/* Heading */}
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+          <motion.h2
+            className="text-2xl font-bold text-white mb-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 1.2, ease: 'easeOut' }}
+          >
             Device Not Supported
-          </h2>
+          </motion.h2>
 
-          {/* Description */}
-          <p className="text-white/80 mb-4">
+          <motion.p 
+            className="text-white/80 mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 1.2, ease: 'easeOut' }}
+          >
             {isTabletDevice
               ? 'Please rotate your device to landscape mode for the best experience.'
               : 'This platform requires a tablet (iPad Mini or larger) or desktop computer.'}
-          </p>
-          <p className="text-white/60 text-sm">
+          </motion.p>
+          
+          <motion.p 
+            className="text-white/60 text-sm mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.6, duration: 1.2, ease: 'easeOut' }}
+          >
             {isTabletDevice
               ? 'For the best experience, we recommend using landscape orientation.'
               : 'Please switch to a supported device to continue.'}
-          </p>
+          </motion.p>
 
           {/* Button for rotated tablets */}
           {isTabletDevice && (
-            <motion.button
-              onClick={() => window.location.reload()}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="mt-6 px-6 py-3 rounded-xl text-black bg-white/20 backdrop-blur-lg border border-white/30 hover:bg-white/30 transition-all duration-300 shadow-md hover:shadow-lg"
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.8, duration: 1.2, ease: 'easeOut' }}
             >
-              I've Rotated My Device
-            </motion.button>
+              <motion.button
+                onClick={() => window.location.reload()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-6 py-3 rounded-xl text-black bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-blue-300/30 cursor-pointer transition-all duration-500 ease-in-out shadow-md hover:shadow-lg"
+              >
+                I've Rotated My Device
+              </motion.button>
+            </motion.div>
           )}
         </motion.div>
       </div>
