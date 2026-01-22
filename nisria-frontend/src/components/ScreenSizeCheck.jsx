@@ -2,94 +2,59 @@ import React, { useState, useEffect } from 'react';
 
 // Device detection helper
 const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-// Check if device is an iPad
-const isIPad = () => {
-  return /iPad|Macintosh/i.test(navigator.userAgent) && 'ontouchend' in document;
-};
-
-// Check if screen is too small
+// Check if screen is smaller than iPad Mini (768px width)
 const isScreenTooSmall = () => {
+  // 768px is the width of iPad Mini in portrait mode
+  // 1024px is the width of iPad Mini in landscape mode
   const isPortrait = window.innerHeight > window.innerWidth;
-  // For iPad in landscape, we want to allow the full width
-  if (isIPad() && !isPortrait) {
-    return window.innerWidth < 1024;
-  }
-  // For other devices or portrait mode
-  return window.innerWidth < 768;
+  const minWidth = isPortrait ? 768 : 1024;
+  return window.innerWidth < minWidth;
 };
 
 // Check if device is a tablet
 const isTablet = () => {
   const userAgent = navigator.userAgent.toLowerCase();
+  const isIPad = /ipad|macintosh/i.test(userAgent) && 'ontouchend' in document;
   const isAndroidTablet = /(android(?!.*mobile))/.test(userAgent);
-  return isIPad() || isAndroidTablet || (!isMobileDevice() && window.innerWidth >= 768);
-};
-
-// Check if we're in landscape mode on a tablet
-const isTabletLandscape = () => {
-  return isTablet() && window.innerWidth > window.innerHeight && window.innerWidth >= 1024;
+  return isIPad || isAndroidTablet || (!isMobileDevice() && window.innerWidth >= 768);
 };
 
 const ScreenSizeCheck = ({ children }) => {
   const [showUnsupportedScreen, setShowUnsupportedScreen] = useState(false);
   const [isTabletDevice, setIsTabletDevice] = useState(false);
-  const [isLandscape, setIsLandscape] = useState(false);
 
   useEffect(() => {
     const checkDeviceAndScreen = () => {
       const tooSmall = isScreenTooSmall();
       const isTabletDevice = isTablet();
-      const isLandscapeMode = isTabletLandscape();
-      
-      // For iPad in landscape, we want to allow the full width
-      if (isLandscapeMode) {
-        document.documentElement.classList.add('tablet-landscape');
-        document.documentElement.classList.remove('portrait');
-        setIsLandscape(true);
-      } else {
-        document.documentElement.classList.remove('tablet-landscape');
-        document.documentElement.classList.add('portrait');
-        setIsLandscape(false);
-      }
       
       // Show unsupported screen if:
       // 1. It's a mobile device (phones), or
       // 2. Screen is too small (smaller than iPad Mini)
-      setShowUnsupportedScreen((isMobileDevice() && !isTabletDevice) || tooSmall);
+      setShowUnsupportedScreen(isMobileDevice() && !isTabletDevice || tooSmall);
       setIsTabletDevice(isTabletDevice);
 
       // Add a class to the HTML element for responsive adjustments
       if (isTabletDevice) {
         document.documentElement.classList.add('is-tablet');
-        
-        // Add orientation class
-        if (window.innerWidth > window.innerHeight) {
-          document.documentElement.classList.add('landscape');
-          document.documentElement.classList.remove('portrait');
-        } else {
-          document.documentElement.classList.add('portrait');
-          document.documentElement.classList.remove('landscape');
-        }
       } else {
-        document.documentElement.classList.remove('is-tablet', 'landscape', 'portrait');
+        document.documentElement.classList.remove('is-tablet');
       }
     };
 
     // Initial check
     checkDeviceAndScreen();
 
-    // Add event listeners
+    // Add resize event listener
     window.addEventListener('resize', checkDeviceAndScreen);
-    window.addEventListener('orientationchange', checkDeviceAndScreen);
 
     // Clean up
     return () => {
       window.removeEventListener('resize', checkDeviceAndScreen);
-      window.removeEventListener('orientationchange', checkDeviceAndScreen);
-      document.documentElement.classList.remove('is-tablet', 'tablet-landscape', 'landscape', 'portrait');
+      document.documentElement.classList.remove('is-tablet');
     };
   }, []);
 
