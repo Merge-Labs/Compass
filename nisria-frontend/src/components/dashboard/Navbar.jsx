@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate for naviga
 const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dfjet61yc/"; // As in Team.jsx and Settings.jsx
 
 
-const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Dira" }) => {
+const Navbar = ({ user, onToggleSidebar, appTheme, appName = "Nisria's Compass" }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,21 +116,21 @@ const Navbar = ({ user, onToggleSmSidebar, appTheme, appName = "Dira" }) => {
 
   return (
     <nav className={`w-full px-6 py-4 border-b transition-colors duration-200 glass-surface border-white/40`}>
-      <div className="flex items-center justify-between">
+      <div className="flex-1 flex items-center justify-end space-x-4">
+        <div className="flex items-center">
+          <button
+            onClick={onToggleSidebar}
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white md:hidden"
+            aria-expanded="false"
+          >
+            <span className="sr-only">Open main menu</span>
+            <MenuIcon className="block h-6 w-6" />
+          </button>
+          <h1 className="ml-4 text-xl font-semibold text-gray-900 dark:text-white md:block hidden">
+            {appName}
+          </h1>
+        </div>
         <div className="flex items-center max-md:space-x-10">
-          {/* Hamburger Menu for small screens */}
-          {onToggleSmSidebar && (
-            <button
-              onClick={onToggleSmSidebar}
-              className={`p-2 rounded-md md:hidden mr-3 ${
-                appTheme === 'light' ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 hover:bg-slate-700'
-              }`}
-              aria-label="Open sidebar"
-            >
-              <MenuIcon size={24} />
-            </button>
-          )}
-
           {/* Left side - User info and date */}
           <div className="flex flex-col space-y-1 max-md:mx-auto">
             <div className={`text-lg font-semibold ${
