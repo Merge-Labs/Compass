@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { X, AlertCircle, User, Briefcase, Phone, Mail, Calendar as CalendarIcon, CheckSquare, Loader2, Home, FileText, Gift, MessageSquare, BarChart, Star, Image as ImageIcon } from 'lucide-react';
+import ModalPortal from '../../common/ModalPortal';
 
 const initialFormData = {
   trainee_name: '',
@@ -61,9 +62,21 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setFormData(prev => ({ ...prev, pictures: file }));
-    setFileName(file ? file.name : '');
-    if (errors.pictures) setErrors(prev => ({ ...prev, pictures: null }));
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, pictures: 'Please upload an image file' }));
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, pictures: 'File size should be less than 5MB' }));
+        return;
+      }
+      setFormData(prev => ({ ...prev, pictures: file }));
+      setFileName(file.name);
+      if (errors.pictures) setErrors(prev => ({ ...prev, pictures: null }));
+    }
   };
 
   const validateForm = () => {
@@ -103,7 +116,7 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
     submissionData.append('trainer', trainerId);
 
     try {
-      const endpoint = `/api/programs/${divisionName.toLowerCase()}/vocational-trainers/${trainerId}/trainees/`;
+      const endpoint = `/api/programs/${divisionName.toLowerCase()}/vocational/`;
       const response = await api.post(endpoint, submissionData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -127,14 +140,24 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Add Vocational Trainee</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+    <ModalPortal>
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto" 
+        onClick={handleBackdropClick}
+      >
+        <div className="relative w-full max-w-3xl max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+              <h3 className="text-lg font-semibold text-gray-800">Add Vocational Trainee</h3>
+              <button 
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
           
           <div>
@@ -157,7 +180,27 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
               {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label htmlFor="age" className={labelClasses}>Age</label>
+              <div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" id="age" name="age" value={formData.age} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>
+              {errors.age && <p className={errorClasses}><AlertCircle size={14}/>{errors.age}</p>}
+            </div>
+            <div>
+              <label htmlFor="gender" className={labelClasses}>Gender</label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={`${inputClasses}`}>
+                <option value="">Select Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+              </select>
+              {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
+            </div>
+          </div>
 
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Contact Information</h4>
+            <div><label htmlFor="trainee_phone" className={labelClasses}>Phone Number*</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="trainee_phone" name="trainee_phone" value={formData.trainee_phone} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_phone && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_phone}</p>}</div>
+            <div className="mt-5"><label htmlFor="trainee_email" className={labelClasses}>Email Address*</label><div className="relative"><Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="email" id="trainee_email" name="trainee_email" value={formData.trainee_email} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_email && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_email}</p>}</div>
+            <div className="mt-5"><label htmlFor="address" className={labelClasses}>Address</label><div className="relative"><Home className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.address && <p className={errorClasses}><AlertCircle size={14}/>{errors.address}</p>}</div>
+          </div>
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Contact Information</h4>
             <div><label htmlFor="trainee_phone" className={labelClasses}>Phone Number*</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="trainee_phone" name="trainee_phone" value={formData.trainee_phone} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.trainee_phone && <p className={errorClasses}><AlertCircle size={14}/>{errors.trainee_phone}</p>}</div>
@@ -172,7 +215,24 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
               <div><label htmlFor="emergency_contact_number" className={labelClasses}>Contact Number</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="emergency_contact_number" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_number && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_number}</p>}</div>
             </div>
           </div>
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Emergency Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label htmlFor="emergency_contact_name" className={labelClasses}>Contact Name</label><div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="emergency_contact_name" name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_name && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_name}</p>}</div>
+              <div><label htmlFor="emergency_contact_number" className={labelClasses}>Contact Number</label><div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="tel" id="emergency_contact_number" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.emergency_contact_number && <p className={errorClasses}><AlertCircle size={14}/>{errors.emergency_contact_number}</p>}</div>
+            </div>
+          </div>
 
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-700 mb-3">Training & Background</h4>
+            <div><label htmlFor="training_received" className={labelClasses}>Training Received</label><div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="training_received" name="training_received" value={formData.training_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Plumbing, Tailoring" /></div>{errors.training_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.training_received}</p>}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+              <div><label htmlFor="start_date" className={labelClasses}>Start Date</label><div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="start_date" name="start_date" value={formData.start_date} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.start_date && <p className={errorClasses}><AlertCircle size={14}/>{errors.start_date}</p>}</div>
+              <div><label htmlFor="end_date" className={labelClasses}>End Date</label><div className="relative"><CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="date" id="end_date" name="end_date" value={formData.end_date} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>{errors.end_date && <p className={errorClasses}><AlertCircle size={14}/>{errors.end_date}</p>}</div>
+            </div>
+            <div className="mt-5"><label htmlFor="background" className={labelClasses}>Background</label><textarea id="background" name="background" value={formData.background} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Provide a brief background..."></textarea>{errors.background && <p className={errorClasses}><AlertCircle size={14}/>{errors.background}</p>}</div>
+            <div className="mt-5"><label htmlFor="additional_support" className={labelClasses}>Additional Support</label><textarea id="additional_support" name="additional_support" value={formData.additional_support} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Details of any other support received..."></textarea>{errors.additional_support && <p className={errorClasses}><AlertCircle size={14}/>{errors.additional_support}</p>}</div>
+          </div>
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Training & Background</h4>
             <div><label htmlFor="training_received" className={labelClasses}>Training Received</label><div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="training_received" name="training_received" value={formData.training_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Plumbing, Tailoring" /></div>{errors.training_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.training_received}</p>}</div>
@@ -200,16 +260,28 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
             </div>
             <div className="mt-5"><label htmlFor="quarterly_follow_up" className={labelClasses}>Quarterly Follow-up Notes</label><textarea id="quarterly_follow_up" name="quarterly_follow_up" value={formData.quarterly_follow_up} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`}></textarea>{errors.quarterly_follow_up && <p className={errorClasses}><AlertCircle size={14}/>{errors.quarterly_follow_up}</p>}</div>
             <div className="mt-5"><label htmlFor="testimonial" className={labelClasses}>Testimonial</label><textarea id="testimonial" name="testimonial" value={formData.testimonial} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`}></textarea>{errors.testimonial && <p className={errorClasses}><AlertCircle size={14}/>{errors.testimonial}</p>}</div>
-            <div className="mt-5">
+            <div className="pt-4 mt-4 border-t border-gray-200">
               <label htmlFor="pictures" className={labelClasses}>Pictures</label>
               <div className="relative">
                 <label htmlFor="pictures" className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
                   <ImageIcon className="w-5 h-5 text-gray-400 mr-2" />
                   <span className="text-gray-600">{fileName || "Click to upload an image"}</span>
                 </label>
-                <input type="file" id="pictures" name="pictures" onChange={handleFileChange} className="sr-only" accept="image/*" />
+                <input 
+                  type="file" 
+                  id="pictures" 
+                  name="pictures" 
+                  onChange={handleFileChange} 
+                  className="sr-only" 
+                  accept="image/*" 
+                />
+                {errors.pictures && (
+                  <p className="text-red-500 text-sm mt-1 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.pictures}
+                  </p>
+                )}
               </div>
-              {errors.pictures && <p className={errorClasses}><AlertCircle size={14}/>{errors.pictures}</p>}
             </div>
           </div>
 
@@ -229,8 +301,10 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
             </button>
           </div>
         </form>
+          </div>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 

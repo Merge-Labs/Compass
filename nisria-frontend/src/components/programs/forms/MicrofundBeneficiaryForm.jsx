@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { X, AlertCircle, User, Users, Phone, MapPin, DollarSign, CheckSquare, FileText, Image as ImageIcon, Info, Briefcase, MessageSquare, BarChart, Home, Star } from 'lucide-react';
+import ModalPortal from '../../common/ModalPortal';
 
 const initialFormData = {
   person_name: '',
@@ -38,12 +39,6 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -117,70 +112,95 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Add Microfund Beneficiary</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"><X size={22} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
-          
-          <div>
-            <label htmlFor="person_name" className={labelClasses}>Person's Name*</label>
-            <div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="person_name" name="person_name" value={formData.person_name} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Jane Doe" /></div>
-            {errors.person_name && <p className={errorClasses}><AlertCircle size={14}/>{errors.person_name}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div>
-              <label htmlFor="age" className={labelClasses}>Age</label>
-              <div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" id="age" name="age" value={formData.age} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., 35" /></div>
-              {errors.age && <p className={errorClasses}><AlertCircle size={14}/>{errors.age}</p>}
+    <ModalPortal>
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto" 
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="relative w-full max-w-3xl max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+              <h3 className="text-lg font-semibold text-gray-800">Add Microfund Beneficiary</h3>
+              <button 
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
             </div>
-            <div>
-              <label htmlFor="gender" className={labelClasses}>Gender</label>
-              <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={`${inputClasses}`}>
-                <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-              {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
-            </div>
-            <div>
-              <label htmlFor="telephone" className={labelClasses}>Telephone*</label>
-              <div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="telephone" name="telephone" value={formData.telephone} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., +2547..." /></div>
-              {errors.telephone && <p className={errorClasses}><AlertCircle size={14}/>{errors.telephone}</p>}
-            </div>
-          </div>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {isSubmitting && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50 rounded-b-xl">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+              {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
 
-          <div className="pt-4 mt-4 border-t border-gray-200">
-            <h4 className="text-md font-semibold text-gray-700 mb-3">Group & Project Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label htmlFor="chama_group" className={labelClasses}>Chama Group*</label>
-                <div className="relative"><Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="chama_group" name="chama_group" value={formData.chama_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Visionary Women" /></div>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="text" 
+                    id="chama_group" 
+                    name="chama_group" 
+                    value={formData.chama_group} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., Visionary Women" 
+                  />
+                </div>
                 {errors.chama_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.chama_group}</p>}
               </div>
+              
               <div>
                 <label htmlFor="role_in_group" className={labelClasses}>Role in Group</label>
-                <div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="role_in_group" name="role_in_group" value={formData.role_in_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Treasurer" /></div>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="text" 
+                    id="role_in_group" 
+                    name="role_in_group" 
+                    value={formData.role_in_group} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., Treasurer" 
+                  />
+                </div>
                 {errors.role_in_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.role_in_group}</p>}
               </div>
-            </div>
-            <div className="mt-5">
-              <label htmlFor="money_received" className={labelClasses}>Money Received</label>
-              <div className="relative"><DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" step="0.01" id="money_received" name="money_received" value={formData.money_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., 50000.00" /></div>
-              {errors.money_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.money_received}</p>}
-            </div>
-            <div className="mt-5">
-              <label htmlFor="project_done" className={labelClasses}>Project Done</label>
-              <textarea id="project_done" name="project_done" value={formData.project_done} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Describe the project undertaken with the funds..."></textarea>
-              {errors.project_done && <p className={errorClasses}><AlertCircle size={14}/>{errors.project_done}</p>}
-            </div>
-          </div>
+              
+              <div className="mt-5">
+                <label htmlFor="money_received" className={labelClasses}>Money Received</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    id="money_received" 
+                    name="money_received" 
+                    value={formData.money_received} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., 50000.00" 
+                  />
+                </div>
+                {errors.money_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.money_received}</p>}
+              </div>
+              <div className="mt-5">
+                <label htmlFor="project_done" className={labelClasses}>Project Done</label>
+                <textarea 
+                  id="project_done" 
+                  name="project_done" 
+                  value={formData.project_done} 
+                  onChange={handleInputChange} 
+                  rows="3" 
+                  className={`${inputClasses} pl-4`} 
+                  placeholder="Describe the project undertaken with the funds..."
+                ></textarea>
+                {errors.project_done && <p className={errorClasses}><AlertCircle size={14}/>{errors.project_done}</p>}
+              </div>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Personal & Location Information</h4>
@@ -243,24 +263,27 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-5 mt-6 border-t border-gray-200">
-            <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium flex items-center justify-center min-w-[150px]">
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Adding...
-                </>
-              ) : (
-                "Add Beneficiary"
-              )}
-            </button>
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <button 
+                  type="button" 
+                  onClick={onClose} 
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Beneficiary'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 
