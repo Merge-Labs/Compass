@@ -57,6 +57,12 @@ const MicrofundBeneficiaryForm = ({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -156,29 +162,25 @@ const MicrofundBeneficiaryForm = ({
   const errorClasses = 'text-red-600 text-xs mt-1 flex items-center gap-1';
 
   return (
-    <ModalPortal>
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
-        onClick={(e) => e.target === e.currentTarget && onClose()}
-      >
-        <div className="relative w-full max-w-3xl max-h-[90vh]">
-          <div className="bg-white rounded-xl shadow-2xl flex flex-col">
-
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800">
-                Add Microfund Beneficiary
-              </h3>
-              <button onClick={onClose}>
-                <X size={22} />
+    <ModalPortal isOpen={isOpen} onClose={onClose}>
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+            onClick={handleBackdropClick} 
+          />
+          <div className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+            <div className="bg-gray-50 px-4 py-3 sm:flex sm:items-center sm:justify-between sm:px-6">
+              <h3 className="text-lg font-medium text-gray-900">Add Microfund Beneficiary</h3>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <X className="h-6 w-6" />
               </button>
             </div>
-
-            {/* Form */}
-            <form
-              onSubmit={handleSubmit}
-              className="p-6 space-y-6 overflow-y-auto"
-            >
+            <form onSubmit={handleSubmit} className="space-y-6 p-6">
               {errors.form && (
                 <p className={`${errorClasses} p-3 bg-red-50 border rounded`}>
                   <AlertCircle size={16} />
