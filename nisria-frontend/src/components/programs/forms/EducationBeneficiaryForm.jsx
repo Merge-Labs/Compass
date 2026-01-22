@@ -108,7 +108,8 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
         className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto" 
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div className="relative w-full max-w-3xl max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col relative">
         <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
           <h3 className="text-lg font-semibold text-gray-800">Add Education Beneficiary</h3>
           <button 
@@ -122,7 +123,7 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           {isSubmitting && (
-            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-b-xl">
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50 rounded-b-xl">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           )}
@@ -248,7 +249,8 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
             </button>
           </div>
         </form>
-      </div>
+          </div>
+        </div>
       </div>
     </ModalPortal>
   );
