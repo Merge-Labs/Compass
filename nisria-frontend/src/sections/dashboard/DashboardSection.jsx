@@ -61,8 +61,6 @@ const DashboardSection = () => {
     { name: "Microfund", value: 86 },
     { name: "Vocational Training", value: 64 },
     { name: "Rescue", value: 34 },
-    { name: "Health", value: 42 },
-    { name: "Other", value: 18 },
   ];
 
   const CustomTooltip = ({ active, payload, theme }) => {
