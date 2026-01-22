@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { X, AlertCircle, User, Users, Phone, MapPin, DollarSign, CheckSquare, FileText, Image as ImageIcon, Info, Briefcase, MessageSquare, BarChart, Home, Star } from 'lucide-react';
+import ModalPortal from '../../common/ModalPortal';
 
 const initialFormData = {
   person_name: '',
@@ -38,12 +39,6 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -123,7 +118,7 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <div className="relative w-full max-w-3xl max-h-[90vh]">
-          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col relative">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
               <h3 className="text-lg font-semibold text-gray-800">Add Microfund Beneficiary</h3>
               <button 
@@ -142,29 +137,70 @@ const MicrofundBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
               )}
               {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
 
-              {/* Person Name */}
               <div>
                 <label htmlFor="chama_group" className={labelClasses}>Chama Group*</label>
-                <div className="relative"><Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="chama_group" name="chama_group" value={formData.chama_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Visionary Women" /></div>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="text" 
+                    id="chama_group" 
+                    name="chama_group" 
+                    value={formData.chama_group} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., Visionary Women" 
+                  />
+                </div>
                 {errors.chama_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.chama_group}</p>}
               </div>
+              
               <div>
                 <label htmlFor="role_in_group" className={labelClasses}>Role in Group</label>
-                <div className="relative"><Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="role_in_group" name="role_in_group" value={formData.role_in_group} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., Treasurer" /></div>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="text" 
+                    id="role_in_group" 
+                    name="role_in_group" 
+                    value={formData.role_in_group} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., Treasurer" 
+                  />
+                </div>
                 {errors.role_in_group && <p className={errorClasses}><AlertCircle size={14}/>{errors.role_in_group}</p>}
               </div>
-            </div>
-            <div className="mt-5">
-              <label htmlFor="money_received" className={labelClasses}>Money Received</label>
-              <div className="relative"><DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" step="0.01" id="money_received" name="money_received" value={formData.money_received} onChange={handleInputChange} className={`${inputClasses} pl-10`} placeholder="e.g., 50000.00" /></div>
-              {errors.money_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.money_received}</p>}
-            </div>
-            <div className="mt-5">
-              <label htmlFor="project_done" className={labelClasses}>Project Done</label>
-              <textarea id="project_done" name="project_done" value={formData.project_done} onChange={handleInputChange} rows="3" className={`${inputClasses} pl-4`} placeholder="Describe the project undertaken with the funds..."></textarea>
-              {errors.project_done && <p className={errorClasses}><AlertCircle size={14}/>{errors.project_done}</p>}
-            </div>
-          </div>
+              
+              <div className="mt-5">
+                <label htmlFor="money_received" className={labelClasses}>Money Received</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    id="money_received" 
+                    name="money_received" 
+                    value={formData.money_received} 
+                    onChange={handleInputChange} 
+                    className={`${inputClasses} pl-10`} 
+                    placeholder="e.g., 50000.00" 
+                  />
+                </div>
+                {errors.money_received && <p className={errorClasses}><AlertCircle size={14}/>{errors.money_received}</p>}
+              </div>
+              <div className="mt-5">
+                <label htmlFor="project_done" className={labelClasses}>Project Done</label>
+                <textarea 
+                  id="project_done" 
+                  name="project_done" 
+                  value={formData.project_done} 
+                  onChange={handleInputChange} 
+                  rows="3" 
+                  className={`${inputClasses} pl-4`} 
+                  placeholder="Describe the project undertaken with the funds..."
+                ></textarea>
+                {errors.project_done && <p className={errorClasses}><AlertCircle size={14}/>{errors.project_done}</p>}
+              </div>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Personal & Location Information</h4>
