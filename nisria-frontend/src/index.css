@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap');
 @import "tailwindcss";
+@import "./styles/tablet.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -113,7 +114,31 @@
   }
 }
 
+/* Tablet-specific utilities */
 @layer utilities {
+  /* Ensure content doesn't get hidden behind fixed elements on tablets */
+  .safe-area-padding {
+    @apply px-4 md:px-6 lg:px-8;
+    padding-left: env(safe-area-inset-left, 1rem);
+    padding-right: env(safe-area-inset-right, 1rem);
+  }
+  
+  /* Improve touch targets for tablet */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Optimize typography for tablet */
+  .tablet-text-base {
+    @apply text-base md:text-[15px] lg:text-base;
+  }
+  
+  /* Better form controls for touch */
+  .form-control {
+    @apply text-base md:text-[15px] lg:text-base;
+    min-height: 44px;
+  }
   /* Glassmorphism utilities */
   .glass-surface {
     background: rgba(255, 255, 255, 0.55);

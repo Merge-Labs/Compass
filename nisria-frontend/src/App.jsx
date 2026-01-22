@@ -4,15 +4,18 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeProvider";
 import AppRoutes from "./routes/AppRoutes";
+import ScreenSizeCheck from "./components/ScreenSizeCheck";
 
 function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <div className="App">
-            <AppRoutes />
-          </div>
+          <ScreenSizeCheck>
+            <div className="App">
+              <AppRoutes />
+            </div>
+          </ScreenSizeCheck>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

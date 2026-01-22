@@ -1,0 +1,51 @@
+/* Tablet-specific styles */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Add smooth transitions for sidebar */
+  .sidebar-transition {
+    transition: width 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Adjust main content when sidebar is expanded */
+  .tablet-view .main-content {
+    margin-left: 20px;
+    transition: margin-left 0.3s ease;
+  }
+
+  .tablet-view .main-content.expanded {
+    margin-left: 288px; /* 72px (collapsed) + 16px padding */
+  }
+
+  /* Improve form layouts on tablets */
+  .form-container {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  /* Ensure form inputs are touch-friendly */
+  input, select, textarea, button {
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  /* Improve table readability */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Adjust modal positioning */
+  .modal-container {
+    padding: 1rem;
+  }
+
+  /* Ensure buttons are touch-friendly */
+  .btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Improve card layouts */
+  .card {
+    margin-bottom: 1rem;
+  }
+}

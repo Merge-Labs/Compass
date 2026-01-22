@@ -23,17 +23,36 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 768px) and (max-width: 1023.98px)');
+    // For tablets (768px - 1024px), we'll handle the sidebar differently
+    const mediaQuery = window.matchMedia('(min-width: 768px) and (max-width: 1024px)');
     const handleChange = (event) => {
-      setIsMdScreen(event.matches);
-      if (!event.matches) {
+      const isTablet = event.matches;
+      setIsMdScreen(isTablet);
+      
+      // On tablets, we want to start with the sidebar collapsed
+      if (isTablet) {
+        setIsHoveredForMd(false);
+        // Add a class to the body for tablet-specific styles
+        document.body.classList.add('tablet-view');
+      } else {
+        // Remove tablet class when not in tablet view
+        document.body.classList.remove('tablet-view');
+        // Reset hover state when leaving tablet view
         setIsHoveredForMd(false);
       }
     };
     
+    // Initial check
     handleChange(mediaQuery);
+    
+    // Listen for changes
     mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    
+    // Cleanup
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+      document.body.classList.remove('tablet-view');
+    };
   }, []);
 
   const handleItemClick = (label) => {
@@ -48,8 +67,12 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
     ${isSmMenuOpen ? 'block' : 'hidden'}
     ${isHoveredForMd && isMdScreen ? 'md:block' : 'md:hidden'}
     lg:block
+    
+    /* Show labels when sidebar is hovered on tablet */
+    ${isHoveredForMd ? 'tablet:block' : 'tablet:hidden'}
   `;
 
+  // On tablets, we want the sidebar to be collapsed by default
   const isCollapsed = !isSmMenuOpen && (!isHoveredForMd || !isMdScreen);
 
   // Group menu items based on user role
@@ -107,12 +130,27 @@ const Sidebar = ({ isSmMenuOpen, toggleSmMenu, onNavigate, activeSection }) => {
           }
           shadow-xl relative overflow-hidden
           
+          /* Mobile: Hidden by default, slides in when menu is open */
           ${isSmMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72'} 
           
-          md:translate-x-0 md:shadow-lg
+          /* Tablet: Always visible but collapsed by default, expands on hover */
+          md:translate-x-0 
           md:relative md:inset-auto 
           ${isHoveredForMd && isMdScreen ? 'md:w-72' : 'md:w-20'}
+          
+          /* Desktop: Always expanded */
           lg:w-72 
+          
+          /* Tablet-specific styles */
+          tablet:z-30
+          tablet:shadow-lg
+          
+          /* Ensure sidebar is above content on tablets */
+          @media (min-width: 768px) and (max-width: 1024px) {
+            position: fixed;
+            height: 100vh;
+            z-index: 40;
+          }
         `}
         onMouseEnter={() => {
           if (isMdScreen) {
