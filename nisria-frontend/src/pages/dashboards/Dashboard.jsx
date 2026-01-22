@@ -8,14 +8,13 @@ import Sidebar from "../../components/dashboard/sidebar";
 import Navbar from "../../components/dashboard/Navbar";
 import TasksSection from "../../sections/tasks/TasksSection";
 import DocumentsPage from "../../sections/documents/DocumentsPage";
-import Team from '../../sections/team/Team';
+import Team from '../../sections/team/Team'
 import Settings from "../../sections/settings/Settings";
 import NotificationsPage from "../../sections/notifications/NotificationsPage";
-import RecycleBin from "../../sections/bin/RecycleBin";
-import { Loader2, Menu } from "lucide-react";
+import RecycleBin from "../../sections/bin/RecycleBin"
+import { Loader2 } from "lucide-react";
+import bgImage from "/bg.jpg";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
-import "../../styles/dashboard.css";
-import { useMediaQuery } from "react-responsive";
 
 const SECTION_COMPONENTS = {
   dashboard: DashboardSection,
@@ -35,13 +34,8 @@ const DEFAULT_SECTION = "dashboard";
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSmSidebarOpen, setIsSmSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const isTabletLandscape = useMediaQuery({
-    query: '(min-width: 1180px) and (max-height: 1024px) and (orientation: landscape)'
-  });
-  const isMobile = useMediaQuery({ maxWidth: 991 });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,56 +46,17 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user && theme) setIsLoading(false);
-    
-    // Close mobile menu when navigating
-    if (isMobileMenuOpen) {
-      setIsMobileMenuOpen(false);
-    }
-  }, [user, theme, location.pathname]);
-  
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 991) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [user, theme]);
 
   // Sidebar navigation handler
   const handleSidebarNav = (sectionLabel) => {
     navigate(`/dashboard/compass/${sectionLabel.toLowerCase()}`);
-    if (isMobile) {
-      setIsMobileMenuOpen(false);
-    }
   };
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
-  
-  const toggleSidebar = () => {
-    if (isMobile) {
-      setIsMobileMenuOpen(!isMobileMenuOpen);
-    } else {
-      setSidebarCollapsed(!sidebarCollapsed);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="glass-surface rounded-2xl px-6 py-4">
-          <Loader2 className="w-12 h-12 animate-spin text-p1" />
-        </div>
-        <span className="mt-4 text-lg font-medium text-gray-800">Loading dashboard...</span>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -115,55 +70,37 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-layout">
-      {/* Mobile menu toggle button */}
-      <button 
-        className="sidebar-toggle md:hidden" 
-        onClick={toggleSidebar}
-        aria-label="Toggle menu"
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar
+        isSmMenuOpen={isSmSidebarOpen}
+        toggleSmMenu={setIsSmSidebarOpen}
+        onNavigate={handleSidebarNav}
+        activeSection={section.charAt(0).toUpperCase() + section.slice(1)}
+      />
+      <div
+        className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out
+        ${
+          isSmSidebarOpen
+            ? "blur-sm md:blur-none pointer-events-none md:pointer-events-auto"
+            : ""
+        }
+      `}
       >
-        <Menu size={20} />
-      </button>
-      
-      {/* Sidebar */}
-      <div 
-        className={`dashboard-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'open' : ''}`}
-        style={{
-          backgroundColor: theme === 'dark' ? '#1a1a1a' : '#fff',
-          color: theme === 'dark' ? '#fff' : '#333'
-        }}
-      >
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onCollapse={setSidebarCollapsed}
-          onNavigate={handleSidebarNav}
-          activeSection={section.charAt(0).toUpperCase() + section.slice(1)}
-        />
-      </div>
-      
-      {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div 
-          className="sidebar-overlay visible md:hidden" 
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-      
-      {/* Main content */}
-      <div className="dashboard-content">
-        <Navbar
-          user={user}
-          onLogout={handleLogout}
-          appTheme={theme}
-          onToggleSidebar={toggleSidebar}
-          appName="Nisria's Compass"
-        />
-        
-        <main className="main-content">
+        <div className="sticky top-0 z-20">
+          <Navbar
+            user={user}
+            onLogout={handleLogout}
+            appTheme={theme}
+            onToggleSmSidebar={() => setIsSmSidebarOpen((v) => !v)}
+            appName="Nisria's Compass"
+          />
+        </div>
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardSection />} />
             <Route path="grants/*" element={<GrantsDashboard />} />
+            {/* <Route path="grants/*" element={<Grants />} /> */}
             <Route path="programs/*" element={<ProgramsDashboard />} />
             <Route path="documents/*" element={<DocumentsPage />} />
             <Route path="team/*" element={<Team />} />
