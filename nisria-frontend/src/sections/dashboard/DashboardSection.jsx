@@ -55,15 +55,47 @@ const DashboardSection = () => {
     "#FFBB28",
     "#FF8042",
   ];
-  // Dummy beneficiaries data to use locally instead of fetching from the API
-  const DUMMY_BENEFICIARIES_BY_PROGRAM = [
-    { name: "Education", value: 124 },
-    { name: "Microfund", value: 86 },
-    { name: "Vocational Training", value: 64 },
-    { name: "Rescue", value: 34 },
-    { name: "Health", value: 42 },
-    { name: "Other", value: 18 },
-  ];
+  // State for program statistics
+  const [programStats, setProgramStats] = useState({
+    loading: true,
+    error: null,
+    data: []
+  });
+
+  // Fetch program statistics from the backend
+  useEffect(() => {
+    const fetchProgramStats = async () => {
+      try {
+        setProgramStats(prev => ({ ...prev, loading: true, error: null }));
+        
+        // Replace with your actual API endpoint
+        const response = await api.get('/api/programs/stats/beneficiaries-by-program/');
+        
+        // Filter out the Health category and transform data if needed
+        const filteredData = response.data
+          .filter(program => program.name.toLowerCase() !== 'health')
+          .map(program => ({
+            name: program.name,
+            value: program.count
+          }));
+          
+        setProgramStats({
+          loading: false,
+          error: null,
+          data: filteredData
+        });
+      } catch (error) {
+        console.error('Error fetching program statistics:', error);
+        setProgramStats({
+          loading: false,
+          error: 'Failed to load program statistics',
+          data: []
+        });
+      }
+    };
+
+    fetchProgramStats();
+  }, []);
 
   const CustomTooltip = ({ active, payload, theme }) => {
     if (active && payload && payload.length) {
