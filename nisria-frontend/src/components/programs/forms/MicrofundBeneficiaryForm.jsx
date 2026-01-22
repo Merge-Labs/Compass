@@ -162,31 +162,30 @@ const MicrofundBeneficiaryForm = ({
   const errorClasses = 'text-red-600 text-xs mt-1 flex items-center gap-1';
 
   return (
-    <ModalPortal isOpen={isOpen} onClose={onClose}>
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
-            onClick={handleBackdropClick} 
-          />
-          <div className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
-            <div className="bg-gray-50 px-4 py-3 sm:flex sm:items-center sm:justify-between sm:px-6">
-              <h3 className="text-lg font-medium text-gray-900">Add Microfund Beneficiary</h3>
-              <button
-                type="button"
+    <ModalPortal>
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto" 
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="relative w-full max-w-3xl max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col relative">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+              <h3 className="text-lg font-semibold text-gray-800">Add Microfund Beneficiary</h3>
+              <button 
                 onClick={onClose}
-                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label="Close modal"
               >
-                <X className="h-6 w-6" />
+                <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6 p-6">
-              {errors.form && (
-                <p className={`${errorClasses} p-3 bg-red-50 border rounded`}>
-                  <AlertCircle size={16} />
-                  {errors.form}
-                </p>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {isSubmitting && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50 rounded-b-xl">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
               )}
+              {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
 
               {/* Person Name */}
               <div>
@@ -258,21 +257,20 @@ const MicrofundBeneficiaryForm = ({
                 )}
               </div>
 
-              {/* Footer */}
-              <div className="flex justify-end gap-3 pt-6 border-t">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-2 border rounded"
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <button 
+                  type="button" 
+                  onClick={onClose} 
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded"
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isSubmitting ? 'Adding...' : 'Add Beneficiary'}
+                  {isSubmitting ? 'Saving...' : 'Save Beneficiary'}
                 </button>
               </div>
             </form>

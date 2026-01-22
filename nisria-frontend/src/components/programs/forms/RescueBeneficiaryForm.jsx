@@ -120,19 +120,30 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
   const errorClasses = "text-red-600 text-xs mt-1 flex items-center gap-1";
 
   return (
-    <ModalPortal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-gray-50 px-4 py-3 sm:flex sm:items-center sm:justify-between sm:px-6">
-        <h3 className="text-lg font-medium text-gray-900">Add Rescue Beneficiary</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <X className="h-6 w-6" />
-        </button>
-      </div>
-      <form onSubmit={handleSubmit} className="space-y-6 p-6">
-        {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
+    <ModalPortal>
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto" 
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="relative w-full max-w-3xl max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full flex flex-col relative">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+              <h3 className="text-lg font-semibold text-gray-800">Add Rescue Beneficiary</h3>
+              <button 
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {isSubmitting && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50 rounded-b-xl">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+              {errors.form && <p className={`${errorClasses} p-3 bg-red-50 border border-red-200 rounded-md`}><AlertCircle size={16}/>{errors.form}</p>}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
@@ -211,22 +222,33 @@ const RescueBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, programId,
           </div>
         </div>
 
-        <div className="flex justify-end gap-4 pt-5 mt-6 border-t border-gray-200">
-          <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" disabled={isSubmitting}>
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
             Cancel
           </button>
-          <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium flex items-center justify-center min-w-[150px]">
+          <button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[130px]"
+          >
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Adding...
+                Saving...
               </>
             ) : (
-              "Add Beneficiary"
+              'Save Beneficiary'
             )}
           </button>
         </div>
       </form>
+          </div>
+        </div>
+      </div>
     </ModalPortal>
   );
 };
