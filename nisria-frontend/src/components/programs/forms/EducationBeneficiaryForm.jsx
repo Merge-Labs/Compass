@@ -102,7 +102,7 @@ const EducationBeneficiaryForm = ({ isOpen, onClose, onBeneficiaryAdded, program
   const errorClasses = "text-red-600 text-xs mt-1.5 flex items-start gap-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50 rounded-t-xl">
           <h3 className="text-lg font-semibold text-gray-800">Add Education Beneficiary</h3>
