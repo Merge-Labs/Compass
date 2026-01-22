@@ -213,6 +213,7 @@ const MicrofundBeneficiaryDetailModal = ({ isOpen, onClose, beneficiary, loading
       </div>
     </div>
   );
+  
 };
 
 export default MicrofundBeneficiaryDetailModal;
