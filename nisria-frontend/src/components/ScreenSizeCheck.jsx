@@ -75,7 +75,7 @@ const ScreenSizeCheck = ({ children }) => {
           />
 
           <motion.h2
-            className="text-2xl font-bold text-white mb-3"
+            className="text-2xl font-bold text-red-600 mb-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 1.2, ease: 'easeOut' }}
@@ -84,7 +84,7 @@ const ScreenSizeCheck = ({ children }) => {
           </motion.h2>
 
           <motion.p 
-            className="text-white/80 mb-4"
+            className="text-black mb-4 font-medium"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 1.2, ease: 'easeOut' }}
@@ -95,7 +95,7 @@ const ScreenSizeCheck = ({ children }) => {
           </motion.p>
           
           <motion.p 
-            className="text-white/60 text-sm mb-6"
+            className="text-black/80 text-sm mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.6, duration: 1.2, ease: 'easeOut' }}
