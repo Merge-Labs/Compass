@@ -184,64 +184,16 @@ const DashboardSection = () => {
       }
     };
 
-    // Fetch beneficiaries data from the API with fallback to sample data
-    const fetchBeneficiariesByProgram = async () => {
+    // Use dummy data instead of calling the API for beneficiaries by program
+    const fetchBeneficiariesByProgram = () => {
       setIsLoadingBeneficiaries(true);
       setBeneficiariesError(null);
-      
-      // Fallback sample data in case the API is not available
-      const FALLBACK_DATA = [
-        { name: "Education", value: 124 },
-        { name: "Microfund", value: 86 },
-        { name: "Vocational Training", value: 64 },
-        { name: "Rescue", value: 34 }
-      ];
-
       try {
-        console.log('Fetching beneficiaries data from API...');
-        // Try the most likely endpoint first
-        let response;
-        
-        try {
-          // First try the programs stats endpoint
-          response = await api.get('/api/programs/beneficiaries/stats/');
-        } catch (firstError) {
-          console.log('First endpoint failed, trying alternative...', firstError);
-          // If first attempt fails, try an alternative endpoint
-          try {
-            response = await api.get('/api/beneficiaries/stats/by-program/');
-          } catch (secondError) {
-            console.log('All API attempts failed, using fallback data');
-            throw new Error('All API endpoints failed');
-          }
-        }
-
-        console.log('API Response:', response.data);
-
-        if (response.data && Array.isArray(response.data)) {
-          const filteredData = response.data
-            .filter(program => program.name && program.name.toLowerCase() !== 'health')
-            .map(program => ({
-              name: program.name,
-              value: program.count || 0 // Ensure we have a number value
-            }));
-          
-          console.log('Processed data:', filteredData);
-          setBeneficiariesByProgramData(filteredData);
-        } else {
-          console.warn('Unexpected API response format, using fallback data');
-          setBeneficiariesByProgramData(FALLBACK_DATA);
-        }
+        // Map the dummy data shape if needed later
+        setBeneficiariesByProgramData(DUMMY_BENEFICIARIES_BY_PROGRAM);
       } catch (error) {
-        console.error('API Error:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
-        
-        // Use fallback data in case of error
-        setBeneficiariesByProgramData(FALLBACK_DATA);
-        setBeneficiariesError('Could not load live data. Showing sample data.');
+        console.error("Failed to set dummy beneficiaries data:", error);
+        setBeneficiariesError("Could not load beneficiary data.");
       } finally {
         setIsLoadingBeneficiaries(false);
       }
