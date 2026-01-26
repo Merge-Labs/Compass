@@ -475,13 +475,6 @@ const GrantsDashboard = () => {
               iconColorClass="text-blue-600"
             />
             <StatCard
-              title="Total Value (Page)"
-              value={formatCurrency(stats.totalValue)}
-              IconComponent={DollarSign}
-              iconBgClass="bg-green-100"
-              iconColorClass="text-green-600"
-            />
-            <StatCard
               title="Approved (Page)"
               value={stats.approved}
               IconComponent={CheckCircle}
