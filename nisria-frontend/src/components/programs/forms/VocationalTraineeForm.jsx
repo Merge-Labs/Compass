@@ -180,20 +180,6 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
               {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="age" className={labelClasses}>Age</label>
-              <div className="relative"><User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="number" id="age" name="age" value={formData.age} onChange={handleInputChange} className={`${inputClasses} pl-10`} /></div>
-              {errors.age && <p className={errorClasses}><AlertCircle size={14}/>{errors.age}</p>}
-            </div>
-            <div>
-              <label htmlFor="gender" className={labelClasses}>Gender</label>
-              <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={`${inputClasses}`}>
-                <option value="">Select Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
-              </select>
-              {errors.gender && <p className={errorClasses}><AlertCircle size={14}/>{errors.gender}</p>}
-            </div>
-          </div>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-700 mb-3">Contact Information</h4>
