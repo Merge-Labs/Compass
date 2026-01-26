@@ -327,7 +327,7 @@ const GrantsDashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
               <div className="flex items-center justify-between">
                 <div>
@@ -336,17 +336,6 @@ const GrantsDashboard = () => {
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
                   <Building className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            <div className="glass-panel bg-white border border-white/40 rounded-3xl shadow-2xl overflow-hidden p-6 hover:shadow-3xl transition-all duration-300 hover:border-white/60">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Value</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <DollarSign className="w-6 h-6 text-white" />
                 </div>
               </div>
             </div>
