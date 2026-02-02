@@ -209,7 +209,7 @@ const ProgramsManagement = () => {
     }
   }, []);
 
-  // Fetch beneficiaries based on program
+  // Fetch beneficiaries based on program with pagination support
   const fetchBeneficiaries = useCallback(async (program) => {
     if (!program || !program.name || !program.division_name_display) {
       setError("Cannot fetch beneficiaries: Program details are incomplete.");
@@ -219,15 +219,14 @@ const ProgramsManagement = () => {
 
     setLoading(true);
     setError(null);
-    setBeneficiaries([]); // Clear previous beneficiaries
+    setBeneficiaries([]);
 
     try {
       let endpoint = '';
       const divisionName = program.division_name_display.toLowerCase();
       const programName = program.name.toLowerCase();
       
-      // Construct endpoint based on program type
-      // This switch assumes specific endpoint structures. Adjust as per your API.
+      // Construct base endpoint based on program type
       switch (programName) {
         case 'education':
           endpoint = `/api/programs/${divisionName}/education/`;
@@ -239,22 +238,41 @@ const ProgramsManagement = () => {
           endpoint = `/api/programs/${divisionName}/rescue/`;
           break;
         case 'vocational':
-          if (currentVocationalTrainerId) { // If a trainer ID is set, fetch their trainees
+          if (currentVocationalTrainerId) {
             endpoint = `/api/programs/${divisionName}/vocational-trainers/${currentVocationalTrainerId}/trainees/`;
-          } else { // Otherwise, fetch trainers
+          } else {
             endpoint = `/api/programs/${divisionName}/vocational-trainers/`;
           }
-         break; // <-- Removed duplicate line and added break
+          break;
         default:
-          // Fallback or error if program type is unknown for beneficiary fetching
           console.warn(`Unknown program type for fetching beneficiaries: ${programName}`);
           setError(`Beneficiary endpoint not defined for program type: ${program.name}`);
           setLoading(false);
           return;
       }
+
+      let allResults = [];
+      let nextUrl = endpoint;
       
-      const response = await api.get(endpoint);
-      setBeneficiaries(response.data.results || []);
+      // Fetch all pages of results
+      while (nextUrl) {
+        const response = await api.get(nextUrl);
+        const data = response.data;
+        
+        if (data.results && Array.isArray(data.results)) {
+          allResults = [...allResults, ...data.results];
+        }
+        
+        // Check if there's a next page
+        nextUrl = data.next;
+        
+        // If the API returns a relative URL, make it absolute
+        if (nextUrl && nextUrl.startsWith('/')) {
+          nextUrl = `${window.location.origin}${nextUrl}`;
+        }
+      }
+      
+      setBeneficiaries(allResults);
     } catch (err) {
       console.error('Error fetching beneficiaries:', err);
       setError(err.response?.data?.detail || err.message || `Failed to fetch beneficiaries for ${program.name}`);
