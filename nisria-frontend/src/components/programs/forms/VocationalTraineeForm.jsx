@@ -116,7 +116,7 @@ const VocationalTraineeForm = ({ isOpen, onClose, onTraineeAdded, programId, div
     submissionData.append('trainer', trainerId);
 
     try {
-      const endpoint = `/api/programs/${divisionName.toLowerCase()}/vocational/`;
+      const endpoint = `/api/programs/${divisionName.toLowerCase()}/vocational-trainers/${trainerId}/trainees/`;
       const response = await api.post(endpoint, submissionData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
