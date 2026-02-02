@@ -3,6 +3,11 @@ import { useNavigate, useParams, Link, Routes, Route, useLocation } from 'react-
 import { Outlet } from 'react-router-dom';
 import {
   Building2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   DollarSign,
   Users,
   UserCheck,
@@ -18,7 +23,8 @@ import {
   Activity,
   Eye,
   Calendar,
-  ChevronRight,
+  ChevronUp,
+  ChevronDown,
   MapPin,
   Phone,
   Mail,
@@ -119,6 +125,13 @@ const ProgramsManagement = () => {
   const [divisions, setDivisions] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [beneficiaries, setBeneficiaries] = useState([]);
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10, // Default page size
+    totalItems: 0,
+    totalPages: 1
+  });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -210,7 +223,7 @@ const ProgramsManagement = () => {
   }, []);
 
   // Fetch beneficiaries based on program with pagination support
-  const fetchBeneficiaries = useCallback(async (program) => {
+  const fetchBeneficiaries = useCallback(async (program, page = 1, pageSize = 10) => {
     if (!program || !program.name || !program.division_name_display) {
       setError("Cannot fetch beneficiaries: Program details are incomplete.");
       setBeneficiaries([]);
@@ -251,28 +264,23 @@ const ProgramsManagement = () => {
           return;
       }
 
-      let allResults = [];
-      let nextUrl = endpoint;
+      // Add pagination parameters
+      endpoint += `${endpoint.includes('?') ? '&' : '?'}page=${page}&page_size=${pageSize}`;
       
-      // Fetch all pages of results
-      while (nextUrl) {
-        const response = await api.get(nextUrl);
-        const data = response.data;
-        
-        if (data.results && Array.isArray(data.results)) {
-          allResults = [...allResults, ...data.results];
-        }
-        
-        // Check if there's a next page
-        nextUrl = data.next;
-        
-        // If the API returns a relative URL, make it absolute
-        if (nextUrl && nextUrl.startsWith('/')) {
-          nextUrl = `${window.location.origin}${nextUrl}`;
-        }
-      }
+      const response = await api.get(endpoint);
+      const data = response.data;
       
-      setBeneficiaries(allResults);
+      setBeneficiaries(data.results || []);
+      
+      // Update pagination info
+      setPagination(prev => ({
+        ...prev,
+        currentPage: page,
+        pageSize: pageSize,
+        totalItems: data.count || 0,
+        totalPages: Math.ceil((data.count || 0) / pageSize)
+      }));
+      
     } catch (err) {
       console.error('Error fetching beneficiaries:', err);
       setError(err.response?.data?.detail || err.message || `Failed to fetch beneficiaries for ${program.name}`);
@@ -281,6 +289,19 @@ const ProgramsManagement = () => {
       setLoading(false);
     }
   }, [currentVocationalTrainerId]);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchBeneficiaries(selectedProgram, newPage, pagination.pageSize);
+    }
+  };
+  
+  // Handle page size change
+  const handlePageSizeChange = (e) => {
+    const newSize = parseInt(e.target.value, 10);
+    fetchBeneficiaries(selectedProgram, 1, newSize);
+  };
 
   // Initial data fetch for divisions and all programs
   useEffect(() => {
@@ -906,22 +927,135 @@ const ProgramsManagement = () => {
                   </button>
                 </div>
 
-                <BeneficiariesTable
-                  beneficiaries={filteredData} // This will be trainers or trainees list
-                  programType={                    
-                    selectedProgram.name.toLowerCase() === 'vocational' 
-                      ? (currentVocationalTrainerId ? 'vocational-trainee' : 'vocational-trainer') 
-                      : selectedProgram.name.toLowerCase()
-                  }
-                  loading={loading} 
-                  error={error}
-                  onAddNewBeneficiary={handleOpenAddBeneficiaryForm}
-                  onViewDetails={handleOpenBeneficiaryDetailModal} // Pass the handler
-                  onEditBeneficiary={handleOpenEditBeneficiaryModal} // Pass the edit handler
-                  onDeleteBeneficiary={handleOpenConfirmDeleteModal} // Pass the delete handler
-                  searchTerm={searchTerm} // Pass searchTerm for empty state message
-                  onViewTrainees={selectedProgram.name.toLowerCase() === 'vocational' && !currentVocationalTrainerId ? handleViewTrainees : undefined}
-                />
+                <div className="space-y-4">
+                  <BeneficiariesTable
+                    beneficiaries={filteredData}
+                    programType={                    
+                      selectedProgram.name.toLowerCase() === 'vocational' 
+                        ? (currentVocationalTrainerId ? 'vocational-trainee' : 'vocational-trainer') 
+                        : selectedProgram.name.toLowerCase()
+                    }
+                    loading={loading} 
+                    error={error}
+                    onAddNewBeneficiary={handleOpenAddBeneficiaryForm}
+                    onViewDetails={handleOpenBeneficiaryDetailModal}
+                    onEditBeneficiary={handleOpenEditBeneficiaryModal}
+                    onDeleteBeneficiary={handleOpenConfirmDeleteModal}
+                    searchTerm={searchTerm}
+                    onViewTrainees={selectedProgram.name.toLowerCase() === 'vocational' && !currentVocationalTrainerId ? handleViewTrainees : undefined}
+                  />
+                  
+                  {/* Pagination Controls */}
+                  {pagination.totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg">
+                      <div className="flex-1 flex justify-between sm:hidden">
+                        <button
+                          onClick={() => handlePageChange(pagination.currentPage - 1)}
+                          disabled={pagination.currentPage === 1}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => handlePageChange(pagination.currentPage + 1)}
+                          disabled={pagination.currentPage === pagination.totalPages}
+                          className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700">
+                            Showing <span className="font-medium">{(pagination.currentPage - 1) * pagination.pageSize + 1}</span> to{' '}
+                            <span className="font-medium">
+                              {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)}
+                            </span>{' '}
+                            of <span className="font-medium">{pagination.totalItems}</span> results
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center">
+                            <label htmlFor="page-size" className="mr-2 text-sm text-gray-700">
+                              Items per page:
+                            </label>
+                            <select
+                              id="page-size"
+                              value={pagination.pageSize}
+                              onChange={handlePageSizeChange}
+                              className="block w-20 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                            >
+                              <option value={10}>10</option>
+                              <option value={20}>20</option>
+                              <option value={50}>50</option>
+                              <option value={100}>100</option>
+                            </select>
+                          </div>
+                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button
+                              onClick={() => handlePageChange(1)}
+                              disabled={pagination.currentPage === 1}
+                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              <span className="sr-only">First</span>
+                              <ChevronsLeft className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handlePageChange(pagination.currentPage - 1)}
+                              disabled={pagination.currentPage === 1}
+                              className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              <span className="sr-only">Previous</span>
+                              <ChevronLeft className="h-5 w-5" />
+                            </button>
+                            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                              let pageNum;
+                              if (pagination.totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (pagination.currentPage <= 3) {
+                                pageNum = i + 1;
+                              } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                                pageNum = pagination.totalPages - 4 + i;
+                              } else {
+                                pageNum = pagination.currentPage - 2 + i;
+                              }
+                              
+                              return (
+                                <button
+                                  key={pageNum}
+                                  onClick={() => handlePageChange(pageNum)}
+                                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                    pagination.currentPage === pageNum
+                                      ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {pageNum}
+                                </button>
+                              );
+                            })}
+                            <button
+                              onClick={() => handlePageChange(pagination.currentPage + 1)}
+                              disabled={pagination.currentPage === pagination.totalPages}
+                              className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              <span className="sr-only">Next</span>
+                              <ChevronRight className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handlePageChange(pagination.totalPages)}
+                              disabled={pagination.currentPage === pagination.totalPages}
+                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              <span className="sr-only">Last</span>
+                              <ChevronsRight className="h-5 w-5" />
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>              
             )}
           </div> 
