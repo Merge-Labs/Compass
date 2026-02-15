@@ -4,6 +4,7 @@ from django.urls import path, include
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from views import health_check, health_check_detailed
 
 
 schema_view = get_schema_view(
@@ -21,6 +22,10 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
+    # Health check endpoints for Coolify and monitoring
+    path('api/health/', health_check, name='health-check'),
+    path('api/health/detailed/', health_check_detailed, name='health-check-detailed'),
+    
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/programs/', include('divisions.urls')),

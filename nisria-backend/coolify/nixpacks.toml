@@ -1,0 +1,14 @@
+# Coolify Nixpacks/Dockerfile Configuration
+# This file provides Coolify with deployment hints
+
+[phases.setup]
+nixPkgs = ["...", "postgresql"]
+
+[phases.build]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.install]
+cmds = ["python manage.py collectstatic --noinput"]
+
+[start]
+cmd = "gunicorn compass.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-4}"
