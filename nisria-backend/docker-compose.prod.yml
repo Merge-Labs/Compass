@@ -15,7 +15,7 @@ services:
       - DEBUG=False
       - SKIP_COLLECTSTATIC=0
     expose:
-      - "8000"
+      - "8001"
     restart: unless-stopped
     depends_on:
       - db

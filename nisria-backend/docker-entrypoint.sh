@@ -20,8 +20,8 @@ if [ "${DJANGO_ENV:-development}" = "production" ]; then
     python manage.py collectstatic --noinput
   fi
   echo "Starting Gunicorn"
-  exec gunicorn compass.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-4}
+  exec gunicorn compass.wsgi:application --bind 0.0.0.0:8001 --workers ${GUNICORN_WORKERS:-4}
 else
   echo "Starting Django development server"
-  exec python manage.py runserver 0.0.0.0:8000
+  exec python manage.py runserver 0.0.0.0:8001
 fi
