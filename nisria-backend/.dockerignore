@@ -12,4 +12,5 @@ dist/
 node_modules/
 *.sqlite3
 media/
+staticfiles/
 /.pytest_cache

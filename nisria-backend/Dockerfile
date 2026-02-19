@@ -19,6 +19,10 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN adduser --disabled-password --gecos "" appuser || true
+
+# Create staticfiles directory and set proper permissions for appuser
+RUN mkdir -p /app/staticfiles && chown -R appuser:appuser /app/staticfiles
+
 USER appuser
 
 ENV DJANGO_SETTINGS_MODULE=compass.settings
