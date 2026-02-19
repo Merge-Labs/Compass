@@ -45,12 +45,16 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
 ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h and h.strip()]
 if ALLOWED_HOSTS:
     # explicit hosts provided via env
-    pass
+    # Always include localhost/127.0.0.1 for Docker healthchecks
+    if 'localhost' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('localhost')
+    if '127.0.0.1' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('127.0.0.1')
 else:
     # If not provided, fall back to sensible defaults depending on environment
     if DJANGO_ENV == 'production':
-        # In production (Contabo) require explicit ALLOWED_HOSTS in env; otherwise use localhost
-        ALLOWED_HOSTS = ['localhost']
+        # In production, include localhost and 127.0.0.1 for Docker healthchecks
+        ALLOWED_HOSTS = ['localhost', '127.0.0.1']
     else:
         ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
