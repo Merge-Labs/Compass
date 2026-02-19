@@ -27,6 +27,6 @@ USER appuser
 
 ENV DJANGO_SETTINGS_MODULE=compass.settings
 
-EXPOSE 8000
+EXPOSE 8001
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
