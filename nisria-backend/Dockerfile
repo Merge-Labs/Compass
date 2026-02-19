@@ -62,7 +62,8 @@ USER appuser
 EXPOSE 8000
 
 # Health check - use Host header to ensure Django ALLOWED_HOSTS accepts the request
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+# Start period of 120s allows time for: database wait + migrations + collectstatic + gunicorn boot
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
     CMD curl -f -H "Host: localhost" http://127.0.0.1:8000/health/ || exit 1
 
 # Run entrypoint script
