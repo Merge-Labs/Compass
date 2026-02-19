@@ -25,7 +25,7 @@ services:
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
       - SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC:-0}
     ports:
-      - "8000:8000"
+      - "8002:8000"
     restart: unless-stopped
     depends_on:
       db:
