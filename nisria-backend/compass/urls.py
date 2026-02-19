@@ -23,7 +23,8 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     # Health check endpoints for Coolify and monitoring
-    path('api/health/', health_check, name='health-check'),
+    path('health/', health_check, name='health-check'),  # Root level for Docker healthcheck
+    path('api/health/', health_check, name='api-health-check'),
     path('api/health/detailed/', health_check_detailed, name='health-check-detailed'),
     
     path('admin/', admin.site.urls),
